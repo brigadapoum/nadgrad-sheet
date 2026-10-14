@@ -10,7 +10,7 @@
   ],
   "url": "https://github.com/brigadapoum/nadgrad-sheet",
   "manifest": "https://raw.githubusercontent.com/brigadapoum/nadgrad-sheet/main/module.json",
-  "download": "https://raw.githubusercontent.com/brigadapoum/nadgrad-sheet/v0.2.0/dist/nadgrad.zip",
+  "download": "https://raw.githubusercontent.com/brigadapoum/nadgrad-sheet/main/dist/nadgrad.zip",
   "compatibility": {
     "minimum": "13",
     "verified": "13.351"

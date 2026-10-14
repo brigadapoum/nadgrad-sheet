@@ -7,6 +7,24 @@ import { registerArchive } from "./archive.mjs";
 
 registerArchive();
 
+// Тема листа — для каждого браузера своя. «Как в Foundry» — по светлой/тёмной теме интерфейса.
+Hooks.once("init", () => {
+  game.settings.register(MODULE_ID, "theme", {
+    name: "Тема листа рискаря",
+    hint: "Тушь — светлая, Смог — тёмная. «Как в Foundry» — по теме интерфейса. Переключается и прямо на листе, над портретом.",
+    scope: "client",
+    config: true,
+    type: String,
+    choices: { auto: "Как в Foundry", tush: "Тушь", smog: "Смог" },
+    default: "auto",
+    onChange: () => {
+      for (const app of foundry.applications.instances.values()) {
+        if (app.options?.classes?.includes("nadgrad")) app.render();
+      }
+    },
+  });
+});
+
 Hooks.once("init", async () => {
   if (game.system.id !== "CBRPNK") return;
   // Лист 1.1+ лежит здесь; в 1.05 файла нет — тогда тихо остаёмся только с архивом.

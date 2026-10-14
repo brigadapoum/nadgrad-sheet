@@ -1,8 +1,14 @@
 // Лист рискаря Надграда: наследник листа системы CBR+PNK 1.1+ (ApplicationV2).
 // Родной лист не трогаем — добавляем к нему две части: полосу вкладок и экран «Статус».
 import {
-  MODULE_ID, buildStatusContext, readState, repMax, tensionAdd, cellClick, clampInt,
+  MODULE_ID, buildStatusContext, readState, repMax, tensionAdd, clampInt,
+  LOAD_LEVELS, loadStep, loadIndex,
 } from "./logic.mjs";
+import { tidyHeader, applyThemeClass, effectiveTheme, loadButton } from "./dom.mjs";
+
+const themeSetting = () => {
+  try { return game.settings.get(MODULE_ID, "theme"); } catch { return "auto"; }
+};
 
 const TABS = [
   { id: "sheet", label: "Лист" },
@@ -20,14 +26,15 @@ export function makeSheetClass(Runner) {
       actions: {
         ngTab: NadgradRunner.#onTab,
         ngStep: NadgradRunner.#onStep,
-        ngRepCell: NadgradRunner.#onRepCell,
+        ngRepCell: { handler: NadgradRunner.#onRepCell, buttons: [0, 2] },
         ngRepRank: NadgradRunner.#onRepRank,
-        ngTensionCell: NadgradRunner.#onTensionCell,
-        ngTensionLevel: NadgradRunner.#onTensionLevel,
-        ngTensionStep: { handler: NadgradRunner.#onTensionStep, buttons: [0, 2] },
+        ngTensionCell: { handler: NadgradRunner.#onTensionCell, buttons: [0, 2] },
+        ngTensionLevel: { handler: NadgradRunner.#onTensionLevel, buttons: [0, 2] },
         ngTensionAdd: NadgradRunner.#onTensionAdd,
         ngLife: NadgradRunner.#onLife,
         ngNotes: NadgradRunner.#onNotes,
+        ngTheme: NadgradRunner.#onTheme,
+        ngLoad: { handler: NadgradRunner.#onLoad, buttons: [0, 2] },
       },
     };
 
@@ -53,7 +60,22 @@ export function makeSheetClass(Runner) {
 
     async _onRender(context, options) {
       await super._onRender(context, options);
+      this.#decorate();
       this.#applyTab();
+    }
+
+    /** Правки родного листа: тема, полоса над портретом, кнопка загрузки. */
+    #decorate() {
+      const root = this.element;
+      const theme = themeSetting();
+      applyThemeClass(root, theme);
+      tidyHeader(root, { active: effectiveTheme(root, theme) });
+      const index = loadIndex(this.actor.system?.GEAR?.LOAD?.selected);
+      loadButton(root, {
+        index,
+        label: game.i18n.localize(LOAD_LEVELS[index].key),
+        levels: LOAD_LEVELS,
+      });
     }
 
     #applyTab() {
@@ -72,7 +94,7 @@ export function makeSheetClass(Runner) {
     static #onTab(event, target) {
       this._ngTab = target.dataset.tab;
       this.#applyTab();
-      this.element.querySelector(".window-content")?.scrollTo({ top: 0 });
+      this.element.querySelector(".window-content")?.scrollTo?.({ top: 0 });
     }
 
     /** −/+ у чеков и дел: data-field, data-delta */
@@ -84,9 +106,11 @@ export function makeSheetClass(Runner) {
       return this.#set(field, clampInt(s[field] + delta, lo, 999999));
     }
 
+    /** Как на родном листе: ЛКМ — поставить отметку, ПКМ — снять. */
     static #onRepCell(event, target) {
       const s = this.#flags();
-      return this.#set("rep.value", cellClick(s.rep.value, Number(target.dataset.n)));
+      const d = event.button === 2 ? -1 : 1;
+      return this.#set("rep.value", clampInt(s.rep.value + d, 0, repMax(s.rep.rank)));
     }
 
     static #onRepRank(event, target) {
@@ -95,20 +119,16 @@ export function makeSheetClass(Runner) {
       return this.#set("rep", { rank, value: Math.min(s.rep.value, repMax(rank)) });
     }
 
+    /** Ромбы напряжения: ЛКМ +1, ПКМ −1 — с переносом 9 → уровень (и обратно). */
     static #onTensionCell(event, target) {
-      const s = this.#flags();
-      return this.#set("tension.points", cellClick(s.tension.points, Number(target.dataset.n)));
+      return this.#applyTension(event.button === 2 ? -1 : 1);
     }
 
+    /** Уровни напряжения вручную: ЛКМ +1 уровень, ПКМ −1 (показатель не трогаем). */
     static #onTensionLevel(event, target) {
       const s = this.#flags();
-      return this.#set("tension.level", cellClick(s.tension.level, Number(target.dataset.n)));
-    }
-
-    /** ЛКМ +1, ПКМ −1 — с переносом 9 → уровень */
-    static #onTensionStep(event, target) {
-      const delta = event.button === 2 ? -1 : 1;
-      return this.#applyTension(delta);
+      const d = event.button === 2 ? -1 : 1;
+      return this.#set("tension.level", clampInt(s.tension.level + d, 0, 4));
     }
 
     /** «+N»: число из поля рядом, можно отрицательное */
@@ -131,6 +151,21 @@ export function makeSheetClass(Runner) {
       const s = this.#flags();
       const level = Number(target.dataset.level);
       return this.#set("life.level", s.life.level === level ? null : level);
+    }
+
+    /** Тушь / Смог — выбор запоминается для этого браузера; перерисовываются все открытые листы. */
+    static async #onTheme(event, target) {
+      await game.settings.set(MODULE_ID, "theme", target.dataset.theme);
+    }
+
+    /** Загрузка снаряжения: ЛКМ — тяжелее, ПКМ — легче, по кругу. */
+    static #onLoad(event, target) {
+      const step = loadStep(this.actor.system?.GEAR?.LOAD?.selected, event.button === 2 ? -1 : 1);
+      return this.actor.update({
+        "system.GEAR.LOAD.selected": step.selected,
+        "system.GEAR.LOAD.max": step.max,
+        "system.GEAR.LOAD.desc": game.i18n.localize(step.key),
+      });
     }
 
     /** Открыть досье системы (там же старые заметки 1.05) — через родное действие листа. */

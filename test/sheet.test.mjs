@@ -1,41 +1,57 @@
-// Прогон класса листа на заглушке Foundry: ловим ошибки private-полей, действий и вкладок.
+// Прогон класса листа на заглушке Foundry с настоящим DOM (jsdom):
+// ловим ошибки private-полей, действий, вкладок, правок полосы над портретом и кнопки загрузки.
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { test, beforeEach } from "node:test";
+import { JSDOM } from "jsdom";
 import { makeSheetClass } from "../scripts/sheet.mjs";
 
+const SETTINGS = { "nadgrad.theme": "auto" };
 globalThis.ui = { notifications: { warns: [], warn(m) { this.warns.push(m); } } };
+globalThis.game = {
+  i18n: { localize: (k) => ({ "LOAD.LIGHT": "LIGHT: Move freely", "LOAD.MEDIUM": "MEDIUM: Look ready", "LOAD.HEAVY": "HEAVY: Loud or slow" }[k] ?? k) },
+  settings: {
+    get: (m, k) => SETTINGS[`${m}.${k}`],
+    set: async (m, k, v) => { SETTINGS[`${m}.${k}`] = v; },
+  },
+};
+beforeEach(() => { SETTINGS["nadgrad.theme"] = "auto"; ui.notifications.warns = []; });
 
-class FakeEl {
-  constructor(attrs = {}) { this.attrs = attrs; this.cls = new Set(); this.value = attrs.value ?? ""; this.dataset = attrs.dataset ?? {}; }
-  get classList() { const s = this.cls; return { toggle: (c, on) => (on ? s.add(c) : s.delete(c)), contains: (c) => s.has(c) }; }
-  scrollTo() {}
-}
+// Скелет окна с родным листом 1.2 — только то, что трогает модуль.
+const SHEET_HTML = `
+<form class="application sheet actor runner-actor nadgrad themed theme-light">
+ <section class="window-content">
+  <nav data-application-part="ngTabs">
+   <button data-action="ngTab" data-tab="sheet"></button><button data-action="ngTab" data-tab="status"></button>
+   <button data-action="ngTab" data-tab="relations"></button><button data-action="ngTab" data-tab="projects"></button>
+  </nav>
+  <div data-application-part="form" class="hunted">
+   <div><section class="header"><div class="options">
+     <button data-action="fateChange" data-flag="CRED">CRED</button><button data-action="rollAngle"></button>
+     <label><input type="checkbox" name="system.angle.hunted"></label><button data-action="fateChange" data-flag="DEBT">DEBT</button>
+   </div></section></div>
+   <section class="gears"><h3>GEAR <button data-action="gearLoadChange" class="stack">0 / 3</button></h3><p class="desc"></p></section>
+  </div>
+  <div data-application-part="status"><input class="ng-tension-add"></div>
+  <div data-application-part="relations"></div>
+  <div data-application-part="projects"></div>
+ </section>
+</form>`;
+
 class Runner {
   static DEFAULT_OPTIONS = { classes: ["runner-actor"], actions: { openNotes: function () { this.openedNotes = true; } } };
   static PARTS = { form: { template: "systems/CBRPNK/actors/runner/runner.hbs" } };
   constructor(actor) {
     this.actor = actor; this.isEditable = true;
     const C = this.constructor;
-    this.options = { actions: { ...Runner.DEFAULT_OPTIONS.actions, ...C.DEFAULT_OPTIONS.actions } };
-    this.parts = { form: new FakeEl(), status: new FakeEl(), relations: new FakeEl(), projects: new FakeEl(), ngTabs: new FakeEl() };
-    this.tabBtns = ["sheet", "status", "relations", "projects"].map((tab) => new FakeEl({ dataset: { tab } }));
-    this.addInput = new FakeEl({ value: "" });
-    this.element = {
-      querySelector: (sel) => {
-        if (sel.includes('"form"')) return this.parts.form;
-        for (const p of ["status", "relations", "projects"]) if (sel.includes(`"${p}"`)) return this.parts[p];
-        if (sel.includes("ng-tension-add")) return this.addInput;
-        if (sel === ".window-content") return new FakeEl();
-        return null;
-      },
-      querySelectorAll: () => this.tabBtns,
-    };
+    this.options = { classes: C.DEFAULT_OPTIONS.classes, actions: { ...Runner.DEFAULT_OPTIONS.actions, ...C.DEFAULT_OPTIONS.actions } };
+    this.dom = new JSDOM(`<body class="theme-dark">${SHEET_HTML}</body>`);
+    this.element = this.dom.window.document.querySelector("form");
   }
   async _prepareContext() { return { base: true }; }
   async _onRender() {}
 }
-function makeActor(flags = {}) {
-  const a = { flags: { nadgrad: flags }, system: { angle: { for: "", DETAILS: "" } }, items: [], updates: [] };
+function makeActor(flags = {}, system = {}) {
+  const a = { flags: { nadgrad: flags }, system: { angle: { for: "", DETAILS: "" }, GEAR: { LOAD: { selected: 0, value: 0, max: 3 } }, ...system }, items: [], updates: [] };
   a.update = async (data) => {
     a.updates.push(data);
     for (const [k, v] of Object.entries(data)) {
@@ -52,6 +68,8 @@ const act = (sheet, name, dataset = {}, button = 0) => {
   const a = sheet.options.actions[name]; const h = typeof a === "function" ? a : a.handler;
   return h.call(sheet, { button }, { dataset });
 };
+const part = (sh, id) => sh.element.querySelector(`[data-application-part="${id}"]`);
+const hidden = (sh, id) => part(sh, id).classList.contains("ng-hidden");
 
 test("классы, части и порядок частей", () => {
   assert.deepEqual(Object.keys(S.PARTS), ["ngTabs", "form", "status", "relations", "projects"]);
@@ -63,40 +81,96 @@ test("контекст и вкладки", async () => {
   assert.equal(ctx.base, true);
   assert.equal(ctx.ng.repMax, 6);
   await sh._onRender(ctx, {});
-  assert.ok(sh.parts.status.classList.contains("ng-hidden"));
-  assert.ok(!sh.parts.form.classList.contains("ng-hidden"));
+  assert.ok(hidden(sh, "status") && !hidden(sh, "form"));
   await act(sh, "ngTab", { tab: "status" });
-  assert.ok(sh.parts.form.classList.contains("ng-hidden"));
-  assert.ok(!sh.parts.status.classList.contains("ng-hidden"));
-  assert.ok(sh.tabBtns[1].classList.contains("active"));
+  assert.ok(hidden(sh, "form") && !hidden(sh, "status"));
+  await act(sh, "ngTab", { tab: "projects" });
+  for (const p of ["form", "status", "relations"]) assert.ok(hidden(sh, p), p);
+  assert.ok(!hidden(sh, "projects"));
 });
-test("чеки и дела", async () => {
+test("полоса над портретом: CRED, DEBT, бросок и «охотник» убраны, стоит переключатель тем", async () => {
+  const sh = new S(makeActor());
+  await sh._onRender({}, {});
+  const bar = sh.element.querySelector("section.header .options");
+  assert.equal(bar.querySelector('[data-flag], [data-action="rollAngle"], input[name="system.angle.hunted"]'), null);
+  assert.deepEqual([...bar.querySelectorAll('[data-action="ngTheme"]')].map((b) => b.dataset.theme), ["tush", "smog"]);
+  assert.equal(part(sh, "form").classList.contains("hunted"), false);
+  // окно светлое → подсвечена «Тушь», хотя интерфейс тёмный
+  assert.equal(bar.querySelector(".active").dataset.theme, "tush");
+  await sh._onRender({}, {}); // повторная перерисовка не плодит переключатели
+  assert.equal(bar.querySelectorAll(".ng-theme").length, 1);
+});
+test("переключатель тем: выбор запоминается и вешает класс на окно", async () => {
+  const sh = new S(makeActor());
+  await act(sh, "ngTheme", { theme: "smog" });
+  assert.equal(SETTINGS["nadgrad.theme"], "smog");
+  await sh._onRender({}, {});
+  assert.ok(sh.element.classList.contains("ng-smog") && !sh.element.classList.contains("ng-tush"));
+  assert.equal(sh.element.querySelector(".ng-theme .active").dataset.theme, "smog");
+  await act(sh, "ngTheme", { theme: "tush" });
+  await sh._onRender({}, {});
+  assert.ok(sh.element.classList.contains("ng-tush") && !sh.element.classList.contains("ng-smog"));
+});
+test("кнопка загрузки: текст уровня, цифра больше не кнопка, ЛКМ тяжелее, ПКМ легче по кругу", async () => {
+  const a = makeActor({}, { GEAR: { LOAD: { selected: "light", value: 1, max: 3 } } });
+  const sh = new S(a);
+  await sh._onRender({}, {});
+  const g = sh.element.querySelector("section.gears");
+  const btn = g.querySelector("button.ng-load");
+  assert.ok(btn && btn.dataset.action === "ngLoad");
+  assert.match(btn.textContent, /LIGHT/);
+  assert.equal(g.querySelector("p.desc"), null);
+  assert.equal(g.querySelector("h3 button").hasAttribute("data-action"), false);
+  assert.equal(btn.querySelectorAll(".ng-dot.on").length, 1);
+  await act(sh, "ngLoad", {}, 0);
+  assert.equal(a.system.GEAR.LOAD.selected, 1); assert.equal(a.system.GEAR.LOAD.max, 5);
+  await act(sh, "ngLoad", {}, 2);
+  await act(sh, "ngLoad", {}, 2);
+  assert.equal(a.system.GEAR.LOAD.selected, 2); assert.equal(a.system.GEAR.LOAD.max, 7);
+  assert.equal(a.system.GEAR.LOAD.value, 1); // отмеченное снаряжение не трогаем
+  await sh._onRender({}, {});
+  assert.match(g.querySelector("button.ng-load").textContent, /HEAVY/);
+  assert.equal(g.querySelectorAll("button.ng-load").length, 1);
+});
+test("чеки, заблокированные и дела", async () => {
   const a = makeActor(); const sh = new S(a);
   await act(sh, "ngStep", { field: "cheki", delta: "1" });
   await act(sh, "ngStep", { field: "cheki", delta: "-1" });
   await act(sh, "ngStep", { field: "cheki", delta: "-1" });
   assert.equal(a.flags.nadgrad.cheki, -1);
+  await act(sh, "ngStep", { field: "blocked", delta: "-1" });
+  assert.equal(a.flags.nadgrad.blocked, 0);
   await act(sh, "ngStep", { field: "dela", delta: "-1" });
   assert.equal(a.flags.nadgrad.dela, 0);
 });
-test("репутация: ячейка, ранг обрезает значение", async () => {
-  const a = makeActor({ rep: { rank: 3, value: 0 } }); const sh = new S(a);
-  await act(sh, "ngRepCell", { n: "9" });
-  assert.equal(a.flags.nadgrad.rep.value, 9);
-  await act(sh, "ngRepRank", { rank: "1" });
-  assert.deepEqual(a.flags.nadgrad.rep, { rank: 1, value: 6 });
+test("репутация: ЛКМ ставит, ПКМ снимает, в пределах ранга; ранг обрезает значение", async () => {
+  const a = makeActor({ rep: { rank: 1, value: 5 } }); const sh = new S(a);
+  await act(sh, "ngRepCell", { n: "2" }, 0);
+  await act(sh, "ngRepCell", { n: "1" }, 0);
+  assert.equal(a.flags.nadgrad.rep.value, 6);
+  await act(sh, "ngRepCell", { n: "6" }, 2);
+  assert.equal(a.flags.nadgrad.rep.value, 5);
+  a.flags.nadgrad.rep = { rank: 3, value: 10 };
+  await act(sh, "ngRepRank", { rank: "2" });
+  assert.deepEqual(a.flags.nadgrad.rep, { rank: 2, value: 8 });
 });
-test("напряжение: ЛКМ/ПКМ, +N с переносом, потолок", async () => {
+test("напряжение: ромбы ЛКМ/ПКМ с переносом, уровни ЛКМ/ПКМ, +N, потолок", async () => {
   const a = makeActor({ tension: { level: 0, points: 8 } }); const sh = new S(a);
-  await act(sh, "ngTensionStep", {}, 0);
+  await act(sh, "ngTensionCell", { n: "3" }, 0);
   assert.deepEqual(a.flags.nadgrad.tension, { level: 1, points: 0 });
-  await act(sh, "ngTensionStep", {}, 2);
+  await act(sh, "ngTensionCell", { n: "1" }, 2);
   assert.deepEqual(a.flags.nadgrad.tension, { level: 0, points: 8 });
-  sh.addInput.value = "10";
+  await act(sh, "ngTensionLevel", { n: "1" }, 0);
+  assert.deepEqual(a.flags.nadgrad.tension, { level: 1, points: 8 });
+  await act(sh, "ngTensionLevel", { n: "1" }, 2);
+  await act(sh, "ngTensionLevel", { n: "1" }, 2);
+  assert.equal(a.flags.nadgrad.tension.level, 0);
+  const input = sh.element.querySelector("input.ng-tension-add");
+  input.value = "10";
   await act(sh, "ngTensionAdd");
   assert.deepEqual(a.flags.nadgrad.tension, { level: 2, points: 0 });
-  assert.equal(sh.addInput.value, "");
-  sh.addInput.value = "40";
+  assert.equal(input.value, "");
+  input.value = "40";
   await act(sh, "ngTensionAdd");
   assert.deepEqual(a.flags.nadgrad.tension, { level: 4, points: 8 });
   assert.equal(ui.notifications.warns.length, 1);
@@ -112,19 +186,4 @@ test("досье открывается родным действием лист
   const sh = new S(makeActor());
   await act(sh, "ngNotes");
   assert.equal(sh.openedNotes, true);
-});
-
-test("вкладки «Отношения» и «Проекты» переключаются", async () => {
-  const sh = new S(makeActor());
-  await sh._onRender({}, {});
-  await act(sh, "ngTab", { tab: "projects" });
-  for (const p of ["form", "status", "relations"]) assert.ok(sh.parts[p].classList.contains("ng-hidden"), p);
-  assert.ok(!sh.parts.projects.classList.contains("ng-hidden"));
-});
-test("заблокированные чеки: −/+ и не ниже нуля", async () => {
-  const a = makeActor(); const sh = new S(a);
-  await act(sh, "ngStep", { field: "blocked", delta: "1" });
-  await act(sh, "ngStep", { field: "blocked", delta: "-1" });
-  await act(sh, "ngStep", { field: "blocked", delta: "-1" });
-  assert.equal(a.flags.nadgrad.blocked, 0);
 });

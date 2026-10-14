@@ -89,3 +89,19 @@ export function buildStatusContext(actor) {
     notes,
   };
 }
+
+// Загрузка снаряжения (лист 1.2): 0 — лёгкая (3), 1 — средняя (5), 2 — тяжёлая (7).
+export const LOAD_LEVELS = [
+  { key: "LOAD.LIGHT", max: 3 },
+  { key: "LOAD.MEDIUM", max: 5 },
+  { key: "LOAD.HEAVY", max: 7 },
+];
+/** Шаг загрузки по кругу: dir = +1 (тяжелее) или −1 (легче). «light» из 1.05 и мусор читаются как 0. */
+export function loadStep(selected, dir = 1) {
+  const cur = clampInt(parseInt(selected), 0, 2);
+  const next = (((cur + (dir < 0 ? -1 : 1)) % 3) + 3) % 3;
+  return { selected: next, ...LOAD_LEVELS[next] };
+}
+export const loadIndex = (selected) => clampInt(parseInt(selected), 0, 2);
+
+export const THEMES = ["tush", "smog"];

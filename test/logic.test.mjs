@@ -75,3 +75,12 @@ test("заблокированные чеки не уходят в минус", 
   assert.equal(readState({ blocked: -5 }).blocked, 0);
   assert.equal(readState({ blocked: 40 }).blocked, 40);
 });
+
+import { loadStep, loadIndex } from "../scripts/logic.mjs";
+test("загрузка: по кругу в обе стороны, «light» из 1.05 = лёгкая", () => {
+  assert.deepEqual(loadStep(0, 1), { selected: 1, key: "LOAD.MEDIUM", max: 5 });
+  assert.deepEqual(loadStep(2, 1), { selected: 0, key: "LOAD.LIGHT", max: 3 });
+  assert.deepEqual(loadStep(0, -1), { selected: 2, key: "LOAD.HEAVY", max: 7 });
+  assert.deepEqual(loadStep("light", 1), { selected: 1, key: "LOAD.MEDIUM", max: 5 });
+  assert.equal(loadIndex(undefined), 0);
+});

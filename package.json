@@ -1,0 +1,11 @@
+{
+  "name": "nadgrad-sheet",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/logic.test.mjs test/sheet.test.mjs"
+  },
+  "devDependencies": {
+    "jsdom": "^29.1.1"
+  }
+}

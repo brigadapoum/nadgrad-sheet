@@ -38,7 +38,7 @@
         {{/each}}
       </div>
     </div>
-    <div class="ng-track">
+    <div class="ng-track" title="ЛКМ — отметить, ПКМ — снять">
       {{#each ng.repCells}}
       <button type="button" data-action="ngRepCell" data-n="{{n}}" class="ng-cell {{#if on}}on{{/if}}" {{#unless @root.ngEditable}}disabled{{/unless}}></button>
       {{/each}}
@@ -50,22 +50,21 @@
     <h3 class="ng-h">Напряжение <span class="ng-val">уровень {{ng.tension.level}} · {{ng.tension.points}} / 8</span></h3>
     <div class="ng-line">
       <span class="ng-label">Уровень</span>
-      <div class="ng-levels">
+      <div class="ng-levels" title="ЛКМ — выше, ПКМ — ниже">
         {{#each ng.tensionLevels}}
         <button type="button" data-action="ngTensionLevel" data-n="{{n}}" class="ng-level {{#if on}}on{{/if}}" {{#unless @root.ngEditable}}disabled{{/unless}}>{{n}}</button>
         {{/each}}
       </div>
     </div>
-    <div class="ng-track ng-diamonds">
+    <div class="ng-track ng-diamonds" title="ЛКМ — отметить, ПКМ — снять">
       {{#each ng.tensionCells}}
       <button type="button" data-action="ngTensionCell" data-n="{{n}}" class="ng-cell {{#if on}}on{{/if}}" {{#unless @root.ngEditable}}disabled{{/unless}}></button>
       {{/each}}
     </div>
     <div class="ng-line ng-tension-ctl">
-      <button type="button" data-action="ngTensionStep" title="ЛКМ: +1 · ПКМ: −1" {{#unless ngEditable}}disabled{{/unless}}>±1</button>
       <input type="number" class="ng-tension-add" placeholder="+N" step="1" {{#unless ngEditable}}disabled{{/unless}}>
       <button type="button" data-action="ngTensionAdd" {{#unless ngEditable}}disabled{{/unless}}>Добавить</button>
-      <span class="ng-hint">9 очков — новый уровень, остаток переносится</span>
+      <span class="ng-hint">ЛКМ — отметить, ПКМ — снять. 9 очков — новый уровень.</span>
     </div>
   </section>
 

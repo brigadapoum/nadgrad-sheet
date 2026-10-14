@@ -1,0 +1,100 @@
+<div class="ng-status">
+
+  <div class="ng-row">
+    <section class="ng-block ng-money">
+      <h3 class="ng-h">Чеки</h3>
+      <div class="ng-counter">
+        <button type="button" data-action="ngStep" data-field="cheki" data-delta="-1" {{#unless ngEditable}}disabled{{/unless}}>−</button>
+        <input type="number" name="flags.nadgrad.cheki" value="{{ng.cheki}}" step="1" {{#unless ngEditable}}disabled{{/unless}}>
+        <button type="button" data-action="ngStep" data-field="cheki" data-delta="1" {{#unless ngEditable}}disabled{{/unless}}>+</button>
+      </div>
+    </section>
+    <section class="ng-block ng-blocked">
+      <h3 class="ng-h" title="Чеки, заблокированные на счетах под уровень жизни">Заблокировано</h3>
+      <div class="ng-counter">
+        <button type="button" data-action="ngStep" data-field="blocked" data-delta="-1" {{#unless ngEditable}}disabled{{/unless}}>−</button>
+        <input type="number" name="flags.nadgrad.blocked" value="{{ng.blocked}}" min="0" step="1" {{#unless ngEditable}}disabled{{/unless}}>
+        <button type="button" data-action="ngStep" data-field="blocked" data-delta="1" {{#unless ngEditable}}disabled{{/unless}}>+</button>
+      </div>
+      <p class="ng-hint">на уровень жизни</p>
+    </section>
+    <section class="ng-block ng-jobs">
+      <h3 class="ng-h">Дела</h3>
+      <div class="ng-counter">
+        <button type="button" data-action="ngStep" data-field="dela" data-delta="-1" {{#unless ngEditable}}disabled{{/unless}}>−</button>
+        <input type="number" name="flags.nadgrad.dela" value="{{ng.dela}}" min="0" step="1" {{#unless ngEditable}}disabled{{/unless}}>
+        <button type="button" data-action="ngStep" data-field="dela" data-delta="1" {{#unless ngEditable}}disabled{{/unless}}>+</button>
+      </div>
+    </section>
+  </div>
+
+  <section class="ng-block ng-rep">
+    <h3 class="ng-h">Репутация <span class="ng-val">{{ng.rep.value}} / {{ng.repMax}}</span></h3>
+    <div class="ng-line">
+      <span class="ng-label">Ранг</span>
+      <div class="ng-ranks">
+        {{#each ng.repRanks}}
+        <button type="button" data-action="ngRepRank" data-rank="{{r}}" class="{{#if on}}on{{/if}}" {{#unless @root.ngEditable}}disabled{{/unless}}>{{r}}</button>
+        {{/each}}
+      </div>
+    </div>
+    <div class="ng-track">
+      {{#each ng.repCells}}
+      <button type="button" data-action="ngRepCell" data-n="{{n}}" class="ng-cell {{#if on}}on{{/if}}" {{#unless @root.ngEditable}}disabled{{/unless}}></button>
+      {{/each}}
+    </div>
+    {{#if ng.repFull}}<p class="ng-hint">Шкала ранга заполнена.</p>{{/if}}
+  </section>
+
+  <section class="ng-block ng-tension">
+    <h3 class="ng-h">Напряжение <span class="ng-val">уровень {{ng.tension.level}} · {{ng.tension.points}} / 8</span></h3>
+    <div class="ng-line">
+      <span class="ng-label">Уровень</span>
+      <div class="ng-levels">
+        {{#each ng.tensionLevels}}
+        <button type="button" data-action="ngTensionLevel" data-n="{{n}}" class="ng-level {{#if on}}on{{/if}}" {{#unless @root.ngEditable}}disabled{{/unless}}>{{n}}</button>
+        {{/each}}
+      </div>
+    </div>
+    <div class="ng-track ng-diamonds">
+      {{#each ng.tensionCells}}
+      <button type="button" data-action="ngTensionCell" data-n="{{n}}" class="ng-cell {{#if on}}on{{/if}}" {{#unless @root.ngEditable}}disabled{{/unless}}></button>
+      {{/each}}
+    </div>
+    <div class="ng-line ng-tension-ctl">
+      <button type="button" data-action="ngTensionStep" title="ЛКМ: +1 · ПКМ: −1" {{#unless ngEditable}}disabled{{/unless}}>±1</button>
+      <input type="number" class="ng-tension-add" placeholder="+N" step="1" {{#unless ngEditable}}disabled{{/unless}}>
+      <button type="button" data-action="ngTensionAdd" {{#unless ngEditable}}disabled{{/unless}}>Добавить</button>
+      <span class="ng-hint">9 очков — новый уровень, остаток переносится</span>
+    </div>
+  </section>
+
+  <section class="ng-block ng-life">
+    <h3 class="ng-h">Уровень жизни</h3>
+    <div class="ng-seg">
+      {{#each ng.lifeLevels}}
+      <button type="button" data-action="ngLife" data-level="{{id}}" class="{{#if active}}on{{/if}}" {{#unless @root.ngEditable}}disabled{{/unless}}>{{name}}</button>
+      {{/each}}
+    </div>
+    <input type="text" class="ng-life-note" name="flags.nadgrad.life.note" value="{{ng.life.note}}" placeholder="Где живёт: город, Бункер…" {{#unless ngEditable}}disabled{{/unless}}>
+    {{#if ng.lifeCurrent}}
+    <div class="ng-life-text"><span class="ng-label">Что даёт</span> {{{ng.lifeCurrent.gives}}}</div>
+    {{else}}
+    <p class="ng-hint">Уровень не выбран.</p>
+    {{/if}}
+  </section>
+
+  <section class="ng-block ng-notes">
+    <h3 class="ng-h">Старые заметки
+      <button type="button" class="ng-small" data-action="ngNotes">{{#if ng.notes.fromDossier}}Открыть досье{{else}}Перенести в досье{{/if}}</button>
+    </h3>
+    {{#if ng.notes.empty}}
+    <p class="ng-hint">Заметок нет.</p>
+    {{else}}
+    <p class="ng-hint">{{#if ng.notes.fromDossier}}Из досье.{{else}}Из шторки EXPAND листа 1.05.{{/if}} Только чтение — отсюда удобно переносить в поля выше.</p>
+    {{#if ng.notes.wrf}}<p class="ng-wrf">{{ng.notes.wrf}}</p>{{/if}}
+    <div class="ng-notes-text">{{{ng.notes.html}}}</div>
+    {{/if}}
+  </section>
+
+</div>

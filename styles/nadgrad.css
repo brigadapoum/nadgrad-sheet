@@ -1,0 +1,347 @@
+/* =========================================================
+   Надград: темы листа рискаря CBR+PNK 1.2 по доске-референсу
+   Светлая — «Тушь»: бумага, чёрная тушь, ржавчина, полутоновая точка.
+   Тёмная  — «Смог»: копоть, оливковый туман, ржаво-оранжевый и красный
+             неон, холодный бирюзовый огонёк.
+   Тема переключается сама — по теме интерфейса Foundry
+   (класс .theme-light / .theme-dark на окне листа).
+   ========================================================= */
+
+/* ---------- палитры ---------- */
+/* светлая «Тушь» — по умолчанию */
+.application.runner-actor {
+  --ng-bg: #ECE7DA;                 /* бумага */
+  --ng-bg-img: radial-gradient(rgb(28 24 20 / .07) 1px, transparent 1.2px);
+  --ng-bg-size: 4px 4px;            /* полутоновая точка */
+  --ng-ink: #1C1814;                /* тушь */
+  --ng-muted: #6B655A;
+  --ng-line: #1C1814;
+  --ng-stripe: #E2DCCC;
+  --ng-plate: #1C1814;              /* плашки подходов */
+  --ng-plate-ink: #ECE7DA;
+  --ng-plate-muted: #B9B2A2;
+  --ng-plate-acc: #D97A47;          /* ржавчина на чёрной плашке */
+  --ng-act: #A64F2B;                /* ржавчина — главный акцент */
+  --ng-red: #A63C2C;                /* опасность, угроза, стресс */
+  --ng-cool: #356F63;               /* холодный: эффект, передышка */
+  --ng-sign: #C9A25E;               /* табличка-указатель */
+  --ng-sign-ink: #1C1814;
+  --ng-on-acc: #F4EFE3;             /* текст на цветных кнопках */
+  --ng-field: #F6F2E8;
+  --ng-off: #D6CFBE;                /* невыбранные ячейки дорожек */
+  --ng-glow: none;
+  --ng-overlay: rgb(28 24 20 / .78);
+  --ng-overlay-ink: #ECE7DA;
+  --ng-header: #1C1814;
+  --ng-header-ink: #ECE7DA;
+  /* палитра системы (тройки RGB) — для мест, которые не перекрыты ниже */
+  --action: 166 79 43; --resist: 166 60 44; --breath: 53 111 99; --text: 28 24 20;
+  --good: 53 111 99; --bad: 166 60 44; --mixed: 201 162 94; --dark: 28 24 20;
+}
+/* тёмная «Смог» — тёмная тема у окна или у всего интерфейса */
+.application.runner-actor.theme-dark,
+body.theme-dark .application.runner-actor:not(.theme-light) {
+  --ng-bg: #14120F;
+  --ng-bg-img: radial-gradient(130% 45% at 50% 0%, rgb(84 90 77 / .35), transparent 70%),
+               linear-gradient(#1A1915, #0F0C0A);
+  --ng-bg-size: auto;
+  --ng-ink: #D0D4C9;                /* бледный шалфей */
+  --ng-muted: #8A9086;
+  --ng-line: #545A4D;
+  --ng-stripe: #1E1D18;
+  --ng-plate: #231F1A;
+  --ng-plate-ink: #D0D4C9;
+  --ng-plate-muted: #8A9086;
+  --ng-plate-acc: #E0763A;
+  --ng-act: #E0763A;                /* ржаво-оранжевый неон */
+  --ng-red: #E2402F;                /* красный неон */
+  --ng-cool: #5CCFC0;               /* бирюзовый огонёк */
+  --ng-sign: #B08E59;               /* песок */
+  --ng-sign-ink: #100C0A;
+  --ng-on-acc: #100C0A;
+  --ng-field: #1C1A16;
+  --ng-off: #2E2C24;
+  --ng-glow: 0 0 6px;
+  --ng-overlay: rgb(16 12 10 / .72);
+  --ng-overlay-ink: #D0D4C9;
+  --ng-header: #100C0A;
+  --ng-header-ink: #B08E59;
+  --action: 224 118 58; --resist: 226 64 47; --breath: 92 207 192; --text: 16 12 10;
+  --good: 92 207 192; --bad: 226 64 47; --mixed: 176 142 89; --dark: 16 12 10;
+}
+
+/* ---------- переменные самой системы — на наши ---------- */
+.application.runner-actor {
+  background-color: var(--ng-bg);
+  background-image: var(--ng-bg-img);
+  background-size: var(--ng-bg-size);
+  color: var(--ng-ink);
+}
+
+/* ---------- шрифты: Oswald — вывески, IBM Plex Mono — текст ---------- */
+.application.runner-actor .window-content *:not(i) { font-family: "IBM Plex Mono", monospace; }
+.application.runner-actor :is(h1, h3, .label, .throws button, .approach h3, .skillList h3, .stress .label,
+  .stress p, section.augmentations h3, .gears h3, .harm h3, .harm ol li > div:last-child,
+  .header .options button, .rollSection span.label):not(i) {
+  font-family: "Oswald", sans-serif !important; text-transform: uppercase; letter-spacing: .04em;
+}
+.application.runner-actor .rollSection label { font-family: "Oswald", sans-serif !important; }
+
+/* ---------- заголовок окна ---------- */
+.application.runner-actor > .window-header { background: var(--ng-header); color: var(--ng-header-ink); border-bottom: 2px solid var(--ng-act); }
+.application.runner-actor > .window-header .window-title { font-family: "Oswald", sans-serif; letter-spacing: .06em; text-transform: uppercase; font-size: 18px; }
+.application.runner-actor > .window-header button { background: transparent; color: var(--ng-header-ink); border: 0; border-left: 1px solid var(--ng-line); }
+.application.runner-actor > .window-header button[data-tooltip="Close Window"] { background: var(--ng-red); color: var(--ng-on-acc); }
+
+/* ---------- портрет ---------- */
+.application.runner-actor section.header .options { background: var(--ng-overlay); color: var(--ng-overlay-ink); border-bottom: 1px solid var(--ng-act); }
+.application.runner-actor section.header .options button { color: var(--ng-overlay-ink); border-color: rgb(255 255 255 / .15); font-size: 13px; }
+.application.runner-actor section.header h1 { background: var(--ng-overlay); border-top: 2px solid var(--ng-act); }
+.application.runner-actor section.header h1 input {
+  color: var(--ng-overlay-ink); font-family: "Oswald", sans-serif !important; font-weight: 600;
+  font-size: 30px; letter-spacing: .08em; text-transform: uppercase; padding: 10px 18px; height: auto;
+}
+.application.runner-actor.theme-dark section.header h1 input,
+body.theme-dark .application.runner-actor:not(.theme-light) section.header h1 input { text-shadow: 0 0 8px rgb(226 64 47 / .55); }
+.application.runner-actor .header h1 button { background: var(--ng-act); color: var(--ng-on-acc); border: 0; border-radius: 0; }
+.application.runner-actor i.fa-duotone.fa-solid { color: var(--ng-act); }
+.application.runner-actor .hunted section.header h1 { border-top-color: var(--ng-red); }
+.application.runner-actor .hunted section.header h1 input { color: var(--ng-red); }
+.application.runner-actor button.stack[data-flag="CRED"] {
+  border: 0; background: linear-gradient(90deg, var(--ng-cool) 0 calc(var(--stack)/var(--max)*100%), transparent 0);
+}
+.application.runner-actor button.stack[data-flag="DEBT"] {
+  border: 0; background: linear-gradient(270deg, var(--ng-red) 0 calc(var(--stack)/var(--max)*100%), transparent 0);
+}
+
+/* ---------- броски ---------- */
+.application.runner-actor section.rollSection { gap: 3px; margin: 3px 0 0; }
+.application.runner-actor .rollSection > div { gap: 3px; }
+.application.runner-actor .rollSection label { color: var(--ng-on-acc); padding: 4px 8px; font-size: 14px; }
+.application.runner-actor .rollSection span.label { color: var(--ng-ink); padding: 0 6px; font-size: 13px; }
+.application.runner-actor .efect label { background: var(--ng-cool); }
+.application.runner-actor .efect label:has(:checked) { background: var(--ng-cool); box-shadow: var(--ng-glow) var(--ng-cool); }
+.application.runner-actor .efect label:has(:checked) ~ label { background: var(--ng-off); color: var(--ng-muted); }
+.application.runner-actor .threat label { background: var(--ng-off); color: var(--ng-muted); }
+.application.runner-actor .threat label:has(:checked) { box-shadow: var(--ng-glow) var(--ng-red); }
+.application.runner-actor .threat label:has(:checked),
+.application.runner-actor .threat label:has(:checked) ~ label { background: var(--ng-red); color: var(--ng-on-acc); }
+.application.runner-actor .addDice label { background: var(--ng-sign); color: var(--ng-sign-ink); }
+.application.runner-actor .addDice label:has(:checked) { background: var(--ng-act); color: var(--ng-on-acc); }
+.application.runner-actor .addDice label:has(:checked) ~ label { background: var(--ng-off); color: var(--ng-muted); }
+.application.runner-actor label:has([name="system.roll.isGlichDice"]) { background: var(--ng-off); border: 0; border-radius: 0; padding: 4px 10px; }
+.application.runner-actor label:has([name="system.roll.isGlichDice"]) i { color: var(--ng-muted); opacity: 1; }
+.application.runner-actor label:has([name="system.roll.isGlichDice"]:checked) { background: var(--ng-red); }
+.application.runner-actor label:has([name="system.roll.isGlichDice"]:checked) i { color: var(--ng-on-acc); }
+.application.runner-actor .throws { gap: 3px; }
+.application.runner-actor .throws button { color: var(--ng-on-acc); font-size: 15px; padding: 6px 4px; font-weight: 500; }
+.application.runner-actor [data-action="rollResist"] { background: var(--ng-red); }
+.application.runner-actor [data-action="rollAction"] { background: var(--ng-act); }
+.application.runner-actor [data-action="rollBreath"] { background: var(--ng-cool); }
+.application.runner-actor.theme-dark .throws button,
+body.theme-dark .application.runner-actor:not(.theme-light) .throws button { box-shadow: inset 0 -3px 0 rgb(0 0 0 / .35); }
+
+/* ---------- стресс: ромбы ---------- */
+.application.runner-actor section.stress { margin: 16px 10px; justify-content: space-evenly; }
+.application.runner-actor .stress .label, .application.runner-actor .stress p { color: var(--ng-ink); font-size: 13px; }
+.application.runner-actor button[data-action="stressChange"] { background: transparent; border: 0; gap: 9px; justify-content: center; }
+.application.runner-actor [data-action="stressChange"] i {
+  width: 22px; height: 22px; border: 1px solid var(--ng-line); transform: rotate(45deg);
+  display: flex; align-items: center; justify-content: center; opacity: 1; color: transparent; font-size: 15px;
+}
+.application.runner-actor [data-action="stressChange"] i::before { transform: rotate(-45deg); display: inline-block; }
+.application.runner-actor [data-action="stressChange"] i.fa-solid { background: var(--ng-act); color: var(--ng-on-acc); border-color: var(--ng-act); box-shadow: var(--ng-glow) var(--ng-act); }
+.application.runner-actor [data-action="stressChange"] i:last-child { border: 3px solid var(--ng-red); }
+
+/* ---------- подходы ---------- */
+.application.runner-actor .approaches > div { grid-template-areas: "."; gap: 5px; padding: 0 16px; }
+.application.runner-actor .approaches .label { display: none; }
+.application.runner-actor .approach {
+  background: var(--ng-plate); color: var(--ng-plate-ink); padding: 6px 10px 6px 12px;
+  border-left: 4px solid var(--ng-line);
+  clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 0 100%);
+}
+.application.runner-actor .approach > div { flex: 1; }
+.application.runner-actor .approach h3 { color: var(--ng-plate-ink); font-size: 18px; font-weight: 500; }
+.application.runner-actor .approach .texts { display: flex; justify-content: space-between; gap: 10px; padding: 0; }
+.application.runner-actor .approach .texts p { color: var(--ng-plate-muted); font-size: 9px; font-style: normal; }
+.application.runner-actor .approach .flaw { color: var(--ng-plate-acc); background: transparent; border: 0; font-size: 9px; font-style: normal; text-transform: uppercase; }
+.application.runner-actor .approach.select { background: var(--ng-plate); border-left-color: var(--ng-plate-acc); }
+.application.runner-actor .approach.select h3 { color: var(--ng-plate-acc); text-shadow: var(--ng-glow) var(--ng-plate-acc); }
+.application.runner-actor .approach button.dots { flex-direction: row; }
+.application.runner-actor .approach .fa-regular { color: var(--ng-plate-muted); opacity: 1; }
+.application.runner-actor .approach .fa-solid { color: var(--ng-plate-acc); }
+.application.runner-actor .approach.GLICHED { border-left-color: var(--ng-red); }
+
+/* ---------- навыки ---------- */
+.application.runner-actor section.skills { margin: 10px 0; }
+.application.runner-actor .skills .label { color: var(--ng-muted); font-size: 12px; text-orientation: upright; letter-spacing: 0; }
+.application.runner-actor .skillList { gap: 0; grid-template-columns: auto auto 1fr; }
+.application.runner-actor .skillList > * { padding: 8px 6px; border-radius: 0; }
+.application.runner-actor .skillList > *:nth-child(odd) { background: transparent; }
+.application.runner-actor .skillList > :is(:nth-child(6n+4), :nth-child(6n+5), :nth-child(6n+6)) { background: var(--ng-stripe); }
+.application.runner-actor .skillList h3 { color: var(--ng-ink); font-size: 15px; font-weight: 400; }
+.application.runner-actor .skills label:has(input:checked) * { color: var(--ng-act); text-shadow: var(--ng-glow) var(--ng-act); }
+.application.runner-actor .skillList .fa-regular { color: var(--ng-muted); opacity: 1; }
+.application.runner-actor .skillList .fa-solid { color: var(--ng-act); }
+.application.runner-actor .expertises { border-bottom: 1px dashed var(--ng-line); }
+.application.runner-actor [data-action="setExpertise"] { color: var(--ng-muted); font-size: 10px; text-shadow: none; }
+.application.runner-actor [data-action="setExpertise"].select { color: var(--ng-red); font-weight: 500; }
+
+/* ---------- аугментации ---------- */
+.application.runner-actor section.augmentations h3 { color: var(--ng-ink); font-size: 17px; }
+.application.runner-actor button.add { background: var(--ng-sign); color: var(--ng-sign-ink); border: 0; border-radius: 0; }
+.application.runner-actor .aug input[type="text"] { color: var(--ng-ink); background: var(--ng-field); border: 1px solid var(--ng-line); border-radius: 0; }
+.application.runner-actor .aug.GLICHED { background: var(--ng-red); animation: none; }
+.application.runner-actor .aug.GLICHED input[type="text"] { background: transparent; color: var(--ng-on-acc); border-color: transparent; }
+.application.runner-actor button[data-action="itemToggle"] i.fa-toggle-on { color: var(--ng-cool); }
+.application.runner-actor button[data-action="itemToggle"] i.fa-toggle-off,
+.application.runner-actor button[data-action="itemToggle"] i.fa-bug { color: var(--ng-muted); }
+.application.runner-actor .GLICHED button[data-action="itemToggle"] i.fa-bug { color: var(--ng-on-acc); }
+.application.runner-actor .aug .fa-circle-xmark { color: var(--ng-red); }
+.application.runner-actor .aug button { background: transparent; border: 0; }
+
+/* ---------- снаряжение ---------- */
+.application.runner-actor section.gears { background: transparent; border: 1px solid var(--ng-line); margin: 6px 10px; padding: 6px 10px; }
+.application.runner-actor .gears h3 { color: var(--ng-ink); font-size: 16px; }
+.application.runner-actor .gears h3 button.stack { color: var(--ng-ink); border: 1px solid var(--ng-line);
+  background: linear-gradient(90deg, var(--ng-act) 0 calc(var(--stack)/var(--max)*100%), transparent 0); }
+.application.runner-actor section.gears .desc {
+  background: var(--ng-sign); color: var(--ng-sign-ink); font-size: 10px; width: auto; justify-self: center;
+  padding: 2px 8px; border-radius: 0; text-transform: uppercase; letter-spacing: .03em;
+}
+.application.runner-actor .gear button { color: var(--ng-ink); font-size: 12px; text-shadow: none; }
+.application.runner-actor .gear button i { color: transparent; border: 1px solid var(--ng-line); opacity: 1; font-size: 11px; padding: 1px; }
+.application.runner-actor .gear button i.fa-solid { background: var(--ng-act); border-color: var(--ng-act); box-shadow: var(--ng-glow) var(--ng-act); }
+.application.runner-actor .gear button:has(.fa-solid) { color: var(--ng-act); }
+.application.runner-actor .gear p { color: var(--ng-muted); font-style: normal; font-size: 9px; text-align: left; padding-left: 6px; }
+.application.runner-actor .gear button.stack { color: var(--ng-red); border: 1px solid var(--ng-red);
+  background: linear-gradient(90deg, rgb(166 60 44 / .3) 0 calc(var(--stack)/var(--max)*100%), transparent 0); }
+
+/* ---------- раны: табличка-указатель справа ---------- */
+.application.runner-actor section.harm { position: relative; padding: 8px 44px 12px 8px; }
+.application.runner-actor .harm h3.label {
+  position: absolute; top: 0; right: 0; bottom: 0; width: 32px; writing-mode: vertical-lr;
+  justify-content: center; background: var(--ng-sign); color: var(--ng-sign-ink); padding: 0; font-size: 15px; letter-spacing: .3em;
+}
+.application.runner-actor .armors { justify-content: flex-start; gap: 14px; margin-bottom: 8px; }
+.application.runner-actor .armors label { border: 0; border-radius: 0; color: var(--ng-ink); font-size: 12px; display: flex; align-items: center; gap: 6px; text-transform: uppercase; }
+.application.runner-actor .armors label i { width: 14px; height: 14px; border: 1px solid var(--ng-line); transform: rotate(45deg); color: transparent; opacity: 1; font-size: 0; }
+.application.runner-actor .armors label:has([checked]) { background: transparent; text-decoration: none; color: var(--ng-cool); }
+.application.runner-actor .armors label:has([checked]) i { background: var(--ng-cool); border-color: var(--ng-cool); }
+.application.runner-actor .harm ol { padding-left: 1.4rem; }
+.application.runner-actor .harm ol li { color: var(--ng-ink); font-size: 13px; }
+.application.runner-actor .harm ol input[type="text"] {
+  background: var(--ng-field); border: 0; border-bottom: 1px solid var(--ng-line); color: var(--ng-ink); width: 112px; font-size: 12px;
+}
+.application.runner-actor .harm ol input[type="text"][harmopen] { background: var(--ng-red); color: var(--ng-on-acc); }
+.application.runner-actor .harm ol div:has(:checked) input[harmopen] { background: var(--ng-off); color: var(--ng-muted); text-decoration: line-through; }
+.application.runner-actor .harm ol i.fa-bandage.fa-thin { color: var(--ng-muted); }
+.application.runner-actor .harm ol i.fa-bandage.fa-solid { color: var(--ng-cool); }
+.application.runner-actor .harm .fa-square-minus { color: var(--ng-red); }
+
+/* ---------- мелкие правки после первого рендера ---------- */
+/* система красит все .fa-solid в --action — иконка досье сливалась с кнопкой */
+.application.runner-actor .header h1 button i { color: var(--ng-on-acc); }
+.application.runner-actor .harm h3.label { text-orientation: upright; letter-spacing: 0; }
+
+/* =========================================================
+   Вкладки и экран «Статус» (модуль Надград)
+   ========================================================= */
+.application.runner-actor .ng-hidden { display: none !important; }
+
+.application.runner-actor .ng-tabs {
+  position: sticky; top: 0; z-index: 5; display: flex; gap: 0;
+  background: var(--ng-header); border-bottom: 2px solid var(--ng-act);
+}
+.application.runner-actor .ng-tabs button {
+  flex: 1; background: transparent; border: 0; border-radius: 0; padding: 6px 4px 5px;
+  color: var(--ng-header-ink); opacity: .6; font-family: "Oswald", sans-serif !important;
+  text-transform: uppercase; letter-spacing: .08em; font-size: 14px;
+}
+.application.runner-actor .ng-tabs button:hover { opacity: .9; }
+.application.runner-actor .ng-tabs button.active { opacity: 1; background: var(--ng-act); color: var(--ng-on-acc); }
+
+.application.runner-actor .ng-status { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px 18px; }
+.application.runner-actor .ng-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.application.runner-actor .ng-row .ng-h { font-size: 14px; }
+.application.runner-actor .ng-row .ng-block { padding: 8px 8px 8px; }
+.application.runner-actor .ng-row .ng-h { margin: -8px -8px 0; padding: 4px 8px; }
+.application.runner-actor .ng-row .ng-counter { grid-template-columns: 24px minmax(0, 1fr) 24px; gap: 3px; }
+.application.runner-actor .ng-row .ng-counter button { font-size: 16px; }
+.application.runner-actor .ng-blocked .ng-counter input { color: var(--ng-muted); }
+.application.runner-actor .ng-row .ng-hint { margin-top: -3px; text-align: center; }
+.application.runner-actor .ng-row > * { min-width: 0; }
+.application.runner-actor .ng-block { border: 1px solid var(--ng-line); padding: 8px 10px 10px; display: flex; flex-direction: column; gap: 7px; }
+.application.runner-actor .ng-h {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  font-family: "Oswald", sans-serif !important; text-transform: uppercase; letter-spacing: .06em;
+  font-size: 16px; color: var(--ng-ink); margin: -8px -10px 0; padding: 4px 10px;
+  border-bottom: 1px solid var(--ng-line);
+}
+.application.runner-actor .ng-val { font-family: "IBM Plex Mono", monospace !important; text-transform: none; letter-spacing: 0; font-size: 12px; color: var(--ng-act); }
+.application.runner-actor .ng-label { font-size: 11px; color: var(--ng-muted); text-transform: uppercase; min-width: 62px; }
+.application.runner-actor .ng-hint { font-size: 10px; color: var(--ng-muted); margin: 0; }
+.application.runner-actor .ng-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* общие кнопки экрана */
+.application.runner-actor .ng-status button {
+  background: transparent; color: var(--ng-ink); border: 1px solid var(--ng-line); border-radius: 0;
+  cursor: pointer; font-family: "IBM Plex Mono", monospace !important; line-height: 1;
+}
+.application.runner-actor .ng-status button:disabled { cursor: default; opacity: .6; }
+.application.runner-actor .ng-status input[type="number"],
+.application.runner-actor .ng-status input[type="text"] {
+  background: var(--ng-field); color: var(--ng-ink); border: 0; border-bottom: 1px solid var(--ng-line);
+  border-radius: 0; height: 28px; padding: 0 6px; font-family: "IBM Plex Mono", monospace !important;
+}
+
+/* чеки и дела */
+.application.runner-actor .ng-counter { display: grid; grid-template-columns: 30px minmax(0, 1fr) 30px; gap: 4px; align-items: center; }
+.application.runner-actor .ng-counter button { height: 30px; font-size: 18px; }
+.application.runner-actor .ng-counter input[type="number"] {
+  height: 30px; width: 100%; min-width: 0; text-align: center; font-family: "Oswald", sans-serif !important; font-size: 22px; font-weight: 500;
+  -moz-appearance: textfield;
+}
+.application.runner-actor .ng-counter input::-webkit-inner-spin-button,
+.application.runner-actor .ng-counter input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.application.runner-actor .ng-money .ng-counter input { color: var(--ng-act); }
+
+/* ранги, уровни */
+.application.runner-actor .ng-ranks, .application.runner-actor .ng-levels { display: flex; gap: 4px; }
+.application.runner-actor .ng-ranks button, .application.runner-actor .ng-levels button {
+  width: 30px; height: 26px; font-family: "Oswald", sans-serif !important; font-size: 14px;
+}
+.application.runner-actor .ng-ranks button.on { background: var(--ng-act); border-color: var(--ng-act); color: var(--ng-on-acc); box-shadow: var(--ng-glow) var(--ng-act); }
+.application.runner-actor .ng-levels button.on { background: var(--ng-red); border-color: var(--ng-red); color: var(--ng-on-acc); box-shadow: var(--ng-glow) var(--ng-red); }
+
+/* шкалы: квадраты — репутация, ромбы — напряжение */
+.application.runner-actor .ng-track { display: flex; gap: 4px; flex-wrap: wrap; }
+.application.runner-actor .ng-track .ng-cell { width: 22px; height: 22px; padding: 0; }
+.application.runner-actor .ng-rep .ng-cell.on { background: var(--ng-cool); border-color: var(--ng-cool); box-shadow: var(--ng-glow) var(--ng-cool); }
+.application.runner-actor .ng-diamonds { gap: 12px; padding: 6px 8px; }
+.application.runner-actor .ng-diamonds .ng-cell { width: 20px; height: 20px; transform: rotate(45deg); }
+.application.runner-actor .ng-diamonds .ng-cell.on { background: var(--ng-red); border-color: var(--ng-red); box-shadow: var(--ng-glow) var(--ng-red); }
+.application.runner-actor .ng-tension-ctl button { height: 28px; padding: 0 8px; font-size: 12px; }
+.application.runner-actor .ng-tension-ctl input.ng-tension-add { width: 64px; text-align: center; }
+
+/* уровень жизни */
+.application.runner-actor .ng-seg { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; }
+.application.runner-actor .ng-seg button {
+  height: 30px; padding: 0 2px; font-family: "Oswald", sans-serif !important; text-transform: uppercase;
+  font-size: 11px; letter-spacing: .02em;
+}
+.application.runner-actor .ng-seg button.on { background: var(--ng-sign); border-color: var(--ng-sign); color: var(--ng-sign-ink); }
+.application.runner-actor .ng-life-text { font-size: 11.5px; line-height: 1.45; color: var(--ng-ink); border-left: 3px solid var(--ng-sign); padding: 2px 0 2px 8px; }
+.application.runner-actor .ng-life-text strong { color: var(--ng-act); font-weight: 500; }
+.application.runner-actor .ng-life-text em { color: var(--ng-ink); font-style: italic; }
+
+/* старые заметки */
+.application.runner-actor .ng-small { font-size: 10px !important; padding: 3px 6px; text-transform: none; letter-spacing: 0; }
+.application.runner-actor .ng-wrf { margin: 0; font-family: "Oswald", sans-serif !important; font-size: 15px; color: var(--ng-act); }
+.application.runner-actor .ng-notes-text { font-size: 11.5px; line-height: 1.45; max-height: 220px; overflow: auto; }
+.application.runner-actor .ng-notes-text p { margin: 0 0 4px; color: var(--ng-ink); }
+
+/* пустые вкладки */
+.application.runner-actor .ng-empty { min-height: 120px; }
+.application.runner-actor .ng-life-text .ng-label { display: inline; min-width: 0; margin-right: 4px; }

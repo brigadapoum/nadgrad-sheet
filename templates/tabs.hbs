@@ -1,0 +1,5 @@
+<nav class="ng-tabs">
+  {{#each ngTabs}}
+  <button type="button" data-action="ngTab" data-tab="{{id}}" class="{{#if active}}active{{/if}}">{{label}}</button>
+  {{/each}}
+</nav>

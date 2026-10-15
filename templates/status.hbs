@@ -16,7 +16,7 @@
         <input type="number" name="flags.nadgrad.blocked" value="{{ng.blocked}}" min="0" step="1" {{#unless ngEditable}}disabled{{/unless}}>
         <button type="button" data-action="ngStep" data-field="blocked" data-delta="1" {{#unless ngEditable}}disabled{{/unless}}>+</button>
       </div>
-      <p class="ng-hint">на уровень жизни</p>
+      <p class="ng-hint" title="Плюс берёт чек из общего пула, минус возвращает. Число, вписанное вручную, ничего не переносит.">на уровень жизни · из чеков</p>
     </section>
     <section class="ng-block ng-jobs">
       <h3 class="ng-h">Дела</h3>

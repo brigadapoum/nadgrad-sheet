@@ -43,7 +43,7 @@ class Runner {
   constructor(actor) {
     this.actor = actor; this.isEditable = true;
     const C = this.constructor;
-    this.options = { classes: C.DEFAULT_OPTIONS.classes, actions: { ...Runner.DEFAULT_OPTIONS.actions, ...C.DEFAULT_OPTIONS.actions } };
+    this.options = { classes: C.DEFAULT_OPTIONS.classes, form: C.DEFAULT_OPTIONS.form, actions: { ...Runner.DEFAULT_OPTIONS.actions, ...C.DEFAULT_OPTIONS.actions } };
     this.dom = new JSDOM(`<body class="theme-dark">${SHEET_HTML}</body>`);
     this.element = this.dom.window.document.querySelector("form");
   }
@@ -79,7 +79,7 @@ test("контекст и вкладки", async () => {
   const sh = new S(makeActor());
   const ctx = await sh._prepareContext({});
   assert.equal(ctx.base, true);
-  assert.equal(ctx.ng.repMax, 4);
+  assert.equal(ctx.ng.repMax, 6);
   await sh._onRender(ctx, {});
   assert.ok(hidden(sh, "status") && !hidden(sh, "form"));
   await act(sh, "ngTab", { tab: "status" });
@@ -140,22 +140,25 @@ test("чеки, заблокированные и дела", async () => {
   await act(sh, "ngStep", { field: "cheki", delta: "-1" });
   assert.equal(a.flags.nadgrad.cheki, -1);
   await act(sh, "ngStep", { field: "blocked", delta: "-1" });
-  assert.equal(a.flags.nadgrad.blocked, 0);
+  assert.equal(a.flags.nadgrad.blocked ?? 0, 0);
+  await act(sh, "ngStep", { field: "blocked", delta: "1" }); // чеков в минусе — блокировать нечего
+  assert.equal(a.flags.nadgrad.blocked ?? 0, 0);
+  assert.equal(ui.notifications.warns.length, 1);
   await act(sh, "ngStep", { field: "dela", delta: "-1" });
   assert.equal(a.flags.nadgrad.dela, 0);
 });
 test("репутация: ЛКМ ставит, ПКМ снимает, в пределах ранга; ранг обрезает значение", async () => {
-  const a = makeActor({ rep: { rank: 1, value: 5 } }); const sh = new S(a);
+  const a = makeActor({ rep: { rank: 1, value: 7 } }); const sh = new S(a);
   await act(sh, "ngRepCell", { n: "2" }, 0);
   await act(sh, "ngRepCell", { n: "1" }, 0);
-  assert.equal(a.flags.nadgrad.rep.value, 6);
-  await act(sh, "ngRepCell", { n: "6" }, 2);
-  assert.equal(a.flags.nadgrad.rep.value, 5);
-  a.flags.nadgrad.rep = { rank: 3, value: 10 };
+  assert.equal(a.flags.nadgrad.rep.value, 8);
+  await act(sh, "ngRepCell", { n: "8" }, 2);
+  assert.equal(a.flags.nadgrad.rep.value, 7);
+  a.flags.nadgrad.rep = { rank: 3, value: 12 };
   await act(sh, "ngRepRank", { rank: "2" });
-  assert.deepEqual(a.flags.nadgrad.rep, { rank: 2, value: 8 });
+  assert.deepEqual(a.flags.nadgrad.rep, { rank: 2, value: 10 });
   await act(sh, "ngRepRank", { rank: "0" });
-  assert.deepEqual(a.flags.nadgrad.rep, { rank: 0, value: 4 });
+  assert.deepEqual(a.flags.nadgrad.rep, { rank: 0, value: 6 });
 });
 test("напряжение: ромбы ЛКМ/ПКМ с переносом, уровни ЛКМ/ПКМ, +N, потолок", async () => {
   const a = makeActor({ tension: { level: 0, points: 8 } }); const sh = new S(a);
@@ -252,4 +255,87 @@ test("загрузка: отметка снаряжения ставит чис�
   sh.isEditable = false;
   await h.call(sh, { button: 0 }, gearTarget(sh, "blade"));
   assert.equal(a.items.get("blade").system.isUse, true);
+});
+
+test("заблокировано: + берёт чек из общего пула, − возвращает; старые суммы не трогаются", async () => {
+  const a = makeActor({ cheki: 2, blocked: 40 }); const sh = new S(a);
+  await act(sh, "ngStep", { field: "blocked", delta: "1" });
+  assert.deepEqual([a.flags.nadgrad.cheki, a.flags.nadgrad.blocked], [1, 41]);
+  await act(sh, "ngStep", { field: "blocked", delta: "-1" });
+  await act(sh, "ngStep", { field: "blocked", delta: "-1" });
+  assert.deepEqual([a.flags.nadgrad.cheki, a.flags.nadgrad.blocked], [3, 39]);
+  const { blockStep } = await import("../scripts/logic.mjs");
+  assert.deepEqual(blockStep({ cheki: 0, blocked: 5 }, 1), { cheki: 0, blocked: 5, short: 1 });
+  assert.deepEqual(blockStep({ cheki: 4, blocked: 0 }, -1), { cheki: 4, blocked: 0, short: 0 });
+});
+
+test("доп. нагрузка: деления счётчика идут в загрузку, как в 1.05", async () => {
+  const { gearLoad, isExtraLoad } = await import("../scripts/logic.mjs");
+  const extra = { type: "gear", system: { value: 0, max: 4, stack: 2, isUse: false } };
+  assert.ok(isExtraLoad(extra));
+  assert.ok(!isExtraLoad({ type: "gear", system: { value: 1, max: 3, stack: 1 } })); // патроны и т. п. — не нагрузка
+  assert.equal(gearLoad([extra, { type: "gear", system: { value: 1, isUse: true, max: 3, stack: 3 } }]), 3);
+
+  const a = gearActor(0, [["blade", 1, true]]);
+  const ex = { id: "extra", type: "gear", system: { value: 0, max: 4, stack: 0, isUse: false } };
+  ex.update = async (d) => { ex.system.stack = d["system.stack"]; };
+  a.items.push(ex);
+  const sh = new S(a);
+  const h = sh.options.actions.gearChangeStack.handler;
+  await h.call(sh, { button: 0 }, gearTarget(sh, "extra"));
+  await h.call(sh, { button: 0 }, gearTarget(sh, "extra"));
+  assert.equal(ex.system.stack, 2);
+  assert.equal(a.system.GEAR.LOAD.value, 3);
+  await h.call(sh, { button: 2 }, gearTarget(sh, "extra"));
+  assert.equal(a.system.GEAR.LOAD.value, 2);
+  // лечение при открытии листа тоже учитывает доп. нагрузку
+  a.system.GEAR.LOAD.value = 0;
+  await sh._onRender(await sh._prepareContext({}), {});
+  assert.equal(a.system.GEAR.LOAD.value, 2);
+});
+
+test("аугментации: поля формы уходят в предметы, пустое имя не пишется", async () => {
+  const { splitAugFields } = await import("../scripts/logic.mjs");
+  const data = { name: "Рентген", "ngAug.a1.name": " Кибер-глаз ", "ngAug.a2.name": "  ", "ngAug.a1.desc": "<p>Видит в темноте</p>", "system.x": 1 };
+  assert.deepEqual(splitAugFields(data), { a1: { name: "Кибер-глаз", "system.desc": "<p>Видит в темноте</p>" } });
+  assert.deepEqual(data, { name: "Рентген", "system.x": 1 });
+
+  const a = makeActor();
+  const aug = { id: "a1", name: "Aug", type: "augmentation", system: { desc: "", isOpen: false }, upd: [] };
+  aug.update = async (d) => { aug.upd.push(d); if (d.name) aug.name = d.name; };
+  a.items = Object.assign([aug], { get: (id) => (id === "a1" ? aug : undefined) });
+  const sh = new S(a);
+  await sh.options.form.handler.call(sh, { preventDefault() {} }, sh.element, { object: { "ngAug.a1.name": "Кибер-глаз", "flags.nadgrad.dela": 2 } });
+  assert.equal(aug.name, "Кибер-глаз");
+  assert.equal(a.flags.nadgrad.dela, 2);
+  assert.ok(!a.updates.some((u) => Object.keys(u).some((k) => k.startsWith("ngAug"))));
+});
+
+test("аугментации и броски в DOM: стрелка описания, имя в форме, плюсы у доп. кубов, кнопки не отправляют форму", async () => {
+  const { augDecorate, dicePlus, noSubmitButtons } = await import("../scripts/dom.mjs");
+  const doc = new JSDOM(`<form>
+    <section class="rollSection"><div class="addDice">${[-1, 0, 1, 2].map((i) => `<label><input type="radio" value=${i}>${i}</label>`).join("")}</div></section>
+    <section class="augmentations">
+      <div class="aug"><div data-item-id="a1"><button data-action="itemToggle" data-flag="isActive"></button><input type="text" value="Aug" data-action="itemName"><button data-action="itemDelAug"></button></div></div>
+      <div class="aug"><div data-item-id="a2"><input type="text" value="Глаз" data-action="itemName"></div><div class="desc"><p>Видит</p></div></div>
+    </section></form>`).window.document;
+  const root = doc.querySelector("form");
+  const items = new Map([["a1", { system: { isOpen: false, desc: "" } }], ["a2", { system: { isOpen: true, desc: "<p>Видит</p>" } }]]);
+  augDecorate(root, { items, editable: true });
+  dicePlus(root);
+  noSubmitButtons(root);
+  const [r1, r2] = root.querySelectorAll(".aug");
+  assert.equal(r1.querySelector("input").name, "ngAug.a1.name");
+  assert.equal(r1.querySelector("input").dataset.action, undefined);
+  assert.equal(r1.querySelector(":scope > div").firstElementChild.dataset.flag, "isOpen");
+  assert.equal(r1.querySelector(".desc"), null);
+  const pm = r2.querySelector(".desc prose-mirror");
+  assert.equal(pm.getAttribute("name"), "ngAug.a2.desc");
+  assert.equal(pm.getAttribute("value"), "<p>Видит</p>");
+  assert.deepEqual([...root.querySelectorAll(".addDice label")].map((l) => l.textContent.trim()), ["-1", "0", "+1", "+2"]);
+  assert.equal(root.querySelectorAll("button:not([type='button'])").length, 0);
+  // повторная правка не плодит стрелки и редакторы
+  augDecorate(root, { items, editable: true });
+  assert.equal(root.querySelectorAll(".ng-aug-open").length, 2);
+  assert.equal(root.querySelectorAll("prose-mirror").length, 1);
 });

@@ -2,9 +2,12 @@
 // Родной лист не трогаем — добавляем к нему две части: полосу вкладок и экран «Статус».
 import {
   MODULE_ID, buildStatusContext, readState, repMax, tensionAdd, clampInt,
-  LOAD_LEVELS, loadStep, loadIndex, gearLoad,
+  LOAD_LEVELS, loadStep, loadIndex, gearLoad, isExtraLoad, blockStep, splitAugFields,
 } from "./logic.mjs";
-import { tidyHeader, applyThemeClass, effectiveTheme, loadButton } from "./dom.mjs";
+import {
+  tidyHeader, applyThemeClass, effectiveTheme, loadButton,
+  noSubmitButtons, enterBlurs, dicePlus, augDecorate,
+} from "./dom.mjs";
 
 const themeSetting = () => {
   try { return game.settings.get(MODULE_ID, "theme"); } catch { return "auto"; }
@@ -23,6 +26,8 @@ export function makeSheetClass(Runner) {
     static DEFAULT_OPTIONS = {
       classes: ["runner-actor", "nadgrad"],
       position: { width: 470, height: 760 },
+      // своя обработка формы: поля аугментаций (ngAug.*) уходят в предметы, остальное — в актёра
+      form: { handler: NadgradRunner.#onSubmit, submitOnChange: true, closeOnSubmit: false },
       actions: {
         ngTab: NadgradRunner.#onTab,
         ngStep: NadgradRunner.#onStep,
@@ -38,6 +43,8 @@ export function makeSheetClass(Runner) {
         ngLoad: { handler: NadgradRunner.#onLoad, buttons: [0, 2] },
         // отметка снаряжения: своя версия — загрузка считается по отмеченным предметам
         gearSelect: NadgradRunner.#onGearSelect,
+        // счётчик «Доп. нагрузки»: как в 1.05, каждое деление — +1 к загрузке
+        gearChangeStack: { handler: NadgradRunner.#onGearStack, buttons: [0, 2] },
       },
     };
 
@@ -100,6 +107,44 @@ export function makeSheetClass(Runner) {
       if (isUse && total > max) await this.#overGeared();
     }
 
+    /** Счётчик у снаряжения (ЛКМ +1, ПКМ −1). У «Доп. нагрузки» деления идут в загрузку. */
+    static async #onGearStack(event, target) {
+      if (!this.isEditable) return;
+      const id = target.closest("[data-item-id]")?.getAttribute("data-item-id");
+      const item = this.actor.items.get(id);
+      if (!item) return;
+      const max = Math.max(0, Number(item.system.max) || 0);
+      const stack = clampInt((Number(item.system.stack) || 0) + (event.button === 2 ? -1 : 1), 0, max);
+      if (stack === Number(item.system.stack)) return;
+      if (!isExtraLoad(item)) return item.update({ "system.stack": stack });
+      const others = Array.from(this.actor.items).filter((i) => i.id !== item.id);
+      const total = gearLoad(others) + stack;
+      this._ngGearBusy = true;
+      try {
+        await item.update({ "system.stack": stack });
+        await this.actor.update({ "system.GEAR.LOAD.value": total });
+      } finally {
+        this._ngGearBusy = false;
+      }
+      const cap = Number(this.actor.system?.GEAR?.LOAD?.max) || 0;
+      if (event.button !== 2 && total > cap) await this.#overGeared();
+    }
+
+    /** Отправка формы листа: аугментации — в свои предметы, остальное — в актёра (как у системы). */
+    static async #onSubmit(event, form, formData) {
+      event?.preventDefault?.();
+      const data = { ...(formData?.object ?? {}) };
+      const augs = splitAugFields(data);
+      for (const [id, upd] of Object.entries(augs)) {
+        const item = this.actor.items.get(id);
+        if (!item) continue;
+        if (upd.name === item.name) delete upd.name;
+        if (upd["system.desc"] === (item.system?.desc ?? "")) delete upd["system.desc"];
+        if (Object.keys(upd).length) await item.update(upd);
+      }
+      if (Object.keys(data).length) await this.actor.update(data);
+    }
+
     /** Карточка «перегружен» в чат — та же, что у системы. */
     async #overGeared() {
       const content = await foundry.applications.handlebars.renderTemplate("systems/CBRPNK/parts/roll-card.hbs", {
@@ -118,6 +163,10 @@ export function makeSheetClass(Runner) {
       const theme = themeSetting();
       applyThemeClass(root, theme);
       tidyHeader(root, { active: effectiveTheme(root, theme) });
+      augDecorate(root, { items: this.actor.items, editable: this.isEditable });
+      dicePlus(root);
+      noSubmitButtons(root);
+      enterBlurs(root);
       const index = loadIndex(this.actor.system?.GEAR?.LOAD?.selected);
       loadButton(root, {
         index,
@@ -145,11 +194,17 @@ export function makeSheetClass(Runner) {
       this.element.querySelector(".window-content")?.scrollTo?.({ top: 0 });
     }
 
-    /** −/+ у чеков и дел: data-field, data-delta */
+    /** −/+ у чеков и дел: data-field, data-delta. «Заблокировано» берёт чеки из общего пула и возвращает их. */
     static #onStep(event, target) {
       const field = target.dataset.field;
       const s = this.#flags();
       const delta = Number(target.dataset.delta) || 0;
+      if (field === "blocked") {
+        const r = blockStep(s, delta);
+        if (r.short) ui.notifications.warn("Свободных чеков нет — блокировать нечего.");
+        if (r.cheki === s.cheki && r.blocked === s.blocked) return;
+        return this.actor.update({ [`flags.${MODULE_ID}.cheki`]: r.cheki, [`flags.${MODULE_ID}.blocked`]: r.blocked });
+      }
       const lo = field === "cheki" ? -999999 : 0;
       return this.#set(field, clampInt(s[field] + delta, lo, 999999));
     }

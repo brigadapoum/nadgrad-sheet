@@ -4,8 +4,8 @@ import { LIFE_LEVELS, LIFE_TITLE } from "./data.mjs";
 export const MODULE_ID = "nadgrad";
 
 export const REP_RANKS = [0, 1, 2, 3, 4, 5]; // рискари стартуют с 0 ранга (автор, 2026-10-15)
-/** Максимум репутации на ранге: 6 / 8 / 10 / 12 / 14 (автор); на 0 ранге — 4, продолжение ряда (решение Claude, ждёт подтверждения). */
-export const repMax = (rank) => 4 + 2 * clampInt(rank, 0, 5);
+/** Максимум репутации на ранге: 0 ранг — 6, каждый следующий +2 (автор, 2026-10-16): 6 / 8 / 10 / 12 / 14 / 16. */
+export const repMax = (rank) => 6 + 2 * clampInt(rank, 0, 5);
 
 export const TENSION_STEP = 9;      // 9 очков → +1 уровень, очки с нуля
 export const TENSION_MAX_LEVEL = 4; // уровни 0–4, рискари стартуют с 0
@@ -113,10 +113,59 @@ export const loadIndex = (selected) => clampInt(parseInt(selected), 0, 2);
 export function gearLoad(items = []) {
   let total = 0;
   for (const it of items) {
-    if (it?.type !== "gear" || !it.system?.isUse) continue;
+    if (it?.type !== "gear") continue;
+    if (isExtraLoad(it)) { total += Math.max(0, Math.trunc(Number(it.system.stack) || 0)); continue; }
+    if (!it.system?.isUse) continue;
     total += Math.max(0, Math.trunc(Number(it.system.value) || 0));
   }
   return total;
 }
 
+/**
+ * «Доп. нагрузка» (EXTRA LOAD): единственное снаряжение без веса, но со счётчиком (value 0, max 4).
+ * В 1.05 каждое деление счётчика добавляло 1 к загрузке; в 1.2 счётчик к загрузке не подключён — подключаем.
+ */
+export function isExtraLoad(it) {
+  return it?.type === "gear" && !Number(it.system?.value) && Number(it.system?.max) > 0;
+}
+
+/** Блокировка чеков под уровень жизни: + берёт чек из общего пула, − возвращает. */
+export function blockStep({ cheki = 0, blocked = 0 } = {}, delta = 0) {
+  const d = Math.trunc(Number(delta) || 0);
+  if (d > 0) {
+    const move = Math.min(d, Math.max(0, cheki));
+    return { cheki: cheki - move, blocked: blocked + move, short: d - move };
+  }
+  const move = Math.min(-d, Math.max(0, blocked));
+  return { cheki: cheki + move, blocked: blocked - move, short: 0 };
+}
+
 export const THEMES = ["tush", "smog"];
+
+/**
+ * Поля аугментаций в форме листа называются `ngAug.<id>.name` / `ngAug.<id>.desc`.
+ * Вынуть их из данных формы (данные актёра остаются в data) и разложить по предметам.
+ * Пустое имя не пишется — как в 1.05.
+ */
+export function splitAugFields(data = {}) {
+  const items = {};
+  const put = (id, field, value) => {
+    if (field === "name") {
+      const v = String(value ?? "").trim();
+      if (!v) return;
+      (items[id] ??= {}).name = v;
+    } else if (field === "desc") {
+      (items[id] ??= {})["system.desc"] = String(value ?? "");
+    }
+  };
+  for (const key of Object.keys(data)) {
+    const m = key.match(/^ngAug\.([^.]+)\.(name|desc)$/);
+    if (m) { put(m[1], m[2], data[key]); delete data[key]; }
+  }
+  // если данные пришли развёрнутыми ({ ngAug: { id: { name } } })
+  if (data.ngAug && typeof data.ngAug === "object") {
+    for (const [id, f] of Object.entries(data.ngAug)) for (const [k, v] of Object.entries(f ?? {})) put(id, k, v);
+    delete data.ngAug;
+  }
+  return items;
+}

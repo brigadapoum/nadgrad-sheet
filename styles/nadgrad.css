@@ -501,3 +501,31 @@ body.ng-ui figure.paused figcaption {
   border-top: 4px solid var(--ngc-pause-acc); border-bottom: 4px solid var(--ngc-pause-acc);
   filter: none; text-shadow: var(--ngc-glow) var(--ngc-pause-acc);
 }
+
+/* ---------- 0.5.2: панель бросков — ячейки одной ширины, выбранная в рамке ---------- */
+.application.runner-actor .rollSection .efect,
+.application.runner-actor .rollSection .threat,
+.application.runner-actor .rollSection .addDice { gap: 2px; }
+.application.runner-actor .rollSection :is(.efect, .threat, .addDice) label {
+  flex: 1 1 0; min-width: 0; padding: 4px 0; position: relative;
+}
+/* система растягивала выбранную ячейку (flex-grow) — отменяем */
+.application.runner-actor .rollSection :is(.efect, .threat, .addDice) label:has(:checked) {
+  flex: 1 1 0; font-weight: 600;
+  outline: 2px solid var(--ng-ink); outline-offset: -2px;
+}
+.application.runner-actor .rollSection :is(.efect, .threat) span.label { flex: none; }
+.application.runner-actor .rollSection label:has([name="system.roll.isGlichDice"]) { flex: none; }
+
+/* ---------- 0.5.2: аугментации — стрелка описания и поле описания ---------- */
+.application.runner-actor .aug .ng-aug-open { flex: none; width: 22px; color: var(--ng-muted); }
+.application.runner-actor .aug .ng-aug-open.on { color: var(--ng-act); }
+.application.runner-actor .aug.GLICHED .ng-aug-open { color: var(--ng-on-acc); }
+.application.runner-actor .aug .desc.ng-aug-desc {
+  min-height: 0; margin: 4px 0 2px 27px; width: auto;
+  padding: 6px 8px; background: var(--ng-field); color: var(--ng-ink);
+  border-left: 3px solid var(--ng-act); font-size: 12px;
+}
+.application.runner-actor .aug .desc.ng-aug-desc prose-mirror { min-height: 60px; display: block; }
+.application.runner-actor .aug .desc.ng-aug-desc .ng-hint { margin: 4px 0 0; color: var(--ng-muted); font-size: 11px; }
+.application.runner-actor .aug.GLICHED .desc.ng-aug-desc { color: var(--ng-ink); }

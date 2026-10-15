@@ -164,5 +164,5 @@ test("статус: кнопки ранга 0 и уровня напряжени
   assert.deepEqual(ranks.map((b) => b.dataset.rank), ["0", "1", "2", "3", "4", "5"]);
   assert.ok(ranks[0].classList.contains("on"));
   assert.ok(doc.querySelector("[data-action='ngTensionZero']").classList.contains("on"));
-  assert.equal(doc.querySelectorAll(".ng-rep .ng-cell").length, 4);
+  assert.equal(doc.querySelectorAll(".ng-rep .ng-cell").length, 6);
 });

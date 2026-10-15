@@ -65,3 +65,91 @@ export function applyUiTheme(body, theme) {
   body.classList.toggle("ng-ui-smog", t === "smog");
   return t;
 }
+
+/**
+ * Все кнопки листа — type="button". Иначе Enter в любом поле «нажимает» первую кнопку формы —
+ * в 1.2 это кнопка досье над портретом, отсюда «Enter открывает заметки».
+ */
+export function noSubmitButtons(root) {
+  for (const b of root.querySelectorAll("button:not([type])")) b.type = "button";
+}
+
+/** Enter в однострочном поле — просто закончить ввод (поле теряет фокус, срабатывает сохранение). */
+export function enterBlurs(root) {
+  if (root.dataset.ngEnter) return;
+  root.dataset.ngEnter = "1";
+  root.addEventListener("keydown", (e) => {
+    const t = e.target;
+    if (e.key !== "Enter" || t?.tagName !== "INPUT") return;
+    if (!["text", "number", "search", ""].includes(t.type ?? "")) return;
+    e.preventDefault();
+    t.blur();
+  });
+}
+
+/** Дорожка доп. кубов: у положительных значений — плюс (+1 … +4). */
+export function dicePlus(root) {
+  for (const label of root.querySelectorAll(".rollSection .addDice label")) {
+    const v = Number(label.querySelector("input")?.value);
+    if (!(v > 0)) continue;
+    for (const n of [...label.childNodes]) if (n.nodeType === 3 && n.textContent.trim()) n.textContent = `+${v}`;
+  }
+}
+
+/**
+ * Аугментации: имя сохраняется (поле получает имя формы), стрелка «описание» слева, как в 1.05,
+ * у открытой аугментации — поле описания (редактор Foundry с кнопкой правки).
+ * items: Map-подобное с get(id) → { name, system: { isOpen, desc } }.
+ */
+export function augDecorate(root, { items, editable }) {
+  const doc = root.ownerDocument;
+  for (const aug of root.querySelectorAll("section.augmentations .aug")) {
+    const head = aug.querySelector(":scope > [data-item-id]");
+    const id = head?.getAttribute("data-item-id");
+    const item = id ? items.get(id) : null;
+    if (!item) continue;
+    const input = head.querySelector('input[type="text"]');
+    if (input) {
+      input.removeAttribute("data-action"); // родное действие вешало слушатель только по клику
+      input.name = `ngAug.${id}.name`;
+      if (!editable) input.disabled = true;
+    }
+    let open = head.querySelector(":scope > .ng-aug-open");
+    if (!open) {
+      open = doc.createElement("button");
+      open.type = "button";
+      open.className = "ng-aug-open";
+      open.dataset.action = "itemToggle"; // родное действие системы: переключает system.isOpen
+      open.dataset.flag = "isOpen";
+      head.prepend(open);
+    }
+    const isOpen = !!item.system?.isOpen;
+    open.classList.toggle("on", isOpen);
+    open.title = isOpen ? "Свернуть описание" : "Развернуть описание";
+    open.innerHTML = `<i class="fa-solid ${isOpen ? "fa-caret-down" : "fa-caret-right"}"></i>`;
+    aug.classList.toggle("ng-open", isOpen);
+
+    let desc = aug.querySelector(":scope > .desc");
+    if (!isOpen) { desc?.remove(); continue; }
+    if (!desc) { desc = doc.createElement("div"); desc.className = "desc"; aug.append(desc); }
+    const html = String(item.system?.desc ?? "");
+    desc.classList.add("ng-aug-desc");
+    if (editable) {
+      if (desc.querySelector("prose-mirror")) continue;
+      const pm = doc.createElement("prose-mirror");
+      pm.setAttribute("name", `ngAug.${id}.desc`);
+      pm.setAttribute("toggled", "");
+      pm.setAttribute("value", html);
+      pm.innerHTML = html;
+      desc.replaceChildren(pm);
+      if (!html.replace(/<[^>]*>/g, "").trim()) {
+        const hint = doc.createElement("p");
+        hint.className = "ng-hint";
+        hint.textContent = "Описания пока нет — кнопка правки справа.";
+        desc.append(hint);
+      }
+    } else {
+      desc.innerHTML = html || `<p class="ng-hint">Описания нет.</p>`;
+    }
+  }
+}

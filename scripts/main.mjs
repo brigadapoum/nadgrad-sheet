@@ -3,11 +3,14 @@
 // 2) Темы «Тушь» / «Смог» — по светлой/тёмной теме Foundry (styles/nadgrad.css).
 // 3) Чат (карточки бросков) и пауза — в той же теме, что и лист.
 // 4) Разовый архив старых заметок 1.05 (Why you running for / DETAILS) в журнал.
+// 5) Счётчики (часы): актёр «Счётчик», токен на сцене, заполнение мышкой (scripts/clock.mjs).
 import { MODULE_ID } from "./logic.mjs";
 import { registerArchive } from "./archive.mjs";
 import { applyUiTheme } from "./dom.mjs";
+import { registerClocks } from "./clock.mjs";
 
 registerArchive();
+registerClocks();
 
 // Тема листа — для каждого браузера своя. «Как в Foundry» — по светлой/тёмной теме интерфейса.
 Hooks.once("init", () => {

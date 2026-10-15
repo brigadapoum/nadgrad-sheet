@@ -1,0 +1,46 @@
+<div class="ng-clock {{#if clock.full}}full{{/if}}">
+  <input type="text" class="ng-clock-name" name="name" value="{{actor.name}}" placeholder="Название" {{#unless ngEditable}}disabled{{/unless}}>
+
+  <svg class="ng-clock-face" viewBox="0 0 256 256">
+    <title>ЛКМ — заполнить до сектора, ПКМ — снять</title>
+    <defs>
+      <pattern id="ng-dots-{{actor.id}}" width="4" height="4" patternUnits="userSpaceOnUse">
+        <circle cx="1" cy="1" r=".7" class="dot"/><circle cx="3" cy="3" r=".7" class="dot"/>
+      </pattern>
+    </defs>
+    <circle class="disk" cx="128" cy="128" r="121"/>
+    <circle class="dots" cx="128" cy="128" r="119" fill="url(#ng-dots-{{actor.id}})"/>
+    {{#each clock.segments}}
+    <path class="seg {{#if on}}on{{/if}}" d="{{d}}" data-action="ngClockSeg" data-n="{{n}}"/>
+    {{/each}}
+    <circle class="core" cx="128" cy="128" r="55"/>
+    <text class="num" x="128" y="130" text-anchor="middle" dominant-baseline="middle">{{clock.size}}</text>
+  </svg>
+
+  <div class="ng-clock-row ng-clock-steps">
+    <button type="button" data-action="ngClockStep" data-delta="-1" title="Снять сектор" {{#unless ngEditable}}disabled{{/unless}}>−</button>
+    <span class="ng-clock-val">{{clock.value}} / {{clock.size}}</span>
+    <button type="button" data-action="ngClockStep" data-delta="1" title="Заполнить сектор" {{#unless ngEditable}}disabled{{/unless}}>+</button>
+  </div>
+
+  <div class="ng-clock-row">
+    <span class="ng-clock-label">Секторов</span>
+    <div class="ng-clock-seg">
+      {{#each clock.sizes}}
+      <button type="button" data-action="ngClockSize" data-size="{{n}}" class="{{#if on}}on{{/if}}" {{#unless @root.ngEditable}}disabled{{/unless}}>{{n}}</button>
+      {{/each}}
+    </div>
+  </div>
+
+  <div class="ng-clock-row">
+    <span class="ng-clock-label">Оформление</span>
+    <div class="ng-clock-seg">
+      {{#each clock.themes}}
+      <button type="button" data-action="ngClockTheme" data-theme="{{id}}" class="{{#if on}}on{{/if}}" {{#unless @root.ngEditable}}disabled{{/unless}}>{{label}}</button>
+      {{/each}}
+    </div>
+  </div>
+
+  <textarea class="ng-clock-note" name="system.note" rows="2" placeholder="Что будет, когда заполнится" {{#unless ngEditable}}disabled{{/unless}}>{{clock.note}}</textarea>
+  <p class="ng-clock-hint">На столе: двойной клик — +1, двойной правый клик — −1, правый клик — меню.</p>
+</div>

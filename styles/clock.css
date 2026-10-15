@@ -1,0 +1,106 @@
+/* =========================================================
+   Надград: счётчики (часы) — окно, диалог создания, меню токена.
+   Тема у каждого счётчика своя (system.theme), не настройка браузера:
+   окно получает класс .ng-clock-tush / .ng-clock-smog.
+   ========================================================= */
+
+.application.ng-clock-sheet,
+.application.ng-clock-dialog {
+  --c-bg: #ECE7DA; --c-bg-img: radial-gradient(rgb(28 24 20 / .07) 1px, transparent 1.2px); --c-bg-size: 4px 4px;
+  --c-ink: #1C1814; --c-muted: #6B655A; --c-line: #1C1814; --c-field: #F6F2E8;
+  --c-disk: #ECE7DA; --c-seg: #F6F2E8; --c-seg-line: #1C1814; --c-seg-w: 2px;
+  --c-core: #1C1814; --c-ring: #A64F2B; --c-num: #ECE7DA;
+  --c-fill: #A64F2B; --c-full: #A63C2C; --c-dot: rgb(28 24 20 / .12);
+  --c-on-acc: #F4EFE3; --c-header: #1C1814; --c-header-ink: #ECE7DA;
+  --c-glow: none;
+}
+.application.ng-clock-sheet.ng-clock-smog,
+.application.ng-clock-dialog.ng-clock-smog {
+  --c-bg: #14120F; --c-bg-img: radial-gradient(130% 45% at 50% 0%, rgb(84 90 77 / .35), transparent 70%), linear-gradient(#1A1915, #0F0C0A); --c-bg-size: auto;
+  --c-ink: #D0D4C9; --c-muted: #8A9086; --c-line: #545A4D; --c-field: #1C1A16;
+  --c-disk: #14120F; --c-seg: #1C1A16; --c-seg-line: #545A4D; --c-seg-w: 2px;
+  --c-core: #100C0A; --c-ring: #E0763A; --c-num: #E0763A;
+  --c-fill: #E0763A; --c-full: #E2402F; --c-dot: transparent;
+  --c-on-acc: #100C0A; --c-header: #100C0A; --c-header-ink: #B08E59;
+  --c-glow: drop-shadow(0 0 5px rgb(224 118 58 / .7));
+}
+
+/* ---------- окно ---------- */
+.application.ng-clock-sheet,
+.application.ng-clock-dialog {
+  background-color: var(--c-bg); background-image: var(--c-bg-img); background-size: var(--c-bg-size);
+  color: var(--c-ink);
+}
+:is(.ng-clock-sheet, .ng-clock-dialog) > .window-header {
+  background: var(--c-header); color: var(--c-header-ink); border-bottom: 2px solid var(--c-ring);
+}
+:is(.ng-clock-sheet, .ng-clock-dialog) > .window-header .window-title {
+  font-family: "Oswald", sans-serif; text-transform: uppercase; letter-spacing: .06em; font-size: 17px;
+}
+:is(.ng-clock-sheet, .ng-clock-dialog) > .window-header button { color: var(--c-header-ink); background: transparent; border: 0; }
+.ng-clock-sheet .window-content { padding: 10px 14px 12px; background: transparent; }
+.ng-clock-sheet .window-content *:not(i),
+.ng-clock-dialog .window-content *:not(i) { font-family: "IBM Plex Mono", monospace; }
+
+.ng-clock { display: flex; flex-direction: column; gap: 8px; }
+.ng-clock-sheet input.ng-clock-name {
+  font-family: "Oswald", sans-serif !important; font-weight: 600; font-size: 22px; letter-spacing: .06em; text-transform: uppercase;
+  text-align: center; height: auto; padding: 4px 6px; color: var(--c-ink);
+  background: transparent; border: 0; border-bottom: 2px solid var(--c-line); border-radius: 0;
+}
+
+/* ---------- сам счётчик ---------- */
+.ng-clock-face { display: block; width: 230px; height: 230px; margin: 2px auto; user-select: none; }
+.ng-clock-face .disk { fill: var(--c-disk); stroke: var(--c-line); stroke-width: 3; }
+.ng-clock-sheet.ng-clock-smog .ng-clock-face .disk { stroke-width: 2; }
+.ng-clock-face .dot { fill: var(--c-dot); }
+.ng-clock-face .seg {
+  fill: var(--c-seg); stroke: var(--c-seg-line); stroke-width: var(--c-seg-w); stroke-linejoin: round;
+  cursor: pointer; transition: fill .12s ease;
+}
+.ng-clock-face .seg:hover { fill: color-mix(in srgb, var(--c-fill) 30%, var(--c-seg)); }
+.ng-clock-face .seg.on { fill: var(--c-fill); filter: var(--c-glow); }
+.ng-clock.full .ng-clock-face .seg.on { fill: var(--c-full); }
+.ng-clock-face .core { fill: var(--c-core); stroke: var(--c-ring); stroke-width: 2.5; }
+.ng-clock.full .ng-clock-face .core { stroke: var(--c-full); stroke-width: 3.5; }
+.ng-clock-face .num {
+  fill: var(--c-num); font-family: "Oswald", sans-serif !important; font-weight: 600; font-size: 64px;
+  pointer-events: none;
+}
+.ng-clock-sheet.ng-clock-smog .ng-clock-face .num { filter: var(--c-glow); }
+.ng-clock-sheet.ng-clock-smog .ng-clock.full .ng-clock-face .num { fill: var(--c-full); }
+.ng-clock-sheet.ng-clock-smog .ng-clock.full .ng-clock-face .seg.on { filter: drop-shadow(0 0 5px rgb(226 64 47 / .75)); }
+
+/* ---------- кнопки ---------- */
+.ng-clock-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ng-clock-steps { justify-content: center; }
+.ng-clock-sheet button,
+.ng-clock-dialog button {
+  font-family: "Oswald", sans-serif !important; text-transform: uppercase; letter-spacing: .04em;
+  background: transparent; color: var(--c-ink); border: 1px solid var(--c-line); border-radius: 0;
+  height: 28px; line-height: 1; padding: 0 8px; box-shadow: none;
+}
+.ng-clock-sheet button:hover:not(:disabled),
+.ng-clock-dialog button:hover:not(:disabled) { border-color: var(--c-ring); color: var(--c-ring); }
+.ng-clock-steps button { width: 36px; font-size: 18px; }
+.ng-clock-val { font-family: "Oswald", sans-serif !important; font-size: 22px; font-weight: 500; min-width: 80px; text-align: center; }
+.ng-clock.full .ng-clock-val { color: var(--c-full); }
+.ng-clock-label { font-family: "Oswald", sans-serif !important; text-transform: uppercase; letter-spacing: .04em; font-size: 13px; color: var(--c-muted); }
+.ng-clock-seg { display: flex; gap: 3px; }
+.ng-clock-seg button { min-width: 30px; font-size: 13px; }
+.ng-clock-seg button.on { background: var(--c-ring); border-color: var(--c-ring); color: var(--c-on-acc); }
+.ng-clock-sheet textarea.ng-clock-note {
+  resize: vertical; min-height: 44px; font-size: 12px; color: var(--c-ink);
+  background: var(--c-field); border: 1px solid var(--c-line); border-radius: 0;
+}
+.ng-clock-hint { margin: 0; font-size: 10px; color: var(--c-muted); text-align: center; }
+
+/* ---------- диалог «Новый счётчик» ---------- */
+.ng-clock-dialog .window-content { background: transparent; }
+.ng-clock-dialog label { font-family: "Oswald", sans-serif !important; text-transform: uppercase; letter-spacing: .04em; color: var(--c-muted); }
+.ng-clock-dialog :is(input, select) { background: var(--c-field); color: var(--c-ink); border: 1px solid var(--c-line); border-radius: 0; }
+.ng-clock-dialog .form-footer button[data-action="ok"] { background: var(--c-ring); border-color: var(--c-ring); color: var(--c-on-acc); }
+
+/* ---------- меню токена ---------- */
+#token-hud .ng-clock-hud { display: flex; flex-direction: column; gap: 4px; }
+#token-hud .ng-clock-hud .control-icon { font-size: 18px; }

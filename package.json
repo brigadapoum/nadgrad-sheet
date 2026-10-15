@@ -3,9 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test test/logic.test.mjs test/sheet.test.mjs"
+    "test": "node --test test/logic.test.mjs test/sheet.test.mjs test/clock.test.mjs"
   },
   "devDependencies": {
+    "handlebars": "^4.7.10",
     "jsdom": "^29.1.1"
   }
 }

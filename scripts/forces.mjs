@@ -1,5 +1,5 @@
 // Окно мастера «Силы мира»: общий список сил с группами и рангами (настройка мира nadgrad.forces).
-import { MODULE_ID, FORCE_RANKS, FORCE_GROUPS, normForces, newId } from "./logic.mjs";
+import { MODULE_ID, FORCE_RANKS, FORCE_GROUPS, normForces, newId, romanRank } from "./logic.mjs";
 
 export const readForces = () => {
   try { return normForces(game.settings.get(MODULE_ID, "forces")); } catch { return []; }
@@ -13,7 +13,7 @@ export function draftToForces(rows) {
 export function forcesContext(rows) {
   const groups = [...new Set([...FORCE_GROUPS, ...rows.map((r) => r.group).filter(Boolean)])];
   return {
-    rows: rows.map((r) => ({ ...r, ranks: FORCE_RANKS.map((x) => ({ r: x, on: r.rank === x })) })),
+    rows: rows.map((r) => ({ ...r, ranks: FORCE_RANKS.map((x) => ({ r: x, text: romanRank(x), on: r.rank === x })) })),
     groups,
   };
 }

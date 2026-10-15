@@ -176,7 +176,7 @@ test("шаблоны «Отношения», «Проекты», «Силы ми
   const ctx = { ng: { rel, proj, isGM: true }, ngEditable: true };
   const r = new JSDOM(tpl("relations.hbs")(ctx)).window.document;
   assert.equal(r.querySelector(".ng-rel.neg .ng-rel-name").textContent, "Лига");
-  assert.equal(r.querySelector(".ng-rel .ng-rk").textContent, "ранг 3");
+  assert.equal(r.querySelector(".ng-rel .ng-rk").textContent, "ранг III");
   assert.equal(r.querySelector(".ng-rel-note").name, "ngRel.liga.note");
   assert.ok(r.querySelector("[data-action='ngForces']"));
   assert.deepEqual([...r.querySelectorAll("select.ng-rel-pick option")].map((o) => [o.value, o.disabled]), [["", false], ["liga", true], ["z", false]]);
@@ -188,7 +188,8 @@ test("шаблоны «Отношения», «Проекты», «Силы ми
   for (const [size, value] of [[8, 3]]) assert.ok(existsSync(new URL(`art/clocks/tush/clock${size}-${value}.webp`, ROOT)));
   const f = new JSDOM(tpl("forces.hbs")(forcesContext(forces))).window.document;
   assert.equal(f.querySelectorAll(".ng-f-row").length, 2);
-  assert.equal(f.querySelector(".ng-f-row .ng-f-rank .on").textContent, "3");
+  assert.equal(f.querySelector(".ng-f-row .ng-f-rank .on").textContent, "III");
+  assert.deepEqual([...f.querySelectorAll(".ng-f-row")[0].querySelectorAll(".ng-f-rank button")].map((b) => b.textContent), ["0", "I", "II", "III", "IV", "V", "VI"]);
   assert.equal(f.querySelectorAll(".ng-f-row")[1].querySelector(".on"), null);
   assert.ok([...f.querySelectorAll("datalist option")].some((o) => o.value === "Места"));
 });
@@ -196,5 +197,5 @@ test("шаблоны «Отношения», «Проекты», «Силы ми
 test("силы мира: черновик → сохранение отбрасывает пустые, ранг в пределах", async () => {
   const { draftToForces } = await import("../scripts/forces.mjs");
   const out = draftToForces([{ id: "a", name: " Лига ", group: "Фракции", rank: 9 }, { id: "b", name: "", group: "", rank: 1 }, { id: "c", name: "Зера", group: "", rank: null }]);
-  assert.deepEqual(out, [{ id: "a", name: "Лига", group: "Фракции", rank: 4 }, { id: "c", name: "Зера", group: "", rank: null }]);
+  assert.deepEqual(out, [{ id: "a", name: "Лига", group: "Фракции", rank: 6 }, { id: "c", name: "Зера", group: "", rank: null }]);
 });

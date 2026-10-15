@@ -172,10 +172,13 @@ export function splitAugFields(data = {}) {
 
 // ---------- Отношения и силы мира ----------
 
-/** Ранги сил на эскизе 2026-10-16: 0–4. Пустой ранг — «ранг ?». */
-export const FORCE_RANKS = [0, 1, 2, 3, 4];
+/** Ранги сил 0–6, пишутся римскими (автор, 2026-10-16). Пустой ранг — «ранг ?». */
+export const FORCE_RANKS = [0, 1, 2, 3, 4, 5, 6];
+const ROMAN = ["0", "I", "II", "III", "IV", "V", "VI"];
+/** Ранг римскими: 0 так и остаётся «0» (римского нуля нет). */
+export const romanRank = (r) => (r === null || r === undefined ? "?" : ROMAN[r] ?? String(r));
 export const FORCE_GROUPS = ["Фракции", "Люди", "Места"];
-export const REL_LIMIT = 99;
+export const REL_LIMIT = 3; // отношения −3…+3 (автор, 2026-10-16)
 
 export function newId() {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
@@ -224,9 +227,12 @@ export function relContext(relations, forces) {
       ...r, i, sign,
       label: f?.name ?? r.name ?? "?",
       rank: f ? f.rank : null,
+      rankText: romanRank(f ? f.rank : null),
       hasRank: !!f && f.rank !== null,
       missing: !f,
       vText: fmtRel(r.v),
+      atMin: r.v <= -REL_LIMIT,
+      atMax: r.v >= REL_LIMIT,
     };
   });
   const by = (a, b) => Math.abs(b.v) - Math.abs(a.v) || a.i - b.i;
@@ -243,7 +249,7 @@ export function relContext(relations, forces) {
     if (!groups.has(g)) groups.set(g, []);
     groups.get(g).push({
       id: f.id,
-      label: `${f.name}${f.rank !== null ? ` · ранг ${f.rank}` : ""}${have.has(f.id) ? " (уже есть)" : ""}`,
+      label: `${f.name}${f.rank !== null ? ` · ранг ${romanRank(f.rank)}` : ""}${have.has(f.id) ? " (уже есть)" : ""}`,
       disabled: have.has(f.id),
     });
   }

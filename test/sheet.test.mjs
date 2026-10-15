@@ -367,6 +367,9 @@ test("отношения: добавить из списка мастера, −
   await act(sh, "ngRelStep", { id: "liga", delta: "1" });
   await act(sh, "ngRelStep", { id: "zera", delta: "-1" });
   assert.deepEqual(a.flags.nadgrad.relations.map((r) => [r.id, r.v]), [["liga", 2], ["zera", -1]]);
+  for (let i = 0; i < 3; i++) await act(sh, "ngRelStep", { id: "liga", delta: "1" });
+  for (let i = 0; i < 4; i++) await act(sh, "ngRelStep", { id: "zera", delta: "-1" });
+  assert.deepEqual(a.flags.nadgrad.relations.map((r) => r.v), [3, -3]); // границы −3…+3
   const b = btn(sh);
   const h = sh.options.actions.ngRelDel;
   b.dataset.id = "zera";
@@ -387,13 +390,13 @@ test("отношения: группы плюс/ноль/минус, сильн�
   const c = relContext(rels, forces);
   assert.deepEqual(c.cols.map((x) => x.items.map((r) => r.label)), [["Лига", "A"], ["Зера"], ["Гунны", "Муниципалитет"]]);
   const mun = c.cols[2].items[1];
-  assert.equal(mun.rank, 4); assert.equal(mun.vText, "−1");
+  assert.equal(mun.rank, 4); assert.equal(mun.rankText, "IV"); assert.equal(mun.vText, "−1");
   const gone = c.cols[2].items[0];
   assert.ok(gone.missing && !gone.hasRank);
   assert.equal(c.cols[1].items[0].hasRank, false); // Зера без ранга
   assert.deepEqual(c.options.map((o) => o.group), ["Фракции", "Люди", "Без группы"]);
   assert.ok(c.options[0].items.every((o) => o.disabled));
-  assert.equal(c.options[0].items[0].label, "Лига · ранг 3 (уже есть)");
+  assert.equal(c.options[0].items[0].label, "Лига · ранг III (уже есть)");
   assert.equal(c.allAdded, true);
   assert.equal(relContext([], []).noForces, true);
 });

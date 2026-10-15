@@ -7,7 +7,7 @@
       <input type="text" class="ng-f-name" value="{{name}}" placeholder="Название силы">
       <input type="text" class="ng-f-group" value="{{group}}" list="ng-force-groups" placeholder="Группа">
       <div class="ng-f-rank">
-        {{#each ranks}}<button type="button" data-action="rank" data-rank="{{r}}" class="{{#if on}}on{{/if}}">{{r}}</button>{{/each}}
+        {{#each ranks}}<button type="button" data-action="rank" data-rank="{{r}}" class="{{#if on}}on{{/if}}">{{text}}</button>{{/each}}
       </div>
       <button type="button" class="ng-x" data-action="del" title="Убрать силу из списка">×</button>
     </div>

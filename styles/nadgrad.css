@@ -620,10 +620,10 @@ body.ng-ui figure.paused figcaption {
 /* ---------- окно мастера «Силы мира» ---------- */
 .application.ng-forces-app .window-content { padding: 0; }
 .application.runner-actor .ng-f-head,
-.application.runner-actor .ng-f-row { display: grid; grid-template-columns: minmax(0, 1fr) 110px auto 22px; gap: 6px; align-items: center; }
+.application.runner-actor .ng-f-row { display: grid; grid-template-columns: minmax(0, 1fr) 96px auto 22px; gap: 6px; align-items: center; }
 .application.runner-actor .ng-f-head { font: 500 10px "Oswald", sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--ng-muted); }
 .application.runner-actor .ng-f-row { padding: 4px 0; border-bottom: 1px dashed var(--ng-line); }
 .application.runner-actor .ng-f-row input[type="text"] { width: 100%; min-width: 0; height: 26px; }
 .application.runner-actor .ng-f-rank { display: flex; gap: 2px; }
-.application.runner-actor .ng-f-rank button { width: 22px; height: 24px; padding: 0; font: 13px "Oswald", sans-serif !important; }
+.application.runner-actor .ng-f-rank button { width: 26px; height: 24px; padding: 0; font: 13px "Oswald", sans-serif !important; }
 .application.runner-actor .ng-f-rank button.on { background: var(--ng-sign); border-color: var(--ng-sign); color: var(--ng-sign-ink); }

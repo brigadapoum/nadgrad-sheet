@@ -113,6 +113,7 @@ test("переключатель тем: выбор запоминается и 
 });
 test("кнопка загрузки: текст уровня, цифра больше не кнопка, ЛКМ тяжелее, ПКМ легче по кругу", async () => {
   const a = makeActor({}, { GEAR: { LOAD: { selected: "light", value: 1, max: 3 } } });
+  a.items = [{ id: "blade", type: "gear", system: { value: 1, isUse: true } }];
   const sh = new S(a);
   await sh._onRender({}, {});
   const g = sh.element.querySelector("section.gears");
@@ -205,4 +206,50 @@ test("чат и пауза: тема на <body> — по выбору, «auto»
   b.classList.replace("theme-dark", "theme-light");
   assert.equal(applyUiTheme(b, "auto"), "tush");
   assert.equal(applyUiTheme(b, "smog"), "smog");
+});
+
+// ---- загрузка снаряжения по отмеченным предметам ----
+function gearActor(stored, gears) {
+  const a = makeActor({}, { GEAR: { LOAD: { selected: 0, value: stored, max: 3 } } });
+  const list = gears.map(([id, value, isUse]) => {
+    const it = { id, type: "gear", system: { value, isUse } };
+    it.update = async (d) => { it.system.isUse = d["system.isUse"]; };
+    return it;
+  });
+  list.push({ id: "dos", type: "dossier", system: { value: 5, isUse: true } });
+  a.items = Object.assign(list, { get: (id) => list.find((i) => i.id === id) });
+  return a;
+}
+const gearTarget = (sh, id) => {
+  const el = sh.dom.window.document.createElement("button");
+  el.setAttribute("data-item-id", id);
+  return el;
+};
+
+test("загрузка: считается по отмеченному снаряжению, не по счётчику", async () => {
+  const { gearLoad } = await import("../scripts/logic.mjs");
+  assert.equal(gearLoad([]), 0);
+  assert.equal(gearLoad([{ type: "gear", system: { value: 2, isUse: true } }, { type: "gear", system: { value: 1, isUse: false } }, { type: "dossier", system: { value: 4, isUse: true } }]), 2);
+});
+test("загрузка: старый счётчик 3/3 без отметок чинится при открытии листа", async () => {
+  const a = gearActor(3, [["blade", 1, false], ["smg", 1, false]]);
+  const sh = new S(a);
+  await sh._onRender(await sh._prepareContext({}), {});
+  assert.equal(a.system.GEAR.LOAD.value, 0);
+  const n = a.updates.length;
+  await sh._onRender(await sh._prepareContext({}), {});
+  assert.equal(a.updates.length, n); // уже верно — повторно не пишет
+});
+test("загрузка: отметка снаряжения ставит число по предметам, снятие — убавляет", async () => {
+  const a = gearActor(3, [["blade", 1, false], ["heavy", 2, true]]);
+  const sh = new S(a);
+  const h = sh.options.actions.gearSelect;
+  await h.call(sh, { button: 0 }, gearTarget(sh, "blade"));
+  assert.equal(a.items.get("blade").system.isUse, true);
+  assert.equal(a.system.GEAR.LOAD.value, 3);
+  await h.call(sh, { button: 0 }, gearTarget(sh, "heavy"));
+  assert.equal(a.system.GEAR.LOAD.value, 1);
+  sh.isEditable = false;
+  await h.call(sh, { button: 0 }, gearTarget(sh, "blade"));
+  assert.equal(a.items.get("blade").system.isUse, true);
 });

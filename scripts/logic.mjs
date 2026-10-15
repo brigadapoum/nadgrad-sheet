@@ -105,4 +105,18 @@ export function loadStep(selected, dir = 1) {
 }
 export const loadIndex = (selected) => clampInt(parseInt(selected), 0, 2);
 
+/**
+ * Сколько ячеек снаряжения занято на самом деле: сумма «веса» отмеченных предметов-снаряжения.
+ * Лист 1.2 хранит загрузку отдельным счётчиком (system.GEAR.LOAD.value) и только прибавляет/вычитает
+ * при клике — после перехода с 1.05 счётчик остался старым, а отметки сбросились. Считаем по предметам.
+ */
+export function gearLoad(items = []) {
+  let total = 0;
+  for (const it of items) {
+    if (it?.type !== "gear" || !it.system?.isUse) continue;
+    total += Math.max(0, Math.trunc(Number(it.system.value) || 0));
+  }
+  return total;
+}
+
 export const THEMES = ["tush", "smog"];

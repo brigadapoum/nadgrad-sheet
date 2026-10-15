@@ -2,7 +2,7 @@
 // Родной лист не трогаем — добавляем к нему две части: полосу вкладок и экран «Статус».
 import {
   MODULE_ID, buildStatusContext, readState, repMax, tensionAdd, clampInt,
-  LOAD_LEVELS, loadStep, loadIndex,
+  LOAD_LEVELS, loadStep, loadIndex, gearLoad,
 } from "./logic.mjs";
 import { tidyHeader, applyThemeClass, effectiveTheme, loadButton } from "./dom.mjs";
 
@@ -36,6 +36,8 @@ export function makeSheetClass(Runner) {
         ngNotes: NadgradRunner.#onNotes,
         ngTheme: NadgradRunner.#onTheme,
         ngLoad: { handler: NadgradRunner.#onLoad, buttons: [0, 2] },
+        // отметка снаряжения: своя версия — загрузка считается по отмеченным предметам
+        gearSelect: NadgradRunner.#onGearSelect,
       },
     };
 
@@ -63,6 +65,51 @@ export function makeSheetClass(Runner) {
       await super._onRender(context, options);
       this.#decorate();
       this.#applyTab();
+      this.#healLoad();
+    }
+
+    /** Пока идёт своя отметка снаряжения, счётчик не чиним — он вот-вот запишется. */
+    _ngGearBusy = false;
+
+    /** Счётчик загрузки разошёлся с отметками (переход 1.05 → 1.2 и т. п.) — записать верное число. */
+    #healLoad() {
+      if (this._ngGearBusy || !this.isEditable) return;
+      const real = gearLoad(this.actor.items);
+      const stored = Number(this.actor.system?.GEAR?.LOAD?.value);
+      if (stored === real) return;
+      return this.actor.update({ "system.GEAR.LOAD.value": real });
+    }
+
+    /** Отметить / снять снаряжение. Как в системе, но загрузка — по отмеченным предметам, а не ±. */
+    static async #onGearSelect(event, target) {
+      if (!this.isEditable) return;
+      const id = target.closest("[data-item-id]")?.getAttribute("data-item-id");
+      const item = this.actor.items.get(id);
+      if (!item) return;
+      const isUse = !item.system.isUse;
+      const others = Array.from(this.actor.items).filter((i) => i.id !== item.id);
+      const total = gearLoad(others) + (isUse ? gearLoad([{ type: "gear", system: { ...item.system, isUse: true } }]) : 0);
+      this._ngGearBusy = true;
+      try {
+        await item.update({ "system.isUse": isUse });
+        await this.actor.update({ "system.GEAR.LOAD.value": total });
+      } finally {
+        this._ngGearBusy = false;
+      }
+      const max = Number(this.actor.system?.GEAR?.LOAD?.max) || 0;
+      if (isUse && total > max) await this.#overGeared();
+    }
+
+    /** Карточка «перегружен» в чат — та же, что у системы. */
+    async #overGeared() {
+      const content = await foundry.applications.handlebars.renderTemplate("systems/CBRPNK/parts/roll-card.hbs", {
+        class: "alert",
+        img: this.actor.img,
+        name: this.actor.name,
+        desc: game.i18n.localize("GEAR.overGEARED.desc"),
+        approach: game.i18n.localize("GEAR.overGEARED.name"),
+      });
+      return ChatMessage.create({ user: game.user.id, speaker: ChatMessage.getSpeaker({ actor: this.actor }), content });
     }
 
     /** Правки родного листа: тема, полоса над портретом, кнопка загрузки. */

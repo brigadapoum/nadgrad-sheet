@@ -3,7 +3,10 @@
 import {
   MODULE_ID, buildStatusContext, readState, repMax, tensionAdd, clampInt,
   LOAD_LEVELS, loadStep, loadIndex, gearLoad, isExtraLoad, blockStep, splitAugFields,
+  readRelations, relContext, readProjects, projContext, splitListFields, projSize, newId, REL_LIMIT,
 } from "./logic.mjs";
+import { readForces, openForces } from "./forces.mjs";
+import { CLOCK_TYPE, CLOCK_FOLDER } from "./clock-logic.mjs";
 import {
   tidyHeader, applyThemeClass, effectiveTheme, loadButton,
   noSubmitButtons, enterBlurs, dicePlus, augDecorate,
@@ -45,6 +48,20 @@ export function makeSheetClass(Runner) {
         gearSelect: NadgradRunner.#onGearSelect,
         // счётчик «Доп. нагрузки»: как в 1.05, каждое деление — +1 к загрузке
         gearChangeStack: { handler: NadgradRunner.#onGearStack, buttons: [0, 2] },
+        // отношения
+        ngRelAdd: NadgradRunner.#onRelAdd,
+        ngRelStep: NadgradRunner.#onRelStep,
+        ngRelDel: NadgradRunner.#onRelDel,
+        ngForces: () => openForces(),
+        // проекты
+        ngProjNew: NadgradRunner.#onProjNew,
+        ngProjSize: NadgradRunner.#onProjSize,
+        ngProjCancel: NadgradRunner.#onProjCancel,
+        ngProjCreate: NadgradRunner.#onProjCreate,
+        ngProjClock: { handler: NadgradRunner.#onProjClock, buttons: [0, 2] },
+        ngProjStep: NadgradRunner.#onProjStep,
+        ngProjDel: NadgradRunner.#onProjDel,
+        ngProjTable: NadgradRunner.#onProjTable,
       },
     };
 
@@ -63,6 +80,11 @@ export function makeSheetClass(Runner) {
     async _prepareContext(options) {
       const context = await super._prepareContext(options);
       context.ng = buildStatusContext(this.actor);
+      const flags = this.actor.flags?.[MODULE_ID];
+      const theme = this.element ? effectiveTheme(this.element, themeSetting()) : (themeSetting() === "smog" ? "smog" : "tush");
+      context.ng.rel = relContext(readRelations(flags), readForces());
+      context.ng.proj = projContext(readProjects(flags), theme, this._ngProjDraft);
+      context.ng.isGM = !!game.user?.isGM;
       context.ngTabs = TABS.map((t) => ({ ...t, active: t.id === this._ngTab }));
       context.ngEditable = this.isEditable;
       return context;
@@ -135,6 +157,25 @@ export function makeSheetClass(Runner) {
       event?.preventDefault?.();
       const data = { ...(formData?.object ?? {}) };
       const augs = splitAugFields(data);
+      const relF = splitListFields(data, "ngRel");
+      const projF = splitListFields(data, "ngProj");
+      const flags = this.actor.flags?.[MODULE_ID];
+      if (Object.keys(relF).length) {
+        const rels = readRelations(flags);
+        const next = rels.map((r) => (relF[r.id] && "note" in relF[r.id] ? { ...r, note: String(relF[r.id].note ?? "") } : r));
+        if (next.some((r, i) => r.note !== rels[i].note)) data[`flags.${MODULE_ID}.relations`] = next;
+      }
+      if (Object.keys(projF).length) {
+        const projs = readProjects(flags);
+        const next = projs.map((p) => {
+          const f = projF[p.id];
+          if (!f) return p;
+          const name = "name" in f && String(f.name).trim() ? String(f.name).trim() : p.name;
+          const note = "note" in f ? String(f.note ?? "") : p.note;
+          return { ...p, name, note };
+        });
+        if (next.some((p, i) => p.name !== projs[i].name || p.note !== projs[i].note)) data[`flags.${MODULE_ID}.projects`] = next;
+      }
       for (const [id, upd] of Object.entries(augs)) {
         const item = this.actor.items.get(id);
         if (!item) continue;
@@ -167,12 +208,162 @@ export function makeSheetClass(Runner) {
       dicePlus(root);
       noSubmitButtons(root);
       enterBlurs(root);
+      this.#wireDraft();
       const index = loadIndex(this.actor.system?.GEAR?.LOAD?.selected);
       loadButton(root, {
         index,
         label: game.i18n.localize(LOAD_LEVELS[index].key),
         levels: LOAD_LEVELS,
       });
+    }
+
+    // ---------- отношения ----------
+
+    #rels() { return readRelations(this.actor.flags?.[MODULE_ID]); }
+    #setRels(list) { return this.#set("relations", list); }
+
+    static #onRelAdd() {
+      const id = this.element.querySelector("select.ng-rel-pick")?.value;
+      if (!id) return ui.notifications.warn("Выбери силу из списка.");
+      const force = readForces().find((f) => f.id === id);
+      if (!force) return;
+      const rels = this.#rels();
+      if (rels.some((r) => r.id === id)) return ui.notifications.warn(`«${force.name}» уже есть в отношениях — меняй кнопками − / +.`);
+      return this.#setRels([...rels, { id, name: force.name, v: 0, note: "" }]);
+    }
+
+    static #onRelStep(event, target) {
+      const rels = this.#rels();
+      const r = rels.find((x) => x.id === target.dataset.id);
+      if (!r) return;
+      r.v = clampInt(r.v + (Number(target.dataset.delta) || 0), -REL_LIMIT, REL_LIMIT);
+      return this.#setRels(rels);
+    }
+
+    /** Удаление — в два клика: первый взводит («точно?»), второй удаляет. */
+    _ngArm = null;
+    #armed(key, target) {
+      if (this._ngArm === key) { this._ngArm = null; return true; }
+      this._ngArm = key;
+      target.textContent = "точно?";
+      target.classList.add("armed");
+      setTimeout(() => { if (this._ngArm === key) { this._ngArm = null; target.textContent = "×"; target.classList.remove("armed"); } }, 3000);
+      return false;
+    }
+
+    static #onRelDel(event, target) {
+      const id = target.dataset.id;
+      if (!this.#armed(`rel:${id}`, target)) return;
+      return this.#setRels(this.#rels().filter((r) => r.id !== id));
+    }
+
+    // ---------- проекты ----------
+
+    /** Черновик нового проекта живёт в листе, пока его не завели или не отменили. */
+    _ngProjDraft = null;
+
+    #projs() { return readProjects(this.actor.flags?.[MODULE_ID]); }
+    #setProjs(list) { return this.#set("projects", list); }
+
+    /** Поля черновика не в форме актёра: значения держим в экземпляре, Enter в названии — «Завести». */
+    #wireDraft() {
+      const box = this.element.querySelector(".ng-newpj");
+      if (!box || !this._ngProjDraft) return;
+      const name = box.querySelector(".ng-pj-draft-name");
+      const note = box.querySelector(".ng-pj-draft-note");
+      for (const [el, key] of [[name, "name"], [note, "note"]]) {
+        if (!el) continue;
+        el.addEventListener("input", (e) => { e.stopPropagation(); if (this._ngProjDraft) this._ngProjDraft[key] = el.value; });
+        el.addEventListener("change", (e) => e.stopPropagation()); // не отправлять форму актёра
+        el.addEventListener("keydown", (e) => {
+          if (e.key !== "Enter") return;
+          e.preventDefault(); e.stopPropagation();
+          NadgradRunner.#onProjCreate.call(this);
+        });
+      }
+      if (!name.value) name.focus?.();
+    }
+
+    #captureDraft() {
+      const box = this.element.querySelector(".ng-newpj");
+      if (!box || !this._ngProjDraft) return;
+      this._ngProjDraft.name = box.querySelector(".ng-pj-draft-name")?.value ?? this._ngProjDraft.name;
+      this._ngProjDraft.note = box.querySelector(".ng-pj-draft-note")?.value ?? this._ngProjDraft.note;
+    }
+
+    static #onProjNew() {
+      this._ngProjDraft = { name: "", size: 8, note: "" };
+      return this.render();
+    }
+
+    static #onProjSize(event, target) {
+      this.#captureDraft();
+      if (this._ngProjDraft) this._ngProjDraft.size = projSize(target.dataset.size);
+      return this.render();
+    }
+
+    static #onProjCancel() {
+      this._ngProjDraft = null;
+      return this.render();
+    }
+
+    static async #onProjCreate() {
+      this.#captureDraft();
+      const d = this._ngProjDraft;
+      if (!d) return;
+      const name = String(d.name ?? "").trim();
+      if (!name) {
+        this.element.querySelector(".ng-pj-draft-name")?.focus?.();
+        return ui.notifications.warn("Назови проект.");
+      }
+      const p = { id: newId(), name, size: projSize(d.size), value: 0, note: String(d.note ?? "").trim() };
+      this._ngProjDraft = null;
+      await this.#setProjs([...this.#projs(), p]);
+      return this.render();
+    }
+
+    #stepProj(id, delta) {
+      const list = this.#projs();
+      const p = list.find((x) => x.id === id);
+      if (!p) return;
+      const v = clampInt(p.value + delta, 0, p.size);
+      if (v === p.value) return;
+      const wasFull = p.value >= p.size;
+      p.value = v;
+      if (v >= p.size && !wasFull) ui.notifications.info(`Проект готов: ${p.name}`);
+      return this.#setProjs(list);
+    }
+
+    static #onProjClock(event, target) { return this.#stepProj(target.dataset.id, event.button === 2 ? -1 : 1); }
+    static #onProjStep(event, target) { return this.#stepProj(target.dataset.id, Number(target.dataset.delta) || 0); }
+
+    static #onProjDel(event, target) {
+      const id = target.dataset.id;
+      if (!this.#armed(`proj:${id}`, target)) return;
+      return this.#setProjs(this.#projs().filter((p) => p.id !== id));
+    }
+
+    /** «На стол»: копия часов проекта — обычный счётчик на сцене (с проектом не связан). */
+    static async #onProjTable(event, target) {
+      const p = this.#projs().find((x) => x.id === target.dataset.id);
+      if (!p) return;
+      if (!game.user?.can?.("ACTOR_CREATE")) return ui.notifications.warn("Выложить на стол может мастер (или игрок с правом создавать актёров).");
+      if (!canvas?.scene) return ui.notifications.warn("Нет открытой сцены.");
+      const theme = effectiveTheme(this.element, themeSetting());
+      let folder = game.folders.find((f) => f.type === "Actor" && f.name === CLOCK_FOLDER);
+      if (!folder) { try { folder = await Folder.create({ name: CLOCK_FOLDER, type: "Actor" }); } catch { folder = null; } }
+      const actor = await Actor.create({
+        name: `${p.name} (${this.actor.name})`,
+        type: CLOCK_TYPE,
+        folder: folder?.id ?? null,
+        system: { size: p.size, value: p.value, theme, note: p.note },
+      });
+      if (!actor) return;
+      const span = (actor.prototypeToken.width ?? 2) * canvas.grid.size;
+      const { x, y } = canvas.stage.pivot;
+      const td = await actor.getTokenDocument({ x: Math.round(x - span / 2), y: Math.round(y - span / 2) });
+      await canvas.scene.createEmbeddedDocuments("Token", [td.toObject()]);
+      ui.notifications.info(`Часы «${p.name}» на столе. Это копия: дальше они крутятся отдельно от проекта.`);
     }
 
     #applyTab() {

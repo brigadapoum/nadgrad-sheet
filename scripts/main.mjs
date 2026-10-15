@@ -8,6 +8,7 @@ import { MODULE_ID } from "./logic.mjs";
 import { registerArchive } from "./archive.mjs";
 import { applyUiTheme } from "./dom.mjs";
 import { registerClocks } from "./clock.mjs";
+import { forcesAppClass } from "./forces.mjs";
 
 registerArchive();
 registerClocks();
@@ -24,12 +25,34 @@ Hooks.once("init", () => {
     default: "auto",
     onChange: () => {
       syncUiTheme();
-      for (const app of foundry.applications.instances.values()) {
-        if (app.options?.classes?.includes("nadgrad")) app.render();
-      }
+      rerenderSheets();
     },
   });
+
+  // Силы мира — общий список для вкладки «Отношения» (ведёт мастер).
+  game.settings.register(MODULE_ID, "forces", {
+    name: "Силы мира",
+    scope: "world",
+    config: false,
+    type: Array,
+    default: [],
+    onChange: () => rerenderSheets(),
+  });
+  game.settings.registerMenu(MODULE_ID, "forcesMenu", {
+    name: "Силы мира",
+    label: "Открыть список сил",
+    hint: "Силы с группами и рангами — из них игроки выбирают, с кем у рискаря отношения.",
+    icon: "fa-solid fa-people-group",
+    type: forcesAppClass(),
+    restricted: true,
+  });
 });
+
+function rerenderSheets() {
+  for (const app of foundry.applications.instances.values()) {
+    if (app.options?.classes?.includes("nadgrad")) app.render();
+  }
+}
 
 Hooks.once("init", async () => {
   if (game.system.id !== "CBRPNK") return;

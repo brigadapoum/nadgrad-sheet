@@ -166,3 +166,35 @@ test("статус: кнопки ранга 0 и уровня напряжени
   assert.ok(doc.querySelector("[data-action='ngTensionZero']").classList.contains("on"));
   assert.equal(doc.querySelectorAll(".ng-rep .ng-cell").length, 6);
 });
+
+test("шаблоны «Отношения», «Проекты», «Силы мира» собираются", async () => {
+  const { relContext, readRelations, projContext, readProjects } = await import("../scripts/logic.mjs");
+  const { forcesContext } = await import("../scripts/forces.mjs");
+  const forces = [{ id: "liga", name: "Лига", group: "Фракции", rank: 3 }, { id: "z", name: "Зера", group: "Люди", rank: null }];
+  const rel = relContext(readRelations({ relations: [{ id: "liga", name: "Лига", v: -2, note: "(месть)" }] }), forces);
+  const proj = projContext(readProjects({ projects: [{ id: "p1", name: "Планер", size: 8, value: 3 }] }), "tush", { name: "", size: 10, note: "" });
+  const ctx = { ng: { rel, proj, isGM: true }, ngEditable: true };
+  const r = new JSDOM(tpl("relations.hbs")(ctx)).window.document;
+  assert.equal(r.querySelector(".ng-rel.neg .ng-rel-name").textContent, "Лига");
+  assert.equal(r.querySelector(".ng-rel .ng-rk").textContent, "ранг 3");
+  assert.equal(r.querySelector(".ng-rel-note").name, "ngRel.liga.note");
+  assert.ok(r.querySelector("[data-action='ngForces']"));
+  assert.deepEqual([...r.querySelectorAll("select.ng-rel-pick option")].map((o) => [o.value, o.disabled]), [["", false], ["liga", true], ["z", false]]);
+  const p = new JSDOM(tpl("projects.hbs")(ctx)).window.document;
+  assert.equal(p.querySelector(".ng-pj img").getAttribute("src"), "modules/nadgrad/art/clocks/tush/clock8-3.webp");
+  assert.equal(p.querySelector(".ng-pj-name").name, "ngProj.p1.name");
+  assert.equal(p.querySelector(".ng-sizes .on").textContent, "10");
+  assert.equal(p.querySelector("[data-action='ngProjNew']"), null); // при открытом черновике кнопки нет
+  for (const [size, value] of [[8, 3]]) assert.ok(existsSync(new URL(`art/clocks/tush/clock${size}-${value}.webp`, ROOT)));
+  const f = new JSDOM(tpl("forces.hbs")(forcesContext(forces))).window.document;
+  assert.equal(f.querySelectorAll(".ng-f-row").length, 2);
+  assert.equal(f.querySelector(".ng-f-row .ng-f-rank .on").textContent, "3");
+  assert.equal(f.querySelectorAll(".ng-f-row")[1].querySelector(".on"), null);
+  assert.ok([...f.querySelectorAll("datalist option")].some((o) => o.value === "Места"));
+});
+
+test("силы мира: черновик → сохранение отбрасывает пустые, ранг в пределах", async () => {
+  const { draftToForces } = await import("../scripts/forces.mjs");
+  const out = draftToForces([{ id: "a", name: " Лига ", group: "Фракции", rank: 9 }, { id: "b", name: "", group: "", rank: 1 }, { id: "c", name: "Зера", group: "", rank: null }]);
+  assert.deepEqual(out, [{ id: "a", name: "Лига", group: "Фракции", rank: 4 }, { id: "c", name: "Зера", group: "", rank: null }]);
+});

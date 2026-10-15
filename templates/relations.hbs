@@ -1,6 +1,47 @@
 <div class="ng-status ng-relations">
-  <section class="ng-block ng-empty">
-    <h3 class="ng-h">Отношения</h3>
-    <p class="ng-hint">Здесь будут отношения рискаря — как в ширме. Пока пусто.</p>
+  <section class="ng-block">
+    <h3 class="ng-h">Отношения <span class="ng-val">{{ng.rel.count}}</span>
+      {{#if ng.isGM}}<button type="button" class="ng-small" data-action="ngForces" title="Общий список сил мира с рангами">Силы мира</button>{{/if}}
+    </h3>
+    {{#if ngEditable}}
+    <div class="ng-tool">
+      <select class="ng-rel-pick" {{#if ng.rel.noForces}}disabled{{/if}}>
+        <option value="">{{#if ng.rel.noForces}}— мастер ещё не завёл силы —{{else}}— выбрать силу из списка мастера —{{/if}}</option>
+        {{#each ng.rel.options}}
+        <optgroup label="{{group}}">
+          {{#each items}}<option value="{{id}}" {{#if disabled}}disabled{{/if}}>{{label}}</option>{{/each}}
+        </optgroup>
+        {{/each}}
+      </select>
+      <button type="button" class="ng-pri" data-action="ngRelAdd" {{#if ng.rel.noForces}}disabled{{/if}}>Добавить</button>
+    </div>
+    <p class="ng-hint">{{#if ng.rel.noForces}}Список сил ведёт мастер: вкладка «Отношения» → «Силы мира».{{else}}{{#if ng.rel.allAdded}}Все силы из списка мастера уже добавлены.{{else}}В списке — силы, которые завёл мастер, с их рангами. Уже добавленные не повторяются.{{/if}}{{/if}}</p>
+    {{/if}}
+
+    {{#if ng.rel.count}}
+    {{#each ng.rel.cols}}
+    <div class="ng-rel-col">
+      <div class="ng-rel-colh {{key}}">{{label}} · {{count}}</div>
+      {{#each items}}
+      <div class="ng-rel {{sign}}{{#if missing}} missing{{/if}}" data-rel="{{id}}">
+        <span class="ng-rel-bar"></span>
+        <span class="ng-rel-name" title="{{#if missing}}Этой силы больше нет в списке мастера{{else}}{{label}}{{/if}}">{{label}}</span>
+        {{#if hasRank}}<span class="ng-rk">ранг {{rank}}</span>{{else}}<span class="ng-rk none" title="{{#if missing}}силы нет в списке мастера{{else}}мастер не задал ранг{{/if}}">ранг ?</span>{{/if}}
+        <span class="ng-rel-val">
+          <button type="button" data-action="ngRelStep" data-id="{{id}}" data-delta="-1" {{#unless @root.ngEditable}}disabled{{/unless}}>−</button>
+          <span>{{vText}}</span>
+          <button type="button" data-action="ngRelStep" data-id="{{id}}" data-delta="1" {{#unless @root.ngEditable}}disabled{{/unless}}>+</button>
+        </span>
+        {{#if @root.ngEditable}}<button type="button" class="ng-x" data-action="ngRelDel" data-id="{{id}}" title="Убрать из отношений">×</button>{{else}}<span></span>{{/if}}
+        <input type="text" class="ng-rel-note" name="ngRel.{{id}}.note" value="{{note}}" placeholder="пометка — клик, чтобы вписать" {{#unless @root.ngEditable}}disabled{{/unless}}>
+      </div>
+      {{else}}
+      <p class="ng-hint">—</p>
+      {{/each}}
+    </div>
+    {{/each}}
+    {{else}}
+    <p class="ng-hint">Отношений пока нет.</p>
+    {{/if}}
   </section>
 </div>

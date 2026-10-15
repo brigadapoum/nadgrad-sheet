@@ -5,8 +5,8 @@ import { test, beforeEach } from "node:test";
 import { JSDOM } from "jsdom";
 import { makeSheetClass } from "../scripts/sheet.mjs";
 
-const SETTINGS = { "nadgrad.theme": "auto" };
-globalThis.ui = { notifications: { warns: [], warn(m) { this.warns.push(m); } } };
+const SETTINGS = { "nadgrad.theme": "auto", "nadgrad.forces": [] };
+globalThis.ui = { notifications: { warns: [], warn(m) { this.warns.push(m); }, info() {} } };
 globalThis.game = {
   i18n: { localize: (k) => ({ "LOAD.LIGHT": "LIGHT: Move freely", "LOAD.MEDIUM": "MEDIUM: Look ready", "LOAD.HEAVY": "HEAVY: Loud or slow" }[k] ?? k) },
   settings: {
@@ -14,7 +14,7 @@ globalThis.game = {
     set: async (m, k, v) => { SETTINGS[`${m}.${k}`] = v; },
   },
 };
-beforeEach(() => { SETTINGS["nadgrad.theme"] = "auto"; ui.notifications.warns = []; });
+beforeEach(() => { SETTINGS["nadgrad.theme"] = "auto"; SETTINGS["nadgrad.forces"] = []; ui.notifications.warns = []; });
 
 // Скелет окна с родным листом 1.2 — только то, что трогает модуль.
 const SHEET_HTML = `
@@ -49,6 +49,7 @@ class Runner {
   }
   async _prepareContext() { return { base: true }; }
   async _onRender() {}
+  async render() { this.renders = (this.renders ?? 0) + 1; }
 }
 function makeActor(flags = {}, system = {}) {
   const a = { flags: { nadgrad: flags }, system: { angle: { for: "", DETAILS: "" }, GEAR: { LOAD: { selected: 0, value: 0, max: 3 } }, ...system }, items: [], updates: [] };
@@ -338,4 +339,109 @@ test("аугментации и броски в DOM: стрелка описан
   augDecorate(root, { items, editable: true });
   assert.equal(root.querySelectorAll(".ng-aug-open").length, 2);
   assert.equal(root.querySelectorAll("prose-mirror").length, 1);
+});
+
+// ---- отношения и проекты ----
+const FORCES = [
+  { id: "liga", name: "Лига", group: "Фракции", rank: 3 },
+  { id: "mun", name: "Муниципалитет", group: "Фракции", rank: 4 },
+  { id: "zera", name: "Зера", group: "Люди", rank: null },
+];
+const pick = (sh, id) => {
+  const doc = sh.dom.window.document;
+  let sel = sh.element.querySelector("select.ng-rel-pick");
+  if (!sel) { sel = doc.createElement("select"); sel.className = "ng-rel-pick"; sh.element.append(sel); }
+  sel.innerHTML = `<option value="${id}">x</option>`; sel.value = id;
+};
+const btn = (sh) => sh.dom.window.document.createElement("button");
+
+test("отношения: добавить из списка мастера, −/+, повтор не добавляется, удаление в два клика", async () => {
+  SETTINGS["nadgrad.forces"] = FORCES;
+  const a = makeActor(); const sh = new S(a);
+  pick(sh, "liga"); await act(sh, "ngRelAdd");
+  pick(sh, "zera"); await act(sh, "ngRelAdd");
+  pick(sh, "liga"); await act(sh, "ngRelAdd");
+  assert.equal(a.flags.nadgrad.relations.length, 2);
+  assert.equal(ui.notifications.warns.length, 1);
+  await act(sh, "ngRelStep", { id: "liga", delta: "1" });
+  await act(sh, "ngRelStep", { id: "liga", delta: "1" });
+  await act(sh, "ngRelStep", { id: "zera", delta: "-1" });
+  assert.deepEqual(a.flags.nadgrad.relations.map((r) => [r.id, r.v]), [["liga", 2], ["zera", -1]]);
+  const b = btn(sh);
+  const h = sh.options.actions.ngRelDel;
+  b.dataset.id = "zera";
+  await h.call(sh, { button: 0 }, b);
+  assert.equal(b.textContent, "точно?");
+  await h.call(sh, { button: 0 }, b);
+  assert.deepEqual(a.flags.nadgrad.relations.map((r) => r.id), ["liga"]);
+});
+
+test("отношения: группы плюс/ноль/минус, сильнее выше, имя и ранг из списка мастера, выпадающий список", async () => {
+  const { relContext, readRelations, normForces } = await import("../scripts/logic.mjs");
+  const rels = readRelations({ relations: [
+    { id: "a", name: "A", v: 1 }, { id: "mun", name: "Старое имя", v: -1 }, { id: "liga", name: "Лига", v: 3 },
+    { id: "zera", name: "Зера", v: 0, note: "(благодарность)" }, { id: "gone", name: "Гунны", v: -3 },
+  ] });
+  const forces = normForces([...FORCES, { id: "a", name: "A", group: "", rank: 1 }, { name: "  " }]);
+  assert.equal(forces.length, 4);
+  const c = relContext(rels, forces);
+  assert.deepEqual(c.cols.map((x) => x.items.map((r) => r.label)), [["Лига", "A"], ["Зера"], ["Гунны", "Муниципалитет"]]);
+  const mun = c.cols[2].items[1];
+  assert.equal(mun.rank, 4); assert.equal(mun.vText, "−1");
+  const gone = c.cols[2].items[0];
+  assert.ok(gone.missing && !gone.hasRank);
+  assert.equal(c.cols[1].items[0].hasRank, false); // Зера без ранга
+  assert.deepEqual(c.options.map((o) => o.group), ["Фракции", "Люди", "Без группы"]);
+  assert.ok(c.options[0].items.every((o) => o.disabled));
+  assert.equal(c.options[0].items[0].label, "Лига · ранг 3 (уже есть)");
+  assert.equal(c.allAdded, true);
+  assert.equal(relContext([], []).noForces, true);
+});
+
+test("проекты: черновик, размер, завести, часы ЛКМ/ПКМ, −/+, удаление", async () => {
+  const a = makeActor(); const sh = new S(a);
+  await act(sh, "ngProjNew");
+  assert.deepEqual(sh._ngProjDraft, { name: "", size: 8, note: "" });
+  await act(sh, "ngProjSize", { size: "6" });
+  await act(sh, "ngProjCreate");
+  assert.equal(ui.notifications.warns.length, 1); // без названия не заводится
+  sh._ngProjDraft.name = "  Свой планер ";
+  sh._ngProjDraft.note = "заметка";
+  await act(sh, "ngProjCreate");
+  assert.equal(sh._ngProjDraft, null);
+  const [p] = a.flags.nadgrad.projects;
+  assert.deepEqual({ ...p, id: "" }, { id: "", name: "Свой планер", size: 6, value: 0, note: "заметка" });
+  for (let i = 0; i < 8; i++) await act(sh, "ngProjClock", { id: p.id }, 0);
+  assert.equal(a.flags.nadgrad.projects[0].value, 6); // упирается в размер
+  await act(sh, "ngProjClock", { id: p.id }, 2);
+  await act(sh, "ngProjStep", { id: p.id, delta: "-1" });
+  assert.equal(a.flags.nadgrad.projects[0].value, 4);
+  const b = btn(sh); b.dataset.id = p.id;
+  const del = sh.options.actions.ngProjDel;
+  await del.call(sh, { button: 0 }, b);
+  assert.equal(a.flags.nadgrad.projects.length, 1);
+  await del.call(sh, { button: 0 }, b);
+  assert.equal(a.flags.nadgrad.projects.length, 0);
+});
+
+test("форма: пометки отношений, имена и заметки проектов уходят во флаги, не в актёра", async () => {
+  const a = makeActor({ relations: [{ id: "liga", name: "Лига", v: 1, note: "" }], projects: [{ id: "p1", name: "Старое", size: 4, value: 1, note: "" }] });
+  const sh = new S(a);
+  await sh.options.form.handler.call(sh, { preventDefault() {} }, sh.element, {
+    object: { "ngRel.liga.note": "(долг)", "ngProj.p1.name": "  ", "ngProj.p1.note": "новая", "ngRel.nope.note": "x" },
+  });
+  assert.equal(a.flags.nadgrad.relations[0].note, "(долг)");
+  assert.deepEqual([a.flags.nadgrad.projects[0].name, a.flags.nadgrad.projects[0].note], ["Старое", "новая"]);
+  assert.ok(!a.updates.some((u) => Object.keys(u).some((k) => k.startsWith("ngRel") || k.startsWith("ngProj"))));
+});
+
+test("контекст листа: отношения, проекты и арт часов по теме", async () => {
+  SETTINGS["nadgrad.forces"] = FORCES;
+  SETTINGS["nadgrad.theme"] = "smog";
+  const a = makeActor({ relations: [{ id: "liga", name: "Лига", v: 2 }], projects: [{ id: "p1", name: "П", size: 4, value: 4 }] });
+  const sh = new S(a);
+  const ctx = await sh._prepareContext({});
+  assert.equal(ctx.ng.rel.count, 1);
+  assert.equal(ctx.ng.proj.items[0].src, "modules/nadgrad/art/clocks/smog/clock4-4.webp");
+  assert.equal(ctx.ng.proj.items[0].full, true);
 });

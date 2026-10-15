@@ -169,3 +169,130 @@ export function splitAugFields(data = {}) {
   }
   return items;
 }
+
+// ---------- Отношения и силы мира ----------
+
+/** Ранги сил на эскизе 2026-10-16: 0–4. Пустой ранг — «ранг ?». */
+export const FORCE_RANKS = [0, 1, 2, 3, 4];
+export const FORCE_GROUPS = ["Фракции", "Люди", "Места"];
+export const REL_LIMIT = 99;
+
+export function newId() {
+  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+}
+
+/** Список сил мира (настройка мира) — с безопасными значениями, без пустых имён. */
+export function normForces(list) {
+  const out = [];
+  for (const f of Array.isArray(list) ? list : []) {
+    const name = String(f?.name ?? "").trim();
+    if (!name) continue;
+    const r = f?.rank;
+    out.push({
+      id: String(f?.id || newId()),
+      name,
+      group: String(f?.group ?? "").trim(),
+      rank: r === null || r === undefined || r === "" ? null : clampInt(r, FORCE_RANKS[0], FORCE_RANKS.at(-1)),
+    });
+  }
+  return out;
+}
+
+/** Отношения рискаря из флагов: [{ id (id силы), name (имя на момент добавления), v, note }]. */
+export function readRelations(flags = {}) {
+  const out = [];
+  for (const r of Array.isArray(flags?.relations) ? flags.relations : []) {
+    if (!r?.id) continue;
+    out.push({ id: String(r.id), name: String(r.name ?? ""), v: clampInt(r.v ?? 0, -REL_LIMIT, REL_LIMIT), note: String(r.note ?? "") });
+  }
+  return out;
+}
+
+const fmtRel = (v) => (v > 0 ? `+${v}` : v < 0 ? `−${-v}` : "0");
+
+/**
+ * Экран «Отношения»: три группы (плюс / ноль / минус), внутри сильнее по модулю выше,
+ * при равенстве — порядок добавления (как в ширме). Имя и ранг — из списка сил мастера.
+ * options — выпадающий список: силы мастера по группам, уже добавленные выключены.
+ */
+export function relContext(relations, forces) {
+  const byId = new Map(forces.map((f) => [f.id, f]));
+  const all = relations.map((r, i) => {
+    const f = byId.get(r.id);
+    const sign = r.v > 0 ? "pos" : r.v < 0 ? "neg" : "zero";
+    return {
+      ...r, i, sign,
+      label: f?.name ?? r.name ?? "?",
+      rank: f ? f.rank : null,
+      hasRank: !!f && f.rank !== null,
+      missing: !f,
+      vText: fmtRel(r.v),
+    };
+  });
+  const by = (a, b) => Math.abs(b.v) - Math.abs(a.v) || a.i - b.i;
+  const cols = [
+    ["pos", "плюс"], ["zero", "ноль"], ["neg", "минус"],
+  ].map(([key, label]) => {
+    const items = all.filter((r) => r.sign === key).sort(by);
+    return { key, label, items, count: items.length };
+  });
+  const have = new Set(relations.map((r) => r.id));
+  const groups = new Map();
+  for (const f of forces) {
+    const g = f.group || "Без группы";
+    if (!groups.has(g)) groups.set(g, []);
+    groups.get(g).push({
+      id: f.id,
+      label: `${f.name}${f.rank !== null ? ` · ранг ${f.rank}` : ""}${have.has(f.id) ? " (уже есть)" : ""}`,
+      disabled: have.has(f.id),
+    });
+  }
+  const options = [...groups].map(([group, items]) => ({ group, items }));
+  return { cols, count: all.length, options, noForces: forces.length === 0, allAdded: forces.length > 0 && forces.every((f) => have.has(f.id)) };
+}
+
+// ---------- Долгосрочные проекты ----------
+
+export const PROJECT_SIZES = [4, 6, 8, 10, 12];
+export const projSize = (v) => (PROJECT_SIZES.includes(Math.trunc(Number(v))) ? Math.trunc(Number(v)) : 8);
+
+/** Проекты рискаря из флагов: [{ id, name, size, value, note }]. */
+export function readProjects(flags = {}) {
+  const out = [];
+  for (const p of Array.isArray(flags?.projects) ? flags.projects : []) {
+    if (!p?.id) continue;
+    const size = projSize(p.size);
+    out.push({ id: String(p.id), name: String(p.name ?? ""), size, value: clampInt(p.value ?? 0, 0, size), note: String(p.note ?? "") });
+  }
+  return out;
+}
+
+/** Картинка часов проекта — те же арты, что у счётчиков на столе. */
+export const projSrc = (p, theme) =>
+  `modules/${MODULE_ID}/art/clocks/${theme === "smog" ? "smog" : "tush"}/clock${projSize(p.size)}-${clampInt(p.value, 0, projSize(p.size))}.webp`;
+
+export function projContext(projects, theme, draft = null) {
+  return {
+    items: projects.map((p) => ({ ...p, src: projSrc(p, theme), full: p.value >= p.size })),
+    count: projects.length,
+    draft: draft ? { ...draft, sizes: PROJECT_SIZES.map((s) => ({ s, on: s === projSize(draft.size) })) } : null,
+  };
+}
+
+/**
+ * Поля списков в форме листа: `<prefix>.<id>.<field>` → { id: { field: value } }.
+ * Найденные ключи удаляются из data (чтобы не ушли в актёра).
+ */
+export function splitListFields(data = {}, prefix) {
+  const out = {};
+  const re = new RegExp(`^${prefix}\\.([^.]+)\\.([A-Za-z]+)$`);
+  for (const key of Object.keys(data)) {
+    const m = key.match(re);
+    if (m) { (out[m[1]] ??= {})[m[2]] = data[key]; delete data[key]; }
+  }
+  if (data[prefix] && typeof data[prefix] === "object") {
+    for (const [id, f] of Object.entries(data[prefix])) Object.assign((out[id] ??= {}), f);
+    delete data[prefix];
+  }
+  return out;
+}

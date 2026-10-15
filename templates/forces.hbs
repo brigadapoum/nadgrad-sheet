@@ -1,0 +1,25 @@
+<div class="ng-status ng-forces">
+  <section class="ng-block">
+    <h3 class="ng-h">Силы мира <span class="ng-gm"><b>МАСТЕР</b> видит только мастер</span></h3>
+    <div class="ng-f-head"><span>Сила</span><span>Группа</span><span>Ранг</span><span></span></div>
+    {{#each rows}}
+    <div class="ng-f-row" data-row="{{id}}">
+      <input type="text" class="ng-f-name" value="{{name}}" placeholder="Название силы">
+      <input type="text" class="ng-f-group" value="{{group}}" list="ng-force-groups" placeholder="Группа">
+      <div class="ng-f-rank">
+        {{#each ranks}}<button type="button" data-action="rank" data-rank="{{r}}" class="{{#if on}}on{{/if}}">{{r}}</button>{{/each}}
+      </div>
+      <button type="button" class="ng-x" data-action="del" title="Убрать силу из списка">×</button>
+    </div>
+    {{else}}
+    <p class="ng-hint">Сил пока нет — добавь первую.</p>
+    {{/each}}
+    <datalist id="ng-force-groups">{{#each groups}}<option value="{{this}}"></option>{{/each}}</datalist>
+    <div class="ng-tool">
+      <button type="button" class="ng-ghost" data-action="add">+ сила</button>
+      <span class="ng-grow"></span>
+      <button type="submit" class="ng-pri">Сохранить</button>
+    </div>
+    <p class="ng-hint">Общий список на весь мир. Игроки выбирают из него силы во вкладке «Отношения». Ранг и название меняются здесь — и сразу у всех рискарей. Повторный клик по выбранному рангу снимает его («ранг ?»). Если убрать силу, у рискарей она останется со старым названием и «ранг ?».</p>
+  </section>
+</div>

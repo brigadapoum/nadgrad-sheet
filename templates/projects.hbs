@@ -1,6 +1,55 @@
 <div class="ng-status ng-projects">
-  <section class="ng-block ng-empty">
-    <h3 class="ng-h">Проекты</h3>
-    <p class="ng-hint">Здесь будут долгосрочные проекты-счётчики. Пока пусто.</p>
+  <section class="ng-block">
+    <h3 class="ng-h">Долгосрочные проекты <span class="ng-val">{{ng.proj.count}}</span></h3>
+    {{#if ngEditable}}
+    {{#unless ng.proj.draft}}
+    <div class="ng-tool">
+      <button type="button" class="ng-pri" data-action="ngProjNew">+ Новый проект</button>
+      <span class="ng-hint">Клик по часам — +1, правый клик — −1</span>
+    </div>
+    {{/unless}}
+    {{#if ng.proj.draft}}
+    <div class="ng-newpj">
+      <input type="text" class="ng-pj-draft-name" value="{{ng.proj.draft.name}}" placeholder="Название проекта">
+      <div class="ng-line"><span class="ng-label">Размер</span>
+        <div class="ng-sizes">
+          {{#each ng.proj.draft.sizes}}<button type="button" data-action="ngProjSize" data-size="{{s}}" class="{{#if on}}on{{/if}}">{{s}}</button>{{/each}}
+        </div>
+      </div>
+      <input type="text" class="ng-pj-draft-note" value="{{ng.proj.draft.note}}" placeholder="Заметка: что нужно, чем платим…">
+      <div class="ng-tool"><span class="ng-grow"></span>
+        <button type="button" class="ng-ghost" data-action="ngProjCancel">Отмена</button>
+        <button type="button" class="ng-pri" data-action="ngProjCreate">Завести</button>
+      </div>
+    </div>
+    {{/if}}
+    {{/if}}
+
+    {{#each ng.proj.items}}
+    <div class="ng-pj{{#if full}} full{{/if}}" data-proj="{{id}}">
+      <button type="button" class="ng-pj-clock" data-action="ngProjClock" data-id="{{id}}" title="ЛКМ — +1, ПКМ — −1" {{#unless @root.ngEditable}}disabled{{/unless}}>
+        <img src="{{src}}" alt="{{value}} / {{size}}">
+      </button>
+      <div class="ng-pj-body">
+        <div class="ng-pj-top">
+          <input type="text" class="ng-pj-name" name="ngProj.{{id}}.name" value="{{name}}" title="Клик — переименовать" {{#unless @root.ngEditable}}disabled{{/unless}}>
+          {{#if full}}<span class="ng-tag">готово</span>{{/if}}
+          <span class="ng-pj-count">{{value}} / {{size}}</span>
+        </div>
+        <input type="text" class="ng-pj-note" name="ngProj.{{id}}.note" value="{{note}}" placeholder="заметка — клик, чтобы вписать" {{#unless @root.ngEditable}}disabled{{/unless}}>
+        {{#if @root.ngEditable}}
+        <div class="ng-pj-ctl">
+          <button type="button" data-action="ngProjStep" data-id="{{id}}" data-delta="-1" title="Минус деление">−</button>
+          <button type="button" data-action="ngProjStep" data-id="{{id}}" data-delta="1" title="Плюс деление">+</button>
+          <span class="ng-grow"></span>
+          <button type="button" data-action="ngProjTable" data-id="{{id}}" title="Выложить копию часов на сцену (нужно право создавать актёров)">на стол</button>
+          <button type="button" class="ng-x" data-action="ngProjDel" data-id="{{id}}" title="Удалить проект">×</button>
+        </div>
+        {{/if}}
+      </div>
+    </div>
+    {{else}}
+    {{#unless ng.proj.draft}}<p class="ng-hint">Проектов пока нет.</p>{{/unless}}
+    {{/each}}
   </section>
 </div>

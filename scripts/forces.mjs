@@ -26,7 +26,7 @@ export function makeForcesApp() {
       tag: "form",
       classes: ["nadgrad", "ng-forces-app", "application", "runner-actor"],
       window: { title: "Силы Надграда — настройка мира", icon: "fa-solid fa-people-group", resizable: true },
-      position: { width: 520, height: 620 },
+      position: { width: 600, height: 620 },
       form: { handler: ForcesApp.#onSave, submitOnChange: false, closeOnSubmit: false },
       actions: { add: ForcesApp.#onAdd, del: ForcesApp.#onDel, rank: ForcesApp.#onRank },
     };

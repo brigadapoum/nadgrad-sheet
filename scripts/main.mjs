@@ -1,23 +1,26 @@
 // Надград — лист рискаря для CBR+PNK (Foundry v13, система CBR+PNK 1.1+).
 // 1) Вкладки на листе: «Лист» (родной лист системы) и «Статус» (поля Надграда).
 // 2) Темы «Тушь» / «Смог» — по светлой/тёмной теме Foundry (styles/nadgrad.css).
-// 3) Разовый архив старых заметок 1.05 (Why you running for / DETAILS) в журнал.
+// 3) Чат (карточки бросков) и пауза — в той же теме, что и лист.
+// 4) Разовый архив старых заметок 1.05 (Why you running for / DETAILS) в журнал.
 import { MODULE_ID } from "./logic.mjs";
 import { registerArchive } from "./archive.mjs";
+import { applyUiTheme } from "./dom.mjs";
 
 registerArchive();
 
 // Тема листа — для каждого браузера своя. «Как в Foundry» — по светлой/тёмной теме интерфейса.
 Hooks.once("init", () => {
   game.settings.register(MODULE_ID, "theme", {
-    name: "Тема листа рискаря",
-    hint: "Тушь — светлая, Смог — тёмная. «Как в Foundry» — по теме интерфейса. Переключается и прямо на листе, над портретом.",
+    name: "Тема Надграда",
+    hint: "Лист рискаря, карточки бросков в чате и пауза. Тушь — светлая, Смог — тёмная. «Как в Foundry» — по теме интерфейса. Переключается и прямо на листе, над портретом.",
     scope: "client",
     config: true,
     type: String,
     choices: { auto: "Как в Foundry", tush: "Тушь", smog: "Смог" },
     default: "auto",
     onChange: () => {
+      syncUiTheme();
       for (const app of foundry.applications.instances.values()) {
         if (app.options?.classes?.includes("nadgrad")) app.render();
       }
@@ -50,4 +53,19 @@ Hooks.once("init", async () => {
     `modules/${MODULE_ID}/templates/projects.hbs`,
   ]);
   console.log(`${MODULE_ID} | лист рискаря с вкладками подключён`);
+});
+
+// Чат и пауза живут вне листа, поэтому тема для них вешается на <body>.
+const themeSetting = () => {
+  try { return game.settings.get(MODULE_ID, "theme"); } catch { return "auto"; }
+};
+function syncUiTheme() {
+  if (game.system?.id !== "CBRPNK") return;
+  applyUiTheme(document.body, themeSetting());
+}
+Hooks.once("ready", () => {
+  syncUiTheme();
+  // «Как в Foundry»: тема интерфейса может смениться на лету — следим за классом <body>.
+  // Повторная установка уже стоящих классов не меняет атрибут, так что зацикливания нет.
+  new MutationObserver(syncUiTheme).observe(document.body, { attributes: true, attributeFilter: ["class"] });
 });

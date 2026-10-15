@@ -187,3 +187,16 @@ test("досье открывается родным действием лист
   await act(sh, "ngNotes");
   assert.equal(sh.openedNotes, true);
 });
+
+test("чат и пауза: тема на <body> — по выбору, «auto» — по теме интерфейса", async () => {
+  const { applyUiTheme } = await import("../scripts/dom.mjs");
+  const { window } = new JSDOM(`<body class="theme-dark"></body>`);
+  const b = window.document.body;
+  assert.equal(applyUiTheme(b, "auto"), "smog");
+  assert.ok(b.classList.contains("ng-ui") && b.classList.contains("ng-ui-smog") && !b.classList.contains("ng-ui-tush"));
+  assert.equal(applyUiTheme(b, "tush"), "tush");
+  assert.ok(b.classList.contains("ng-ui-tush") && !b.classList.contains("ng-ui-smog"));
+  b.classList.replace("theme-dark", "theme-light");
+  assert.equal(applyUiTheme(b, "auto"), "tush");
+  assert.equal(applyUiTheme(b, "smog"), "smog");
+});

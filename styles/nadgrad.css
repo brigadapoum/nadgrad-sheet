@@ -376,3 +376,126 @@ body.theme-dark .application.runner-actor:not(.theme-light):not(.ng-tush) .throw
 .application.runner-actor .ng-dot { width: 9px; height: 9px; border: 1px solid var(--ng-sign-ink); display: inline-block; }
 .application.runner-actor .ng-dot.on { background: var(--ng-sign-ink); }
 .application.runner-actor .gears h3 button.ng-load-count { cursor: default; }
+
+/* =========================================================
+   Чат и пауза — те же «Тушь» / «Смог».
+   Тему на <body> вешает scripts/main.mjs: ng-ui + ng-ui-tush | ng-ui-smog.
+   Карточка броска системы: div.<тип актёра>.<исход> > img, .text (h1, .result h3 + .dice, .desc), .situation.
+   Исходы: critical, good, consequence, bad; alert — перегрузка/перевес; без класса — нейтральная.
+   ========================================================= */
+body.ng-ui-tush {
+  --ngc-bg: #ECE7DA; --ngc-ink: #1C1814; --ngc-muted: #6B655A; --ngc-line: #1C1814;
+  --ngc-panel: rgb(236 231 218 / .92);
+  --ngc-cool: #356F63; --ngc-red: #A63C2C; --ngc-act: #A64F2B; --ngc-plate: #1C1814; --ngc-plate-ink: #ECE7DA;
+  --ngc-glow: none;
+  /* исход: заливка таблички, текст на ней, цвет кубиков и линий на панели */
+  --ngc-crit: #C9A25E; --ngc-crit-ink: #1C1814; --ngc-crit-fg: #8A6A2E;
+  --ngc-good: #356F63; --ngc-good-ink: #F4EFE3; --ngc-good-fg: #356F63;
+  --ngc-mixed: #1C1814; --ngc-mixed-ink: #ECE7DA; --ngc-mixed-fg: #1C1814;
+  --ngc-bad: #A63C2C; --ngc-bad-ink: #F4EFE3; --ngc-bad-fg: #A63C2C;
+  --ngc-none: #A64F2B; --ngc-none-ink: #F4EFE3; --ngc-none-fg: #A64F2B;
+  /* пауза */
+  --ngc-pause-bg: #1C1814; --ngc-pause-ink: #ECE7DA; --ngc-pause-acc: #D97A47;
+}
+body.ng-ui-smog {
+  --ngc-bg: #14120F; --ngc-ink: #D0D4C9; --ngc-muted: #8A9086; --ngc-line: #545A4D;
+  --ngc-panel: rgb(16 12 10 / .84);
+  --ngc-cool: #5CCFC0; --ngc-red: #E2402F; --ngc-act: #E0763A; --ngc-plate: #231F1A; --ngc-plate-ink: #D0D4C9;
+  --ngc-glow: 0 0 6px;
+  --ngc-crit: #E3BE73; --ngc-crit-ink: #100C0A; --ngc-crit-fg: #E3BE73;
+  --ngc-good: #5CCFC0; --ngc-good-ink: #100C0A; --ngc-good-fg: #5CCFC0;
+  --ngc-mixed: #E0763A; --ngc-mixed-ink: #100C0A; --ngc-mixed-fg: #E0763A;
+  --ngc-bad: #E2402F; --ngc-bad-ink: #100C0A; --ngc-bad-fg: #E2402F;
+  --ngc-none: #B08E59; --ngc-none-ink: #100C0A; --ngc-none-fg: #B08E59;
+  --ngc-pause-bg: #100C0A; --ngc-pause-ink: #E2402F; --ngc-pause-acc: #E2402F;
+}
+
+/* ---------- все сообщения: бумага / копоть вместо системных цветов ---------- */
+body.ng-ui li.chat-message.message.flexcol {
+  background: var(--ngc-bg); color: var(--ngc-ink);
+  border-top: 1px solid var(--ngc-line); border-bottom: 1px solid var(--ngc-line);
+  font-family: "IBM Plex Mono", monospace;
+}
+body.ng-ui li.chat-message.message.flexcol * { color: var(--ngc-ink); }
+body.ng-ui li.chat-message.message.flexcol .message-content > p { padding: 6px 8px; font-size: 12px; }
+body.ng-ui li.chat-message.message.flexcol strong { color: var(--ngc-act); }
+body.ng-ui li.chat-message.message.flexcol em { color: var(--ngc-cool); }
+
+/* ---------- карточка броска ---------- */
+body.ng-ui li.chat-message.message.flexcol .message-content > div:has(> .situation) {
+  /* исход по умолчанию — нейтральный */
+  --o: var(--ngc-none); --o-ink: var(--ngc-none-ink); --o-fg: var(--ngc-none-fg);
+  position: relative; display: block; line-height: 1.25;
+}
+body.ng-ui li.chat-message.message.flexcol .message-content :is(.text, .situation) { box-sizing: border-box; }
+body.ng-ui li.chat-message.message.flexcol .message-content > div.critical { --o: var(--ngc-crit); --o-ink: var(--ngc-crit-ink); --o-fg: var(--ngc-crit-fg); }
+body.ng-ui li.chat-message.message.flexcol .message-content > div.good { --o: var(--ngc-good); --o-ink: var(--ngc-good-ink); --o-fg: var(--ngc-good-fg); }
+body.ng-ui li.chat-message.message.flexcol .message-content > div.consequence { --o: var(--ngc-mixed); --o-ink: var(--ngc-mixed-ink); --o-fg: var(--ngc-mixed-fg); }
+body.ng-ui li.chat-message.message.flexcol .message-content > div:is(.bad, .alert) { --o: var(--ngc-bad); --o-ink: var(--ngc-bad-ink); --o-fg: var(--ngc-bad-fg); }
+
+/* пиксельный шрифт системы (.runner *) — на наши */
+body.ng-ui li.chat-message.message.flexcol .message-content > div:has(> .situation) *:not(i) { font-family: "IBM Plex Mono", monospace; }
+body.ng-ui li.chat-message.message.flexcol .message-content > div:has(> .situation) :is(h1, h3, .situation p) {
+  font-family: "Oswald", sans-serif; text-transform: uppercase; letter-spacing: .05em; font-weight: 500;
+}
+body.ng-ui li.chat-message.message.flexcol .message-content > div:has(> .situation) > img {
+  display: block; width: 100%; border: 0; border-radius: 0;
+}
+
+/* верх: эффект · подход · угроза */
+body.ng-ui li.chat-message.message.flexcol .message-content .situation {
+  background: var(--ngc-panel); backdrop-filter: blur(4px);
+  border: 0; border-bottom: 2px solid var(--o); border-radius: 0;
+  padding: 4px 8px; gap: 6px; justify-content: space-between;
+}
+body.ng-ui li.chat-message.message.flexcol .message-content .situation p { font-size: 12px; color: var(--ngc-muted); }
+body.ng-ui li.chat-message.message.flexcol .message-content .situation p:only-child,
+body.ng-ui li.chat-message.message.flexcol .message-content .situation p:not(:first-child):not(:last-child) { color: var(--ngc-ink); font-weight: 600; }
+body.ng-ui li.chat-message.message.flexcol .message-content .situation p:first-child:not(:only-child) { color: var(--ngc-cool); }
+body.ng-ui li.chat-message.message.flexcol .message-content .situation p:last-child:not(:only-child) { color: var(--ngc-red); }
+
+/* низ: имя — исход, табличка действия с кубиками, описание */
+body.ng-ui li.chat-message.message.flexcol .message-content .text {
+  background: var(--ngc-panel); backdrop-filter: blur(4px);
+  border: 0; border-top: 3px solid var(--o); border-radius: 0;
+  box-shadow: var(--ngc-glow) var(--o);
+}
+body.ng-ui li.chat-message.message.flexcol .message-content .text h1 {
+  font-size: 19px; font-weight: 600; text-align: left; padding: 6px 8px 4px; border: 0; color: var(--ngc-ink);
+}
+body.ng-ui li.chat-message.message.flexcol .message-content .text .result {
+  justify-content: space-between; gap: 8px; padding: 0 8px 0 0;
+}
+body.ng-ui li.chat-message.message.flexcol .message-content .text .result h3 {
+  background: var(--o); color: var(--o-ink); font-size: 14px; padding: 3px 14px 3px 8px; border: 0;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+}
+body.ng-ui li.chat-message.message.flexcol .message-content .text .dice { display: flex; gap: 3px; margin-left: auto; }
+body.ng-ui li.chat-message.message.flexcol .message-content .text .dice i {
+  font-size: 22px; color: var(--o-fg); text-shadow: var(--ngc-glow) var(--o-fg);
+}
+body.ng-ui li.chat-message.message.flexcol .message-content .text .dice i.gliched {
+  color: var(--ngc-red); text-shadow: var(--ngc-glow) var(--ngc-red); outline: 1px dashed var(--ngc-red); outline-offset: 1px;
+}
+body.ng-ui li.chat-message.message.flexcol .message-content .desc {
+  padding: 6px 8px 8px; font-size: 11.5px; line-height: 1.4; color: var(--ngc-ink);
+}
+body.ng-ui li.chat-message.message.flexcol .message-content .desc .GLICHED {
+  margin-top: 4px; padding-left: 6px; border-left: 2px solid var(--ngc-red); color: var(--ngc-red);
+}
+
+/* ---------- «нужно выбрать подход/навык» ---------- */
+body.ng-ui li.chat-message.message.flexcol p.infoAlert {
+  padding: 8px 10px !important; margin: 0; color: var(--ngc-red) !important;
+  background: var(--ngc-bg); border: 0; border-left: 4px solid var(--ngc-red); border-radius: 0;
+  font-family: "Oswald", sans-serif; text-transform: uppercase; letter-spacing: .04em; font-size: 14px; text-align: left;
+}
+
+/* ---------- пауза: табличка вместо розовой плашки ---------- */
+body.ng-ui figure.paused figcaption {
+  background: var(--ngc-pause-bg); color: var(--ngc-pause-ink);
+  font-family: "Oswald", sans-serif; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .18em; padding: .08em .5em .12em;
+  border-top: 4px solid var(--ngc-pause-acc); border-bottom: 4px solid var(--ngc-pause-acc);
+  filter: none; text-shadow: var(--ngc-glow) var(--ngc-pause-acc);
+}

@@ -56,3 +56,12 @@ export function loadButton(root, { index, label, levels }) {
   const dots = levels.map((_, i) => `<i class="ng-dot${i <= index ? " on" : ""}"></i>`).join("");
   btn.innerHTML = `<span class="ng-load-text">${label}</span><span class="ng-dots">${dots}</span>`;
 }
+
+/** Чат и пауза: тема на <body> — та же, что выбрана для листа («auto» — по теме интерфейса Foundry). */
+export function applyUiTheme(body, theme) {
+  const t = effectiveTheme(body, theme);
+  body.classList.toggle("ng-ui", true);
+  body.classList.toggle("ng-ui-tush", t === "tush");
+  body.classList.toggle("ng-ui-smog", t === "smog");
+  return t;
+}

@@ -23,9 +23,9 @@ test("напряжение: мусор на входе не ломает", () =>
   assert.deepEqual(tensionAdd({ level: "2", points: "4" }, "5"), { level: 3, points: 0, overflow: 0 });
   assert.deepEqual(tensionAdd(undefined, "abc"), { level: 0, points: 0, overflow: 0 });
 });
-test("репутация: максимум по рангу 6/8/10/12/14", () => {
-  assert.deepEqual([1, 2, 3, 4, 5].map(repMax), [6, 8, 10, 12, 14]);
-  assert.equal(repMax(0), 6);
+test("репутация: максимум по рангу 4/6/8/10/12/14 (ранг 0 — старт)", () => {
+  assert.deepEqual([0, 1, 2, 3, 4, 5].map(repMax), [4, 6, 8, 10, 12, 14]);
+  assert.equal(repMax(-3), 4);
   assert.equal(repMax(9), 14);
 });
 test("клик по ячейке: ставит, повторный клик по последней — снимает", () => {
@@ -35,7 +35,7 @@ test("клик по ячейке: ставит, повторный клик по
 });
 test("состояние по умолчанию и обрезка репутации под ранг", () => {
   const s = readState(undefined);
-  assert.deepEqual(s, { cheki: 0, blocked: 0, rep: { rank: 1, value: 0 }, tension: { level: 0, points: 0 }, life: { level: null, note: "" }, dela: 0 });
+  assert.deepEqual(s, { cheki: 0, blocked: 0, rep: { rank: 0, value: 0 }, tension: { level: 0, points: 0 }, life: { level: null, note: "" }, dela: 0 });
   assert.equal(readState({ rep: { rank: 1, value: 13 } }).rep.value, 6);
 });
 test("контекст: заметки берутся из досье, если оно есть, иначе из старых полей 1.05", () => {
@@ -55,6 +55,10 @@ test("контекст: ячейки шкал", () => {
   assert.equal(c.tensionCells.length, 8);
   assert.equal(c.tensionCells.filter((x) => x.on).length, 4);
   assert.equal(c.tensionLevels.filter((x) => x.on).length, 1);
+  assert.equal(c.tensionZero, false);
+  assert.deepEqual(c.repRanks.map((x) => x.r), [0, 1, 2, 3, 4, 5]);
+  assert.equal(buildStatusContext({}).tensionZero, true);
+  assert.equal(buildStatusContext({}).repMax, 4);
   assert.equal(c.lifeCurrent.name, "Стабильность");
 });
 test("уровни жизни: пять, по порядку, названия как в таблице", () => {

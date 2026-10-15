@@ -30,6 +30,7 @@ export function makeSheetClass(Runner) {
         ngRepRank: NadgradRunner.#onRepRank,
         ngTensionCell: { handler: NadgradRunner.#onTensionCell, buttons: [0, 2] },
         ngTensionLevel: { handler: NadgradRunner.#onTensionLevel, buttons: [0, 2] },
+        ngTensionZero: NadgradRunner.#onTensionZero,
         ngTensionAdd: NadgradRunner.#onTensionAdd,
         ngLife: NadgradRunner.#onLife,
         ngNotes: NadgradRunner.#onNotes,
@@ -115,7 +116,7 @@ export function makeSheetClass(Runner) {
 
     static #onRepRank(event, target) {
       const s = this.#flags();
-      const rank = clampInt(target.dataset.rank, 1, 5);
+      const rank = clampInt(target.dataset.rank, 0, 5);
       return this.#set("rep", { rank, value: Math.min(s.rep.value, repMax(rank)) });
     }
 
@@ -129,6 +130,11 @@ export function makeSheetClass(Runner) {
       const s = this.#flags();
       const d = event.button === 2 ? -1 : 1;
       return this.#set("tension.level", clampInt(s.tension.level + d, 0, 4));
+    }
+
+    /** Кнопка «0»: сбросить уровень напряжения (показатель не трогаем, как и у кнопок 1–4). */
+    static #onTensionZero(event, target) {
+      return this.#set("tension.level", 0);
     }
 
     /** «+N»: число из поля рядом, можно отрицательное */

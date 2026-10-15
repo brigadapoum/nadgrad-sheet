@@ -3,12 +3,12 @@ import { LIFE_LEVELS, LIFE_TITLE } from "./data.mjs";
 
 export const MODULE_ID = "nadgrad";
 
-export const REP_RANKS = [1, 2, 3, 4, 5];
-/** Максимум репутации на ранге: 6 / 8 / 10 / 12 / 14. */
-export const repMax = (rank) => 4 + 2 * clampInt(rank, 1, 5);
+export const REP_RANKS = [0, 1, 2, 3, 4, 5]; // рискари стартуют с 0 ранга (автор, 2026-10-15)
+/** Максимум репутации на ранге: 6 / 8 / 10 / 12 / 14 (автор); на 0 ранге — 4, продолжение ряда (решение Claude, ждёт подтверждения). */
+export const repMax = (rank) => 4 + 2 * clampInt(rank, 0, 5);
 
 export const TENSION_STEP = 9;      // 9 очков → +1 уровень, очки с нуля
-export const TENSION_MAX_LEVEL = 4; // уровни 1–4 (0 — без напряжения)
+export const TENSION_MAX_LEVEL = 4; // уровни 0–4, рискари стартуют с 0
 export const TENSION_POINTS_MAX = TENSION_STEP - 1; // показатель 0–8
 
 export function clampInt(v, lo, hi) {
@@ -42,7 +42,7 @@ export function cellClick(current, n) {
 /** Данные Надграда из флагов актёра, с безопасными значениями по умолчанию. */
 export function readState(flags = {}) {
   const f = flags ?? {};
-  const rank = clampInt(f.rep?.rank ?? 1, 1, 5);
+  const rank = clampInt(f.rep?.rank ?? 0, 0, 5);
   return {
     cheki: clampInt(f.cheki ?? 0, -999999, 999999),
     blocked: clampInt(f.blocked ?? 0, 0, 999999),
@@ -81,6 +81,7 @@ export function buildStatusContext(actor) {
     repFull: s.rep.value >= max,
     repRanks: REP_RANKS.map((r) => ({ r, on: r === s.rep.rank })),
     tensionLevels: cells(TENSION_MAX_LEVEL, s.tension.level),
+    tensionZero: s.tension.level === 0,
     tensionCells: cells(TENSION_POINTS_MAX, s.tension.points),
     tensionStep: TENSION_STEP,
     lifeLevels: life,

@@ -317,6 +317,8 @@ body.theme-dark .application.runner-actor:not(.theme-light):not(.ng-tush) .throw
 }
 .application.runner-actor .ng-ranks button.on { background: var(--ng-act); border-color: var(--ng-act); color: var(--ng-on-acc); box-shadow: var(--ng-glow) var(--ng-act); }
 .application.runner-actor .ng-levels button.on { background: var(--ng-red); border-color: var(--ng-red); color: var(--ng-on-acc); box-shadow: var(--ng-glow) var(--ng-red); }
+/* 0 уровень напряжения — спокойный, не красный */
+.application.runner-actor .ng-levels button.ng-zero.on { background: var(--ng-ink); border-color: var(--ng-ink); color: var(--ng-bg); box-shadow: none; }
 
 /* шкалы: квадраты — репутация, ромбы — напряжение */
 .application.runner-actor .ng-track { display: flex; gap: 4px; flex-wrap: wrap; }

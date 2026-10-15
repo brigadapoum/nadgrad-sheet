@@ -79,7 +79,7 @@ test("контекст и вкладки", async () => {
   const sh = new S(makeActor());
   const ctx = await sh._prepareContext({});
   assert.equal(ctx.base, true);
-  assert.equal(ctx.ng.repMax, 6);
+  assert.equal(ctx.ng.repMax, 4);
   await sh._onRender(ctx, {});
   assert.ok(hidden(sh, "status") && !hidden(sh, "form"));
   await act(sh, "ngTab", { tab: "status" });
@@ -153,6 +153,8 @@ test("репутация: ЛКМ ставит, ПКМ снимает, в пре�
   a.flags.nadgrad.rep = { rank: 3, value: 10 };
   await act(sh, "ngRepRank", { rank: "2" });
   assert.deepEqual(a.flags.nadgrad.rep, { rank: 2, value: 8 });
+  await act(sh, "ngRepRank", { rank: "0" });
+  assert.deepEqual(a.flags.nadgrad.rep, { rank: 0, value: 4 });
 });
 test("напряжение: ромбы ЛКМ/ПКМ с переносом, уровни ЛКМ/ПКМ, +N, потолок", async () => {
   const a = makeActor({ tension: { level: 0, points: 8 } }); const sh = new S(a);
@@ -165,6 +167,10 @@ test("напряжение: ромбы ЛКМ/ПКМ с переносом, ур
   await act(sh, "ngTensionLevel", { n: "1" }, 2);
   await act(sh, "ngTensionLevel", { n: "1" }, 2);
   assert.equal(a.flags.nadgrad.tension.level, 0);
+  a.flags.nadgrad.tension = { level: 3, points: 5 };
+  await act(sh, "ngTensionZero");
+  assert.deepEqual(a.flags.nadgrad.tension, { level: 0, points: 5 });
+  a.flags.nadgrad.tension = { level: 0, points: 8 };
   const input = sh.element.querySelector("input.ng-tension-add");
   input.value = "10";
   await act(sh, "ngTensionAdd");

@@ -654,15 +654,14 @@ body.ng-ui figure.paused figcaption {
 }
 
 /* ---------- токены рискарей (окна мастера) ---------- */
-.application.ng-tokens-app .window-content,
-.application.ng-crop-app .window-content { padding: 0; }
+.application.ng-tokens-app .window-content { padding: 0; }
 .application.runner-actor .ng-gm { margin-left: auto; }
 .application.runner-actor .ng-tk-frames { display: flex; }
 .application.runner-actor .ng-tk-frames button { height: 26px; padding: 0 10px; border-radius: 0; font: 13px "Oswald", sans-serif !important; text-transform: uppercase; letter-spacing: .04em; }
 .application.runner-actor .ng-tk-frames button + button { border-left: 0; }
 .application.runner-actor .ng-tk-frames button.on { background: var(--ng-act); border-color: var(--ng-act); color: var(--ng-on-acc); }
-.application.runner-actor .ng-tk-scale-l { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
-.application.runner-actor input.ng-tk-scale { width: 64px; height: 26px; }
+.application.runner-actor .ng-tk-current { font: 500 15px "Oswald", sans-serif; letter-spacing: .05em; text-transform: uppercase; color: var(--ng-muted); }
+.application.runner-actor .ng-tk-current.ours { color: var(--ng-act); }
 .application.runner-actor .ng-tk-list { display: flex; flex-direction: column; gap: 4px; }
 .application.runner-actor .ng-tk-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 4px 6px; background: var(--ng-stripe); border-left: 3px solid var(--ng-line); }
 .application.runner-actor .ng-tk-row.done { border-left-color: var(--ng-act); }
@@ -672,12 +671,4 @@ body.ng-ui figure.paused figcaption {
 .application.runner-actor .ng-tk-owner { font-size: 10.5px; color: var(--ng-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .application.runner-actor .ng-tk-state { font-size: 11px; color: var(--ng-act); white-space: nowrap; }
 .application.runner-actor .ng-tk-state.todo { color: var(--ng-muted); }
-.application.runner-actor .ng-crop-stage {
-  align-self: center; width: 320px; height: 320px; display: flex; align-items: center; justify-content: center;
-  background: repeating-conic-gradient(var(--ng-off) 0 25%, transparent 0 50%) 0 0 / 20px 20px;
-}
-.application.runner-actor canvas.ng-crop-view { width: 320px; height: 320px; cursor: grab; touch-action: none; }
-.application.runner-actor canvas.ng-crop-view:active { cursor: grabbing; }
-.application.runner-actor .ng-crop-err { padding: 16px; font-size: 12px; color: var(--ng-red); text-align: center; }
-.application.runner-actor input.ng-crop-zoom { flex: 1; }
-.application.runner-actor input.ng-crop-zoom { accent-color: var(--ng-act); }
+

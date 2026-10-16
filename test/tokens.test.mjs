@@ -1,55 +1,39 @@
-// Токены рискарей: кадр, рамки, список, папка, шаблоны окон.
+// Кольца токенов рискарей: кольца Надграда, список, откат картинок 0.8.0, шаблон окна, спрайт-листы.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import Handlebars from "handlebars";
 import { JSDOM } from "jsdom";
 import {
-  TOKEN_VIEW, FRAMES, frameId, defaultCrop, clampCrop, sourceRect, zoomBy, playerRunners,
-  originalSrc, tokenUpdate, prototypeUpdate, rowContext, drawToken, tokenDirFor, tokenFileName,
+  RINGS, RING_DEFAULT, ringPath, isNadgradRing, playerRunners, rowContext, ringToken, ringPrototype, restorePlan,
 } from "../scripts/tokens-logic.mjs";
 
-const tpl = (n) => Handlebars.compile(readFileSync(new URL(`../templates/${n}`, import.meta.url), "utf8"));
-const near = (a, b, eps = 1e-6) => assert.ok(Math.abs(a - b) < eps, `${a} ≈ ${b}`);
+const ROOT = new URL("../", import.meta.url);
+const tpl = (n) => Handlebars.compile(readFileSync(new URL(`templates/${n}`, ROOT), "utf8"));
 
-test("рамка по умолчанию — Тушь, неизвестная тоже становится Тушью", () => {
-  assert.equal(frameId(undefined), "tush");
-  assert.equal(frameId("smog"), "smog");
-  assert.equal(frameId("чепуха"), "tush");
-  assert.deepEqual(Object.keys(FRAMES), ["tush", "smog", "none"]);
+test("кольца Надграда: Тушь по умолчанию, Смог; пути к спрайт-листам модуля", () => {
+  assert.deepEqual(Object.keys(RINGS), ["nadgradTush", "nadgradSmog"]);
+  assert.equal(RING_DEFAULT, "nadgradTush");
+  assert.equal(ringPath("nadgrad", "nadgradTush"), "modules/nadgrad/art/rings/nadgrad-tush.json");
+  assert.ok(isNadgradRing("nadgradSmog"));
+  assert.ok(!isNadgradRing("coreSteel"));
 });
 
-test("кадр: квадратная картинка при зуме 1 целиком в окне, сдвигать некуда", () => {
-  const r = sourceRect(400, 400, { zoom: 1, x: 50, y: -30 });
-  near(r.sx, 0); near(r.sy, 0); near(r.size, 400);
-  assert.deepEqual(clampCrop(400, 400, { zoom: 1, x: 50, y: -30 }), { zoom: 1, x: 0, y: 0 });
-});
-
-test("кадр: широкая картинка двигается только по горизонтали, в пределах краёв", () => {
-  const c = clampCrop(800, 400, { zoom: 1, x: 9999, y: 50 });
-  near(c.x, TOKEN_VIEW / 2); // (800·0.8 − 320)/2 = 160
-  assert.equal(c.y, 0);
-  const r = sourceRect(800, 400, c);
-  near(r.sx, 0); near(r.size, 400); // сдвиг вправо до упора — виден левый край
-});
-
-test("кадр по умолчанию у высокого портрета — ближе к верху (лицо)", () => {
-  const c = defaultCrop(400, 800);
-  assert.ok(c.y > 0);
-  const r = sourceRect(400, 800, c);
-  assert.ok(r.sy < (800 - 400) / 2, "кадр выше центра");
-  assert.ok(r.sy >= 0);
-  assert.deepEqual(defaultCrop(800, 400), { zoom: 1, x: 0, y: 0 });
-});
-
-test("зум: в пределах 1–4, точка под центром остаётся на месте", () => {
-  const c = zoomBy(400, 800, { zoom: 1, x: 0, y: 100 }, 2);
-  assert.equal(c.zoom, 2);
-  near(c.y, 200);
-  assert.equal(zoomBy(400, 400, { zoom: 3.9, x: 0, y: 0 }, 2).zoom, 4);
-  assert.equal(zoomBy(400, 400, { zoom: 1, x: 0, y: 0 }, 0.5).zoom, 1);
-  const r = sourceRect(400, 400, { zoom: 2, x: 0, y: 0 });
-  near(r.size, 200); near(r.sx, 100);
+test("спрайт-листы: все кадры размеров ядра, картинка рядом, полоса цвета и цвет по умолчанию", () => {
+  for (const id of Object.keys(RINGS)) {
+    const url = new URL(ringPath(".", id).replace(/^modules\/\.\//, ""), ROOT);
+    const j = JSON.parse(readFileSync(url, "utf8"));
+    for (const size of ["gnt", "hge", "lrg", "med", "tny"]) {
+      assert.ok(j.frames[`${size}-ring`], `${id}: ${size}-ring`);
+      assert.ok(j.frames[`${size}-ring-bkg`], `${id}: ${size}-ring-bkg`);
+      assert.ok(j.frames[`${size}-ring`].gridTarget > 0);
+    }
+    assert.ok(existsSync(new URL(j.meta.image, url)), `${id}: ${j.meta.image}`);
+    assert.ok(j.config.defaultColorBand.startRadius < j.config.defaultColorBand.endRadius);
+    assert.match(j.config.defaultRingColor, /^#[0-9A-F]{6}$/i);
+    // кадры не вылезают за лист
+    for (const f of Object.values(j.frames)) assert.ok(f.frame.x + f.frame.w <= j.meta.size.w && f.frame.h <= j.meta.size.h);
+  }
 });
 
 test("список: только рискари с владельцем-игроком, не мастером; по алфавиту", () => {
@@ -63,72 +47,45 @@ test("список: только рискари с владельцем-игро
   assert.deepEqual(playerRunners(actors, users).map((a) => a.id), ["b", "a"]);
 });
 
-test("исходник: сохранённый оригинал главнее уже испечённой картинки", () => {
-  assert.equal(originalSrc({ img: "p.jpg", prototypeToken: { texture: { src: "t.jpg" } } }), "t.jpg");
-  assert.equal(originalSrc({ img: "p.jpg", prototypeToken: { texture: { src: "baked.webp" } }, flags: { nadgrad: { token: { src: "t.jpg", out: "baked.webp" } } } }), "t.jpg");
-  assert.equal(originalSrc({ img: "p.jpg" }), "p.jpg");
-});
-
-test("что пишется в токен и в прототип: картинка, масштаб, вписать, кольцо Foundry выключено", () => {
-  assert.deepEqual(tokenUpdate("x.webp", 3), { "texture.src": "x.webp", "texture.scaleX": 3, "texture.scaleY": 3, "texture.fit": "contain", "ring.enabled": false });
-  assert.equal(prototypeUpdate("x.webp", 2)["prototypeToken.texture.scaleY"], 2);
-  assert.equal(tokenUpdate("x.webp", 0)["texture.scaleX"], 1);
-});
-
-test("папка: своя из настроек, иначе рядом с картинками мира, внешние ссылки — в папку мира", () => {
-  assert.equal(tokenDirFor("media/home/worlds/neon/art/LOG%201/a.jpg", "w1"), "media/home/worlds/neon/nadgrad-tokens");
-  assert.equal(tokenDirFor("worlds/w1/art/a.jpg", "w1", "my/dir/"), "my/dir");
-  assert.equal(tokenDirFor("https://assets.sqyre.app/worlds/x/a.jpg", "w1"), "worlds/w1/nadgrad-tokens");
-  assert.equal(tokenDirFor("icons/svg/mystery-man.svg", "w1"), "worlds/w1/nadgrad-tokens");
-  assert.equal(tokenFileName("abc", 123), "abc-123.webp");
-});
-
-test("строка списка: «готово» только если на токене стоит испечённая картинка", () => {
+test("строка списка и что пишется: только ring.enabled, картинку не трогаем", () => {
   const owners = new Map([["p1", "Лера"]]);
-  const a = { id: "a", name: "Кай", img: "p.jpg", ownership: { p1: 3, gm: 3 }, prototypeToken: { texture: { src: "out.webp" } }, flags: { nadgrad: { token: { out: "out.webp", frame: "smog" } } } };
-  assert.deepEqual(rowContext(a, owners), { id: "a", name: "Кай", thumb: "out.webp", owners: "Лера", done: true, frame: "Смог" });
-  a.prototypeToken.texture.src = "other.jpg"; // кто-то поменял картинку руками
-  assert.equal(rowContext(a, owners).done, false);
+  const a = { id: "a", name: "Кай", img: "p.jpg", ownership: { p1: 3, gm: 3 }, prototypeToken: { texture: { src: "t.jpg" }, ring: { enabled: true } } };
+  assert.deepEqual(rowContext(a, owners), { id: "a", name: "Кай", thumb: "t.jpg", owners: "Лера", ring: true });
+  assert.deepEqual(ringToken(true), { "ring.enabled": true });
+  assert.deepEqual(ringPrototype(false), { "prototypeToken.ring.enabled": false });
 });
 
-test("отрисовка: круг с картинкой, у Туши — кольцо и линия, без рамки — только круг", () => {
-  const calls = [];
-  const ctx = new Proxy({}, {
-    get: (t, k) => (k in t ? t[k] : (...args) => calls.push([k, ...args])),
-    set: (t, k, v) => { calls.push([`=${String(k)}`, v]); return true; },
-  });
-  drawToken(ctx, { width: 400, height: 600 }, 512, "tush", { zoom: 1, x: 0, y: 0 });
-  const img = calls.find((c) => c[0] === "drawImage");
-  assert.equal(img.length, 10);
-  assert.ok(calls.some((c) => c[0] === "=fillStyle" && c[1] === FRAMES.tush.ring));
-  assert.ok(calls.some((c) => c[0] === "=strokeStyle" && c[1] === FRAMES.tush.line));
-  assert.ok(!calls.some((c) => c[0] === "=shadowColor"), "у Туши нет свечения");
-  calls.length = 0;
-  drawToken(ctx, { width: 400, height: 400 }, 512, "smog", { zoom: 1, x: 0, y: 0 });
-  assert.ok(calls.some((c) => c[0] === "=shadowColor"), "у Смога свечение");
-  calls.length = 0;
-  drawToken(ctx, { width: 400, height: 400 }, 512, "none", { zoom: 1, x: 0, y: 0 });
-  assert.ok(!calls.some((c) => c[0] === "stroke" || c[0] === "fill"));
-  const dest = calls.find((c) => c[0] === "drawImage");
-  near(dest[8], 512 * 0.96); // без рамки картинка во весь круг (2% поля)
+test("откат 0.8.0: где стоит испечённая картинка — возвращаем исходник и снимаем флаг", () => {
+  const actor = {
+    prototypeToken: { texture: { src: "worlds/neon/nadgrad-tokens/a-1.webp" } },
+    flags: { nadgrad: { token: { src: "media/home/worlds/neon/art/x.jpg", out: "worlds/neon/nadgrad-tokens/a-1.webp" } } },
+  };
+  const toks = [
+    { id: "t1", texture: { src: "worlds/neon/nadgrad-tokens/a-1.webp" } },
+    { id: "t2", texture: { src: "своя-картинка.png" } }, // мастер поменял руками — не трогаем
+  ];
+  const plan = restorePlan(actor, toks);
+  assert.deepEqual(plan.proto, { "prototypeToken.texture.src": "media/home/worlds/neon/art/x.jpg", "flags.nadgrad.-=token": null });
+  assert.deepEqual(plan.tokens, [{ _id: "t1", "texture.src": "media/home/worlds/neon/art/x.jpg" }]);
+  // прототип уже поменяли руками — прототип не трогаем, флаг снимаем
+  const handFixed = restorePlan({ ...actor, prototypeToken: { texture: { src: "new.png" } } }, []);
+  assert.deepEqual(handFixed.proto, { "flags.nadgrad.-=token": null });
+  // нечего откатывать
+  assert.equal(restorePlan({ flags: {} }), null);
 });
 
-test("шаблоны окон собираются", () => {
-  const list = new JSDOM(tpl("tokens.hbs")({
-    rows: [{ id: "a", name: "Кай", thumb: "t.webp", owners: "Лера", done: true, frame: "Тушь" }, { id: "b", name: "Гонг", thumb: "g.jpg", owners: "osya", done: false }],
-    todo: 1,
-    frames: [{ id: "tush", label: "Тушь", on: true }, { id: "smog", label: "Смог" }, { id: "none", label: "Без рамки" }],
-    scale: 3,
+test("шаблон окна: кольцо мира, кнопки колец, список с переключателями", () => {
+  const doc = new JSDOM(tpl("tokens.hbs")({
+    rows: [{ id: "a", name: "Кай", thumb: "t.jpg", owners: "Лера", ring: true }, { id: "b", name: "Гонг", thumb: "g.jpg", owners: "osya", ring: false }],
+    off: 1,
+    rings: [{ id: "nadgradTush", label: "Надград — Тушь", on: true }, { id: "nadgradSmog", label: "Надград — Смог", missing: true }],
+    currentLabel: "Надград — Тушь",
+    isOurs: true,
   })).window.document;
-  assert.equal(list.querySelectorAll(".ng-tk-row").length, 2);
-  assert.ok(list.querySelector(".ng-tk-row.done"));
-  assert.equal(list.querySelector(".ng-tk-frames .on").textContent, "Тушь");
-  assert.equal(list.querySelector("input.ng-tk-scale").value, "3");
-  assert.match(list.querySelector("[data-action='batch']").textContent, /\(1\)/);
-  const crop = new JSDOM(tpl("token-crop.hbs")({ name: "Кай", frames: [{ id: "tush", label: "Тушь", on: true }], zoomPct: 100, zoomMin: 100, zoomMax: 400 })).window.document;
-  assert.ok(crop.querySelector("canvas.ng-crop-view"));
-  assert.ok(crop.querySelector("[data-action='save']"));
-  const err = new JSDOM(tpl("token-crop.hbs")({ name: "Кай", frames: [], error: "нет картинки" })).window.document;
-  assert.equal(err.querySelector("canvas"), null);
-  assert.ok(err.querySelector("[data-action='save']").disabled);
+  assert.ok(doc.querySelector(".ng-tk-current.ours"));
+  assert.equal(doc.querySelector("[data-action='worldRing'].on").dataset.ring, "nadgradTush");
+  assert.ok(doc.querySelector("[data-ring='nadgradSmog']").disabled);
+  assert.equal(doc.querySelectorAll(".ng-tk-row").length, 2);
+  assert.equal(doc.querySelector(".ng-tk-row.done [data-action='toggle']").textContent, "Снять");
+  assert.match(doc.querySelector("[data-action='allOn']").textContent, /\(1\)/);
 });

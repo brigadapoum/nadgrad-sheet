@@ -1,33 +1,39 @@
 <div class="ng-status ng-tokens">
   <section class="ng-block">
-    <h3 class="ng-h">Токены рискарей <span class="ng-val">{{rows.length}}</span><span class="ng-gm"><b>МАСТЕР</b> видит только мастер</span></h3>
-    <div class="ng-tool ng-tk-opts">
-      <span class="ng-label">Рамка</span>
-      <div class="ng-tk-frames">
-        {{#each frames}}<button type="button" data-action="defFrame" data-frame="{{id}}" class="{{#if on}}on{{/if}}">{{label}}</button>{{/each}}
-      </div>
-      <span class="ng-grow"></span>
-      <label class="ng-label ng-tk-scale-l">Масштаб на столе <input type="number" class="ng-tk-scale" min="0.25" max="10" step="0.25" value="{{scale}}"></label>
+    <h3 class="ng-h">Кольцо мира <span class="ng-gm"><b>МАСТЕР</b> видит только мастер</span></h3>
+    <div class="ng-tool">
+      <span class="ng-label">Сейчас</span>
+      <span class="ng-tk-current{{#if isOurs}} ours{{/if}}">{{currentLabel}}</span>
     </div>
     <div class="ng-tool">
-      <button type="button" class="ng-pri" data-action="batch" {{#if busy}}disabled{{/if}}{{#unless todo}} disabled{{/unless}}>{{#if busy}}Обрабатываю…{{else}}Все необработанные — по центру ({{todo}}){{/if}}</button>
-      <button type="button" class="ng-ghost" data-action="rescale">Обновить масштаб</button>
+      <span class="ng-label">Поставить</span>
+      <div class="ng-tk-frames">
+        {{#each rings}}<button type="button" data-action="worldRing" data-ring="{{id}}" class="{{#if on}}on{{/if}}" {{#if missing}}disabled title="Кольцо не подключилось — перезагрузи мир"{{/if}}>{{label}}</button>{{/each}}
+      </div>
+    </div>
+    <p class="ng-hint">Кольцо одно на весь мир — так устроен Foundry. Его же можно выбрать в «Настройки» → «Основные» → «Динамическое кольцо токена». После смены Foundry перезагружается.</p>
+  </section>
+
+  <section class="ng-block">
+    <h3 class="ng-h">Рискари игроков <span class="ng-val">{{rows.length}}</span></h3>
+    <div class="ng-tool">
+      <button type="button" class="ng-pri" data-action="allOn" {{#if busy}}disabled{{/if}}{{#unless off}} disabled{{/unless}}>{{#if busy}}Включаю…{{else}}Включить кольцо всем ({{off}}){{/if}}</button>
     </div>
     <div class="ng-tk-list">
       {{#each rows}}
-      <div class="ng-tk-row{{#if done}} done{{/if}}" data-id="{{id}}">
+      <div class="ng-tk-row{{#if ring}} done{{/if}}" data-id="{{id}}">
         <img class="ng-tk-thumb" src="{{thumb}}" alt="">
         <div class="ng-tk-body">
           <span class="ng-tk-name">{{name}}</span>
           <span class="ng-tk-owner">{{owners}}</span>
         </div>
-        {{#if done}}<span class="ng-tk-state">готово · {{frame}}</span>{{else}}<span class="ng-tk-state todo">как было</span>{{/if}}
-        <button type="button" class="ng-ghost" data-action="crop" data-id="{{id}}">Кадр</button>
+        {{#if ring}}<span class="ng-tk-state">кольцо</span>{{else}}<span class="ng-tk-state todo">без кольца</span>{{/if}}
+        <button type="button" class="ng-ghost" data-action="toggle" data-id="{{id}}">{{#if ring}}Снять{{else}}Включить{{/if}}</button>
       </div>
       {{else}}
       <p class="ng-hint">Рискарей с владельцами-игроками нет.</p>
       {{/each}}
     </div>
-    <p class="ng-hint">В списке — рискари, у которых есть владелец-игрок. «Кадр» — подвинуть и приблизить картинку в круге, выбрать рамку. Готовая картинка ставится на токен этого рискаря на всех сценах и в прототип; портрет на листе не меняется. Масштаб одинаковый у всех обработанных токенов.</p>
+    <p class="ng-hint">«Включить» ставит кольцо в прототип и во все токены рискаря на всех сценах. Картинка токена не меняется. Приблизить или отдалить лицо в кольце — в настройках токена, вкладка «Внешний вид» → «Динамическое кольцо» → «Масштаб объекта».</p>
   </section>
 </div>

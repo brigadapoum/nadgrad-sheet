@@ -77,6 +77,7 @@ Hooks.once("init", async () => {
     `modules/${MODULE_ID}/templates/status.hbs`,
     `modules/${MODULE_ID}/templates/relations.hbs`,
     `modules/${MODULE_ID}/templates/projects.hbs`,
+    `modules/${MODULE_ID}/templates/breather.hbs`,
   ]);
   console.log(`${MODULE_ID} | лист рискаря с вкладками подключён`);
 });

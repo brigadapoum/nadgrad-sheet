@@ -23,17 +23,19 @@ const SHEET_HTML = `
   <nav data-application-part="ngTabs">
    <button data-action="ngTab" data-tab="sheet"></button><button data-action="ngTab" data-tab="status"></button>
    <button data-action="ngTab" data-tab="relations"></button><button data-action="ngTab" data-tab="projects"></button>
+   <button data-action="ngTab" data-tab="breather"></button>
   </nav>
   <div data-application-part="form" class="hunted">
    <div><section class="header"><div class="options">
      <button data-action="fateChange" data-flag="CRED">CRED</button><button data-action="rollAngle"></button>
      <label><input type="checkbox" name="system.angle.hunted"></label><button data-action="fateChange" data-flag="DEBT">DEBT</button>
-   </div></section></div>
+   </div><img><h1><input name="name" type="text"><button data-action="openNotes"></button></h1></section></div>
    <section class="gears"><h3>GEAR <button data-action="gearLoadChange" class="stack">0 / 3</button></h3><p class="desc"></p></section>
   </div>
   <div data-application-part="status"><input class="ng-tension-add"></div>
   <div data-application-part="relations"></div>
   <div data-application-part="projects"></div>
+  <div data-application-part="breather"></div>
  </section>
 </form>`;
 
@@ -73,7 +75,7 @@ const part = (sh, id) => sh.element.querySelector(`[data-application-part="${id}
 const hidden = (sh, id) => part(sh, id).classList.contains("ng-hidden");
 
 test("классы, части и порядок частей", () => {
-  assert.deepEqual(Object.keys(S.PARTS), ["ngTabs", "form", "status", "relations", "projects"]);
+  assert.deepEqual(Object.keys(S.PARTS), ["ngTabs", "form", "status", "relations", "projects", "breather"]);
   assert.ok(S.DEFAULT_OPTIONS.classes.includes("runner-actor"));
 });
 test("контекст и вкладки", async () => {
@@ -447,4 +449,47 @@ test("контекст листа: отношения, проекты и арт 
   assert.equal(ctx.ng.rel.count, 1);
   assert.equal(ctx.ng.proj.items[0].src, "modules/nadgrad/art/clocks/smog/clock4-4.webp");
   assert.equal(ctx.ng.proj.items[0].full, true);
+});
+
+test("вкладка «Передышка»: переключение прячет остальные части", async () => {
+  const sh = new S(makeActor());
+  await sh._onRender({}, {});
+  assert.ok(hidden(sh, "breather"));
+  act(sh, "ngTab", { tab: "breather" });
+  assert.ok(!hidden(sh, "breather"));
+  assert.ok(hidden(sh, "form") && hidden(sh, "status") && hidden(sh, "projects"));
+  const ctx = await sh._prepareContext({});
+  assert.deepEqual(ctx.ngTabs.map((t) => t.label), ["Лист", "Статус", "Отношения", "Проекты", "Передышка"]);
+});
+
+test("мотивация: поле под именем, старое значение из досье / 1.05, своё — во флаге", async () => {
+  // своего значения нет — берём «Угол» из досье
+  const a = makeActor({}, { angle: { for: "Долг семье" } });
+  a.items = [{ type: "dossier", system: { wrf: "Ради сестры" } }];
+  const sh = new S(a);
+  await sh._onRender({}, {});
+  const why = sh.element.querySelector("section.header h1 input.ng-why");
+  assert.ok(why);
+  assert.equal(why.name, "flags.nadgrad.why");
+  assert.equal(why.value, "Ради сестры");
+  assert.equal(why.maxLength, 60);
+  // повторная перерисовка не плодит поля
+  await sh._onRender({}, {});
+  assert.equal(sh.element.querySelectorAll("input.ng-why").length, 1);
+  // без досье — «Why you running for?» листа 1.05
+  const b = new S(makeActor({}, { angle: { for: "Долг семье" } }));
+  await b._onRender({}, {});
+  assert.equal(b.element.querySelector("input.ng-why").value, "Долг семье");
+  // своё значение (даже пустое) главнее старых
+  const c = new S(makeActor({ why: "" }, { angle: { for: "Долг семье" } }));
+  await c._onRender({}, {});
+  assert.equal(c.element.querySelector("input.ng-why").value, "");
+  // отправка формы пишет во флаг актёра
+  await c.options.form.handler.call(c, { preventDefault() {} }, c.element, { object: { "flags.nadgrad.why": "Свалить из Надграда" } });
+  assert.equal(c.actor.flags.nadgrad.why, "Свалить из Надграда");
+  // лист только для чтения — поле выключено
+  const d = new S(makeActor({ why: "x" }));
+  d.isEditable = false;
+  await d._onRender({}, {});
+  assert.equal(d.element.querySelector("input.ng-why").disabled, true);
 });

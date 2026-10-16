@@ -153,3 +153,27 @@ export function augDecorate(root, { items, editable }) {
     }
   }
 }
+
+/**
+ * Мотивация («зачем рискует») — строка под именем, на тёмной плашке у портрета.
+ * Поле в форме листа: name="flags.nadgrad.why" уходит в актёра обычной отправкой формы.
+ */
+export function whyLine(root, { value, editable, max }) {
+  const h1 = root.querySelector("section.header h1");
+  if (!h1) return;
+  let input = h1.querySelector("input.ng-why");
+  if (!input) {
+    input = root.ownerDocument.createElement("input");
+    input.type = "text";
+    input.className = "ng-why";
+    input.name = "flags.nadgrad.why";
+    input.placeholder = "зачем рискует — пара слов";
+    input.title = "Зачем рискарь идёт на дело. Пара-тройка слов.";
+    input.autocomplete = "off";
+    h1.append(input);
+  }
+  input.maxLength = max;
+  if (root.ownerDocument.activeElement !== input) input.value = value ?? "";
+  input.disabled = !editable;
+  h1.classList.add("ng-has-why");
+}

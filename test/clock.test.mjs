@@ -190,12 +190,33 @@ test("шаблоны «Отношения», «Проекты», «Силы ми
   assert.equal(f.querySelectorAll(".ng-f-row").length, 2);
   assert.equal(f.querySelector(".ng-f-row .ng-f-rank .on").textContent, "III");
   assert.deepEqual([...f.querySelectorAll(".ng-f-row")[0].querySelectorAll(".ng-f-rank button")].map((b) => b.textContent), ["0", "I", "II", "III", "IV", "V", "VI"]);
-  assert.equal(f.querySelectorAll(".ng-f-row")[1].querySelector(".on"), null);
+  assert.equal(f.querySelectorAll(".ng-f-row")[1].querySelector(".ng-f-rank .on"), null);
+  assert.equal(f.querySelectorAll(".ng-f-row")[0].querySelector(".ng-f-kind .on").textContent, "Сила"); // без типа — сила
   assert.ok([...f.querySelectorAll("datalist option")].some((o) => o.value === "Места"));
 });
 
 test("силы мира: черновик → сохранение отбрасывает пустые, ранг в пределах", async () => {
   const { draftToForces } = await import("../scripts/forces.mjs");
   const out = draftToForces([{ id: "a", name: " Лига ", group: "Фракции", rank: 9 }, { id: "b", name: "", group: "", rank: 1 }, { id: "c", name: "Зера", group: "", rank: null }]);
-  assert.deepEqual(out, [{ id: "a", name: "Лига", group: "Фракции", rank: 6 }, { id: "c", name: "Зера", group: "", rank: null }]);
+  assert.deepEqual(out, [{ id: "a", name: "Лига", group: "Фракции", kind: "force", rank: 6 }, { id: "c", name: "Зера", group: "", kind: "force", rank: null }]);
+});
+
+test("силы мира: тип «Сила / Персона» — выбор в окне, пометка у рискаря и в списке", async () => {
+  const { draftToForces, forcesContext } = await import("../scripts/forces.mjs");
+  const { relContext, readRelations } = await import("../scripts/logic.mjs");
+  const forces = draftToForces([{ id: "liga", name: "Лига", group: "Фракции", kind: "force", rank: 3 }, { id: "z", name: "Зера", group: "Люди", kind: "person", rank: 1 }, { id: "x", name: "Икс", kind: "чепуха" }]);
+  assert.deepEqual(forces.map((f) => f.kind), ["force", "person", "force"]);
+  const f = new JSDOM(tpl("forces.hbs")(forcesContext(forces))).window.document;
+  assert.deepEqual([...f.querySelectorAll(".ng-f-row")[1].querySelectorAll(".ng-f-kind button")].map((b) => [b.dataset.kind, b.classList.contains("on")]), [["force", false], ["person", true]]);
+  const rel = relContext(readRelations({ relations: [{ id: "z", v: 1 }, { id: "liga", v: 1 }] }), forces);
+  const r = new JSDOM(tpl("relations.hbs")({ ng: { rel }, ngEditable: true })).window.document;
+  const names = [...r.querySelectorAll(".ng-rel-name")];
+  assert.equal(names.find((n) => n.textContent.includes("Зера")).querySelector(".ng-kind").textContent, "перс");
+  assert.equal(names.find((n) => n.textContent.includes("Лига")).querySelector(".ng-kind"), null);
+  assert.ok([...r.querySelectorAll("select.ng-rel-pick option")].some((o) => o.textContent.startsWith("Зера · персона · ранг I")));
+});
+
+test("шаблон «Передышка» собирается", () => {
+  const d = new JSDOM(tpl("breather.hbs")({})).window.document;
+  assert.equal(d.querySelector(".ng-breather .ng-h").textContent, "Передышка");
 });

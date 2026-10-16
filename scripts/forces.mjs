@@ -1,5 +1,5 @@
 // Окно мастера «Силы мира»: общий список сил с группами и рангами (настройка мира nadgrad.forces).
-import { MODULE_ID, FORCE_RANKS, FORCE_GROUPS, normForces, newId, romanRank } from "./logic.mjs";
+import { MODULE_ID, FORCE_RANKS, FORCE_GROUPS, FORCE_KINDS, forceKind, normForces, newId, romanRank } from "./logic.mjs";
 
 export const readForces = () => {
   try { return normForces(game.settings.get(MODULE_ID, "forces")); } catch { return []; }
@@ -7,13 +7,17 @@ export const readForces = () => {
 
 /** Черновик строк окна → то, что сохраняется. Пустые названия отбрасываются. */
 export function draftToForces(rows) {
-  return normForces(rows.map((r) => ({ id: r.id, name: r.name, group: r.group, rank: r.rank })));
+  return normForces(rows.map((r) => ({ id: r.id, name: r.name, group: r.group, kind: r.kind, rank: r.rank })));
 }
 
 export function forcesContext(rows) {
   const groups = [...new Set([...FORCE_GROUPS, ...rows.map((r) => r.group).filter(Boolean)])];
   return {
-    rows: rows.map((r) => ({ ...r, ranks: FORCE_RANKS.map((x) => ({ r: x, text: romanRank(x), on: r.rank === x })) })),
+    rows: rows.map((r) => ({
+      ...r,
+      kinds: FORCE_KINDS.map((k) => ({ ...k, on: forceKind(r.kind) === k.id })),
+      ranks: FORCE_RANKS.map((x) => ({ r: x, text: romanRank(x), on: r.rank === x })),
+    })),
     groups,
   };
 }
@@ -26,9 +30,9 @@ export function makeForcesApp() {
       tag: "form",
       classes: ["nadgrad", "ng-forces-app", "application", "runner-actor"],
       window: { title: "Силы Надграда — настройка мира", icon: "fa-solid fa-people-group", resizable: true },
-      position: { width: 600, height: 620 },
+      position: { width: 720, height: 620 },
       form: { handler: ForcesApp.#onSave, submitOnChange: false, closeOnSubmit: false },
-      actions: { add: ForcesApp.#onAdd, del: ForcesApp.#onDel, rank: ForcesApp.#onRank },
+      actions: { add: ForcesApp.#onAdd, del: ForcesApp.#onDel, rank: ForcesApp.#onRank, kind: ForcesApp.#onKind },
     };
     static PARTS = { body: { template: `modules/${MODULE_ID}/templates/forces.hbs`, scrollable: [""] } };
 
@@ -55,7 +59,8 @@ export function makeForcesApp() {
 
     static #onAdd() {
       this.#capture();
-      this._rows.push({ id: newId(), name: "", group: this._rows.at(-1)?.group ?? FORCE_GROUPS[0], rank: null });
+      const last = this._rows.at(-1);
+      this._rows.push({ id: newId(), name: "", group: last?.group ?? FORCE_GROUPS[0], kind: forceKind(last?.kind), rank: null });
       this.render().then(() => this.element.querySelector("[data-row]:last-of-type .ng-f-name")?.focus());
     }
 
@@ -72,6 +77,14 @@ export function makeForcesApp() {
       if (!row) return;
       const r = Number(target.dataset.rank);
       row.rank = row.rank === r ? null : r;
+      this.render();
+    }
+
+    static #onKind(event, target) {
+      this.#capture();
+      const row = this._rows.find((r) => r.id === target.closest("[data-row]")?.dataset.row);
+      if (!row) return;
+      row.kind = forceKind(target.dataset.kind);
       this.render();
     }
 

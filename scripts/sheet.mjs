@@ -1,15 +1,16 @@
 // Лист рискаря Надграда: наследник листа системы CBR+PNK 1.1+ (ApplicationV2).
-// Родной лист не трогаем — добавляем к нему две части: полосу вкладок и экран «Статус».
+// Родной лист не трогаем — добавляем к нему полосу вкладок и экраны «Статус», «Отношения», «Проекты», «Передышка».
 import {
   MODULE_ID, buildStatusContext, readState, repMax, tensionAdd, clampInt,
   LOAD_LEVELS, loadStep, loadIndex, gearLoad, isExtraLoad, blockStep, splitAugFields,
   readRelations, relContext, readProjects, projContext, splitListFields, projSize, newId, REL_LIMIT,
+  readWhy, WHY_MAX,
 } from "./logic.mjs";
 import { readForces, openForces } from "./forces.mjs";
 import { CLOCK_TYPE, CLOCK_FOLDER } from "./clock-logic.mjs";
 import {
   tidyHeader, applyThemeClass, effectiveTheme, loadButton,
-  noSubmitButtons, enterBlurs, dicePlus, augDecorate,
+  noSubmitButtons, enterBlurs, dicePlus, augDecorate, whyLine,
 } from "./dom.mjs";
 
 const themeSetting = () => {
@@ -21,8 +22,9 @@ const TABS = [
   { id: "status", label: "Статус" },
   { id: "relations", label: "Отношения" },
   { id: "projects", label: "Проекты" },
+  { id: "breather", label: "Передышка" },
 ];
-const PART_OF_TAB = { sheet: "form", status: "status", relations: "relations", projects: "projects" };
+const PART_OF_TAB = { sheet: "form", status: "status", relations: "relations", projects: "projects", breather: "breather" };
 
 export function makeSheetClass(Runner) {
   return class NadgradRunner extends Runner {
@@ -72,6 +74,7 @@ export function makeSheetClass(Runner) {
       status: { template: `modules/${MODULE_ID}/templates/status.hbs` },
       relations: { template: `modules/${MODULE_ID}/templates/relations.hbs` },
       projects: { template: `modules/${MODULE_ID}/templates/projects.hbs` },
+      breather: { template: `modules/${MODULE_ID}/templates/breather.hbs` },
     };
 
     /** Открытая вкладка живёт в экземпляре листа и переживает перерисовки. */
@@ -204,6 +207,7 @@ export function makeSheetClass(Runner) {
       const theme = themeSetting();
       applyThemeClass(root, theme);
       tidyHeader(root, { active: effectiveTheme(root, theme) });
+      whyLine(root, { value: readWhy(this.actor), editable: this.isEditable, max: WHY_MAX });
       augDecorate(root, { items: this.actor.items, editable: this.isEditable });
       dicePlus(root);
       noSubmitButtons(root);

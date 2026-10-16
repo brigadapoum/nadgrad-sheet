@@ -258,9 +258,9 @@ body.theme-dark .application.runner-actor:not(.theme-light):not(.ng-tush) .throw
   background: var(--ng-header); border-bottom: 2px solid var(--ng-act);
 }
 .application.runner-actor .ng-tabs button {
-  flex: 1; background: transparent; border: 0; border-radius: 0; padding: 6px 4px 5px;
+  flex: 1 1 auto; min-width: 0; background: transparent; border: 0; border-radius: 0; padding: 6px 2px 5px;
   color: var(--ng-header-ink); opacity: .6; font-family: "Oswald", sans-serif !important;
-  text-transform: uppercase; letter-spacing: .08em; font-size: 14px;
+  text-transform: uppercase; letter-spacing: .04em; font-size: 13px; white-space: nowrap;
 }
 .application.runner-actor .ng-tabs button:hover { opacity: .9; }
 .application.runner-actor .ng-tabs button.active { opacity: 1; background: var(--ng-act); color: var(--ng-on-acc); }
@@ -620,10 +620,35 @@ body.ng-ui figure.paused figcaption {
 /* ---------- окно мастера «Силы мира» ---------- */
 .application.ng-forces-app .window-content { padding: 0; }
 .application.runner-actor .ng-f-head,
-.application.runner-actor .ng-f-row { display: grid; grid-template-columns: minmax(0, 1fr) 96px auto 22px; gap: 6px; align-items: center; }
+.application.runner-actor .ng-f-row { display: grid; grid-template-columns: minmax(0, 1fr) 132px 96px 194px 22px; gap: 6px; align-items: center; }
 .application.runner-actor .ng-f-head { font: 500 10px "Oswald", sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--ng-muted); }
 .application.runner-actor .ng-f-row { padding: 4px 0; border-bottom: 1px dashed var(--ng-line); }
 .application.runner-actor .ng-f-row input[type="text"] { width: 100%; min-width: 0; height: 26px; }
 .application.runner-actor .ng-f-rank { display: flex; gap: 2px; }
 .application.runner-actor .ng-f-rank button { width: 26px; height: 24px; padding: 0; font: 13px "Oswald", sans-serif !important; }
 .application.runner-actor .ng-f-rank button.on { background: var(--ng-sign); border-color: var(--ng-sign); color: var(--ng-sign-ink); }
+
+/* ---------- мотивация под именем ---------- */
+.application.runner-actor section.header h1.ng-has-why { flex-wrap: wrap; }
+.application.runner-actor section.header h1.ng-has-why > input[name="name"] { flex: 1 1 0; min-width: 0; padding-bottom: 2px; }
+.application.runner-actor section.header h1 input.ng-why {
+  flex: 0 0 100%; order: 3; box-sizing: border-box; height: 24px; margin: 0; padding: 0 18px 6px;
+  background: transparent; border: 0; border-radius: 0; outline: none;
+  font: italic 400 12.5px "IBM Plex Mono", monospace !important; letter-spacing: .02em; text-transform: none;
+  color: var(--ng-sign); text-shadow: none;
+}
+.application.runner-actor section.header h1 input.ng-why::placeholder { color: var(--ng-overlay-ink); opacity: .45; }
+.application.runner-actor section.header h1 input.ng-why:hover:not(:disabled) { box-shadow: inset 0 -1px 0 rgb(255 255 255 / .18); }
+.application.runner-actor section.header h1 input.ng-why:focus { box-shadow: inset 0 -1px 0 var(--ng-act); }
+.application.runner-actor section.header h1 input.ng-why:disabled { cursor: default; }
+
+/* ---------- сила / персона ---------- */
+.application.runner-actor .ng-f-kind { display: flex; gap: 0; }
+.application.runner-actor .ng-f-kind button { flex: 1; }
+.application.runner-actor .ng-f-kind button { height: 24px; padding: 0 7px; font: 12px "Oswald", sans-serif !important; text-transform: uppercase; letter-spacing: .04em; border-radius: 0; }
+.application.runner-actor .ng-f-kind button + button { border-left: 0; }
+.application.runner-actor .ng-f-kind button.on { background: var(--ng-act); border-color: var(--ng-act); color: var(--ng-on-acc); }
+.application.runner-actor .ng-rel-name em.ng-kind {
+  font: 500 9px "Oswald", sans-serif; font-style: normal; letter-spacing: .08em; vertical-align: 2px;
+  margin-right: 6px; padding: 1px 4px; border: 1px solid var(--ng-line); color: var(--ng-muted);
+}

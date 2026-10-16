@@ -178,6 +178,10 @@ const ROMAN = ["0", "I", "II", "III", "IV", "V", "VI"];
 /** Ранг римскими: 0 так и остаётся «0» (римского нуля нет). */
 export const romanRank = (r) => (r === null || r === undefined ? "?" : ROMAN[r] ?? String(r));
 export const FORCE_GROUPS = ["Фракции", "Люди", "Места"];
+/** Тип записи в списке мастера: сила или персона (автор, 2026-10-16). По умолчанию — сила. */
+export const FORCE_KINDS = [{ id: "force", label: "Сила" }, { id: "person", label: "Персона" }];
+export const forceKind = (k) => (k === "person" ? "person" : "force");
+export const kindLabel = (k) => (forceKind(k) === "person" ? "Персона" : "Сила");
 export const REL_LIMIT = 3; // отношения −3…+3 (автор, 2026-10-16)
 
 export function newId() {
@@ -195,6 +199,7 @@ export function normForces(list) {
       id: String(f?.id || newId()),
       name,
       group: String(f?.group ?? "").trim(),
+      kind: forceKind(f?.kind),
       rank: r === null || r === undefined || r === "" ? null : clampInt(r, FORCE_RANKS[0], FORCE_RANKS.at(-1)),
     });
   }
@@ -228,6 +233,8 @@ export function relContext(relations, forces) {
       label: f?.name ?? r.name ?? "?",
       rank: f ? f.rank : null,
       rankText: romanRank(f ? f.rank : null),
+      kind: f ? f.kind : "force",
+      isPerson: !!f && f.kind === "person",
       hasRank: !!f && f.rank !== null,
       missing: !f,
       vText: fmtRel(r.v),
@@ -249,7 +256,7 @@ export function relContext(relations, forces) {
     if (!groups.has(g)) groups.set(g, []);
     groups.get(g).push({
       id: f.id,
-      label: `${f.name}${f.rank !== null ? ` · ранг ${romanRank(f.rank)}` : ""}${have.has(f.id) ? " (уже есть)" : ""}`,
+      label: `${f.name}${f.kind === "person" ? " · персона" : ""}${f.rank !== null ? ` · ранг ${romanRank(f.rank)}` : ""}${have.has(f.id) ? " (уже есть)" : ""}`,
       disabled: have.has(f.id),
     });
   }
@@ -301,4 +308,20 @@ export function splitListFields(data = {}, prefix) {
     delete data[prefix];
   }
   return out;
+}
+
+// ---------- Мотивация («зачем рискует») ----------
+
+export const WHY_MAX = 60;
+
+/**
+ * Мотивация на листе — пара-тройка слов у аватарки. Живёт во флаге nadgrad.why.
+ * Пока флага нет, показываем то, что было: «Угол» из досье 1.2 или «Why you running for?» листа 1.05.
+ */
+export function readWhy(actor) {
+  const own = actor?.flags?.[MODULE_ID]?.why;
+  if (typeof own === "string") return own;
+  const items = Array.from(actor?.items ?? []);
+  const dossier = items.find((i) => i.type === "dossier");
+  return String(dossier?.system?.wrf || actor?.system?.angle?.for || "").trim();
 }

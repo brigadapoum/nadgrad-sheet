@@ -8,7 +8,7 @@ export const TOKEN_DIR_DEFAULT = (worldId) => `worlds/${worldId}/nadgrad-tokens`
 
 /** Рамки. inner — доля радиуса, внутри которой картинка; рамка рисуется кольцом снаружи. */
 export const FRAMES = {
-  tush: { label: "Тушь", ring: "#1C1814", line: "#A64F2B", glow: null, inner: 0.86 },
+  tush: { label: "Тушь", ring: "#1C1814", line: "#A64F2B", glow: null, inner: 0.86 }, // по умолчанию (автор, 2026-10-16)
   smog: { label: "Смог", ring: "#100C0A", line: "#E0763A", glow: "rgba(224,118,58,.85)", inner: 0.86 },
   none: { label: "Без рамки", ring: null, line: null, glow: null, inner: 1 },
 };
@@ -38,7 +38,8 @@ export function clampCrop(w, h, { zoom, x, y }) {
   const s = viewScale(w, h, z);
   const mx = Math.max(0, (w * s - TOKEN_VIEW) / 2);
   const my = Math.max(0, (h * s - TOKEN_VIEW) / 2);
-  return { zoom: z, x: clamp(Number(x) || 0, -mx, mx), y: clamp(Number(y) || 0, -my, my) };
+  // + 0 — без «минус нуля» (−0) в сохранённых данных
+  return { zoom: z, x: clamp(Number(x) || 0, -mx, mx) + 0, y: clamp(Number(y) || 0, -my, my) + 0 };
 }
 
 /** Какой квадрат исходной картинки попадает в окно: { sx, sy, size } в px исходника. */
@@ -106,4 +107,54 @@ export function rowContext(actor, ownersById) {
     done: !!f?.out && f.out === actor.prototypeToken?.texture?.src,
     frame: f?.frame ? FRAMES[frameId(f.frame)].label : "",
   };
+}
+
+/**
+ * Нарисовать токен на холсте N×N: картинка в круге + кольцо рамки (как на эскизе 2026-10-16).
+ * img — что угодно с width/height, что принимает drawImage; crop — { zoom, x, y } в px окна.
+ */
+export function drawToken(ctx, img, N, frame, crop) {
+  const f = FRAMES[frameId(frame)];
+  const { sx, sy, size } = sourceRect(img.width, img.height, crop);
+  const c = N / 2;
+  const R = N / 2 - N * 0.02;
+  const ri = R * f.inner;
+  ctx.clearRect(0, 0, N, N);
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(c, c, ri, 0, Math.PI * 2);
+  ctx.clip();
+  // квадрат кадра (окно) вписан в круг рамки: сторона окна = диаметр картинки
+  ctx.drawImage(img, sx, sy, size, size, c - ri, c - ri, ri * 2, ri * 2);
+  ctx.restore();
+  if (!f.ring) return;
+  ctx.beginPath();
+  ctx.arc(c, c, R, 0, Math.PI * 2);
+  ctx.arc(c, c, ri, 0, Math.PI * 2, true);
+  ctx.fillStyle = f.ring;
+  ctx.fill("evenodd");
+  ctx.save();
+  if (f.glow) { ctx.shadowColor = f.glow; ctx.shadowBlur = N * 0.04; }
+  ctx.beginPath();
+  ctx.arc(c, c, ri + (R - ri) * 0.42, 0, Math.PI * 2);
+  ctx.lineWidth = Math.max(1.5, N * 0.012);
+  ctx.strokeStyle = f.line;
+  ctx.stroke();
+  ctx.restore();
+}
+
+/**
+ * Куда класть готовые токены. Своя папка из настроек — главнее; иначе рядом с картинкой:
+ * «…/worlds/<мир>/art/x.jpg» → «…/worlds/<мир>/nadgrad-tokens». Внешние ссылки (https://…) не годятся.
+ */
+export function tokenDirFor(src, worldId, setting = "") {
+  const own = String(setting ?? "").trim().replace(/\/+$/, "");
+  if (own) return own;
+  let path = String(src ?? "");
+  try { path = decodeURIComponent(path); } catch { /* как есть */ }
+  if (!/^[a-z]+:\/\//i.test(path)) {
+    const m = path.match(/^(.*?worlds\/[^/]+)\//);
+    if (m) return `${m[1]}/nadgrad-tokens`;
+  }
+  return TOKEN_DIR_DEFAULT(worldId);
 }

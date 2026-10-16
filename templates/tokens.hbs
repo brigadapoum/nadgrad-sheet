@@ -1,0 +1,33 @@
+<div class="ng-status ng-tokens">
+  <section class="ng-block">
+    <h3 class="ng-h">Токены рискарей <span class="ng-val">{{rows.length}}</span><span class="ng-gm"><b>МАСТЕР</b> видит только мастер</span></h3>
+    <div class="ng-tool ng-tk-opts">
+      <span class="ng-label">Рамка</span>
+      <div class="ng-tk-frames">
+        {{#each frames}}<button type="button" data-action="defFrame" data-frame="{{id}}" class="{{#if on}}on{{/if}}">{{label}}</button>{{/each}}
+      </div>
+      <span class="ng-grow"></span>
+      <label class="ng-label ng-tk-scale-l">Масштаб на столе <input type="number" class="ng-tk-scale" min="0.25" max="10" step="0.25" value="{{scale}}"></label>
+    </div>
+    <div class="ng-tool">
+      <button type="button" class="ng-pri" data-action="batch" {{#if busy}}disabled{{/if}}{{#unless todo}} disabled{{/unless}}>{{#if busy}}Обрабатываю…{{else}}Все необработанные — по центру ({{todo}}){{/if}}</button>
+      <button type="button" class="ng-ghost" data-action="rescale">Обновить масштаб</button>
+    </div>
+    <div class="ng-tk-list">
+      {{#each rows}}
+      <div class="ng-tk-row{{#if done}} done{{/if}}" data-id="{{id}}">
+        <img class="ng-tk-thumb" src="{{thumb}}" alt="">
+        <div class="ng-tk-body">
+          <span class="ng-tk-name">{{name}}</span>
+          <span class="ng-tk-owner">{{owners}}</span>
+        </div>
+        {{#if done}}<span class="ng-tk-state">готово · {{frame}}</span>{{else}}<span class="ng-tk-state todo">как было</span>{{/if}}
+        <button type="button" class="ng-ghost" data-action="crop" data-id="{{id}}">Кадр</button>
+      </div>
+      {{else}}
+      <p class="ng-hint">Рискарей с владельцами-игроками нет.</p>
+      {{/each}}
+    </div>
+    <p class="ng-hint">В списке — рискари, у которых есть владелец-игрок. «Кадр» — подвинуть и приблизить картинку в круге, выбрать рамку. Готовая картинка ставится на токен этого рискаря на всех сценах и в прототип; портрет на листе не меняется. Масштаб одинаковый у всех обработанных токенов.</p>
+  </section>
+</div>

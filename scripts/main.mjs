@@ -4,14 +4,17 @@
 // 3) Чат (карточки бросков) и пауза — в той же теме, что и лист.
 // 4) Разовый архив старых заметок 1.05 (Why you running for / DETAILS) в журнал.
 // 5) Счётчики (часы): актёр «Счётчик», токен на сцене, заполнение мышкой (scripts/clock.mjs).
+// 6) Токены рискарей: кадр в круге и рамка Надграда, только мастер (scripts/tokens.mjs).
 import { MODULE_ID } from "./logic.mjs";
 import { registerArchive } from "./archive.mjs";
 import { applyUiTheme } from "./dom.mjs";
 import { registerClocks } from "./clock.mjs";
 import { forcesAppClass } from "./forces.mjs";
+import { registerTokens } from "./tokens.mjs";
 
 registerArchive();
 registerClocks();
+registerTokens();
 
 // Тема листа — для каждого браузера своя. «Как в Foundry» — по светлой/тёмной теме интерфейса.
 Hooks.once("init", () => {

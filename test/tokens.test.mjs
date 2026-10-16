@@ -6,6 +6,8 @@ import Handlebars from "handlebars";
 import { JSDOM } from "jsdom";
 import {
   RINGS, RING_DEFAULT, ringPath, isNadgradRing, playerRunners, rowContext, ringToken, ringPrototype, restorePlan,
+  CUT_R, TOKEN_VIEW, clampCrop, defaultCrop, sourceRect, zoomBy, drawCutout, cutDir, cutFileName, uploadedPath,
+  cutToken, cutPrototype, uncutToken, uncutPrototype,
 } from "../scripts/tokens-logic.mjs";
 
 const ROOT = new URL("../", import.meta.url);
@@ -50,7 +52,9 @@ test("список: только рискари с владельцем-игро
 test("строка списка и что пишется: только ring.enabled, картинку не трогаем", () => {
   const owners = new Map([["p1", "Лера"]]);
   const a = { id: "a", name: "Кай", img: "p.jpg", ownership: { p1: 3, gm: 3 }, prototypeToken: { texture: { src: "t.jpg" }, ring: { enabled: true } } };
-  assert.deepEqual(rowContext(a, owners), { id: "a", name: "Кай", thumb: "t.jpg", owners: "Лера", ring: true });
+  assert.deepEqual(rowContext(a, owners), { id: "a", name: "Кай", thumb: "t.jpg", owners: "Лера", ring: true, cut: false });
+  a.prototypeToken.ring.subject = { texture: "worlds/neon/nadgrad-tokens/a-1.webp" };
+  assert.equal(rowContext(a, owners).cut, true);
   assert.deepEqual(ringToken(true), { "ring.enabled": true });
   assert.deepEqual(ringPrototype(false), { "prototypeToken.ring.enabled": false });
 });
@@ -76,8 +80,9 @@ test("откат 0.8.0: где стоит испечённая картинка 
 
 test("шаблон окна: кольцо мира, кнопки колец, список с переключателями", () => {
   const doc = new JSDOM(tpl("tokens.hbs")({
-    rows: [{ id: "a", name: "Кай", thumb: "t.jpg", owners: "Лера", ring: true }, { id: "b", name: "Гонг", thumb: "g.jpg", owners: "osya", ring: false }],
-    off: 1,
+    rows: [{ id: "a", name: "Кай", thumb: "t.jpg", owners: "Лера", ring: true, cut: true }, { id: "b", name: "Гонг", thumb: "g.jpg", owners: "osya", ring: false, cut: false }],
+    todo: 1,
+    dir: "worlds/neon/nadgrad-tokens",
     rings: [{ id: "nadgradTush", label: "Надград — Тушь", on: true }, { id: "nadgradSmog", label: "Надград — Смог", missing: true }],
     currentLabel: "Надград — Тушь",
     isOurs: true,
@@ -86,6 +91,63 @@ test("шаблон окна: кольцо мира, кнопки колец, с�
   assert.equal(doc.querySelector("[data-action='worldRing'].on").dataset.ring, "nadgradTush");
   assert.ok(doc.querySelector("[data-ring='nadgradSmog']").disabled);
   assert.equal(doc.querySelectorAll(".ng-tk-row").length, 2);
-  assert.equal(doc.querySelector(".ng-tk-row.done [data-action='toggle']").textContent, "Снять");
-  assert.match(doc.querySelector("[data-action='allOn']").textContent, /\(1\)/);
+  assert.ok(doc.querySelector(".ng-tk-row.done [data-action='remove']"));
+  assert.equal(doc.querySelector(".ng-tk-row:not(.done) [data-action='remove']"), null, "без кольца снимать нечего");
+  assert.equal(doc.querySelectorAll("[data-action='cut']").length, 2);
+  assert.match(doc.querySelector("[data-action='allCut']").textContent, /\(1\)/);
+  assert.match(doc.body.textContent, /worlds\/neon\/nadgrad-tokens/);
+});
+
+test("вырез: квадрат при зуме 1 целиком в круге; широкий двигается только вбок; высокий — ближе к верху", () => {
+  const r = sourceRect(400, 400, { zoom: 1, x: 50, y: -30 });
+  assert.deepEqual([r.sx, r.sy, r.size], [0, 0, 400]);
+  const c = clampCrop(800, 400, { zoom: 1, x: 9999, y: 50 });
+  assert.equal(c.x, TOKEN_VIEW / 2); assert.equal(c.y, 0);
+  const d = defaultCrop(400, 800);
+  assert.ok(d.y > 0 && sourceRect(400, 800, d).sy < 200);
+  assert.deepEqual(defaultCrop(800, 400), { zoom: 1, x: 0, y: 0 });
+  assert.equal(zoomBy(400, 400, { zoom: 3.9, x: 0, y: 0 }, 2).zoom, 4);
+  assert.equal(zoomBy(400, 800, { zoom: 1, x: 0, y: 100 }, 2).y, 200);
+});
+
+test("вырез: рисуется кругом под внутренний край кольца, снаружи прозрачно", () => {
+  const calls = [];
+  const ctx = new Proxy({}, { get: (t, k) => (...a) => calls.push([k, ...a]), set: () => true });
+  drawCutout(ctx, { width: 400, height: 600 }, 512, { zoom: 1, x: 0, y: 0 });
+  assert.equal(calls[0][0], "clearRect");
+  const arc = calls.find((c) => c[0] === "arc");
+  assert.equal(arc[3], 256 * CUT_R);
+  assert.ok(CUT_R > 0.667 && CUT_R < 0.7, "чуть заходит под кольцо Надграда (0.667)");
+  const img = calls.find((c) => c[0] === "drawImage");
+  assert.equal(img[8], 2 * 256 * CUT_R);
+});
+
+test("загрузка: путь только при успехе; папка — данные Foundry, без «media/home/»", () => {
+  assert.equal(uploadedPath({ status: "success", path: "worlds/neon/nadgrad-tokens/a.webp" }), "worlds/neon/nadgrad-tokens/a.webp");
+  assert.equal(uploadedPath({ status: "error", path: "worlds/neon/x.webp", message: "Target directory … does not exist" }), null);
+  assert.equal(uploadedPath(undefined), null);
+  assert.equal(uploadedPath(false), null);
+  assert.equal(uploadedPath({ path: "" }), null);
+  assert.equal(cutDir("neon"), "worlds/neon/nadgrad-tokens");
+  assert.equal(cutDir("neon", "/my/dir/"), "my/dir");
+  assert.equal(cutFileName("abc", 1), "abc-1.webp");
+});
+
+test("вырез пишется в объект кольца, основная картинка токена не трогается; «снять» — обратно", () => {
+  const t = cutToken("worlds/neon/nadgrad-tokens/a.webp");
+  assert.deepEqual(t, { "ring.enabled": true, "ring.subject.texture": "worlds/neon/nadgrad-tokens/a.webp", "ring.subject.scale": 1 });
+  assert.ok(!Object.keys(t).some((k) => k.startsWith("texture.")), "texture.src не меняется");
+  assert.ok(Object.keys(cutPrototype("x")).every((k) => k.startsWith("prototypeToken.ring.")));
+  assert.deepEqual(uncutToken(), { "ring.enabled": false, "ring.subject.texture": null });
+  assert.deepEqual(uncutPrototype(), { "prototypeToken.ring.enabled": false, "prototypeToken.ring.subject.texture": null });
+  assert.deepEqual(ringToken(true), { "ring.enabled": true });
+  assert.deepEqual(ringPrototype(false), { "prototypeToken.ring.enabled": false });
+});
+
+test("шаблон кадра собирается; при ошибке — без холста и без «На стол»", () => {
+  const ok = new JSDOM(tpl("token-crop.hbs")({ name: "Кай", zoomPct: 100, zoomMin: 100, zoomMax: 400 })).window.document;
+  assert.ok(ok.querySelector("canvas.ng-crop-view"));
+  const err = new JSDOM(tpl("token-crop.hbs")({ name: "Кай", error: "нет картинки" })).window.document;
+  assert.equal(err.querySelector("canvas"), null);
+  assert.ok(err.querySelector("[data-action='save']").disabled);
 });

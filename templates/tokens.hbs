@@ -17,23 +17,26 @@
   <section class="ng-block">
     <h3 class="ng-h">Рискари игроков <span class="ng-val">{{rows.length}}</span></h3>
     <div class="ng-tool">
-      <button type="button" class="ng-pri" data-action="allOn" {{#if busy}}disabled{{/if}}{{#unless off}} disabled{{/unless}}>{{#if busy}}Включаю…{{else}}Включить кольцо всем ({{off}}){{/if}}</button>
+      <button type="button" class="ng-pri" data-action="allCut" {{#if busy}}disabled{{/if}}{{#unless todo}} disabled{{/unless}}>{{#if busy}}Вырезаю…{{else}}Вырезать всех по центру ({{todo}}){{/if}}</button>
     </div>
     <div class="ng-tk-list">
       {{#each rows}}
-      <div class="ng-tk-row{{#if ring}} done{{/if}}" data-id="{{id}}">
+      <div class="ng-tk-row{{#if cut}} done{{/if}}" data-id="{{id}}">
         <img class="ng-tk-thumb" src="{{thumb}}" alt="">
         <div class="ng-tk-body">
           <span class="ng-tk-name">{{name}}</span>
           <span class="ng-tk-owner">{{owners}}</span>
         </div>
-        {{#if ring}}<span class="ng-tk-state">кольцо</span>{{else}}<span class="ng-tk-state todo">без кольца</span>{{/if}}
-        <button type="button" class="ng-ghost" data-action="toggle" data-id="{{id}}">{{#if ring}}Снять{{else}}Включить{{/if}}</button>
+        {{#if cut}}<span class="ng-tk-state">в кольце</span>{{else}}{{#if ring}}<span class="ng-tk-state todo">кольцо без выреза</span>{{else}}<span class="ng-tk-state todo">без кольца</span>{{/if}}{{/if}}
+        <span class="ng-tk-btns">
+          <button type="button" class="ng-ghost" data-action="cut" data-id="{{id}}">Вырез</button>
+          {{#if ring}}<button type="button" class="ng-ghost" data-action="remove" data-id="{{id}}" title="Выключить кольцо и убрать вырез">Снять</button>{{/if}}
+        </span>
       </div>
       {{else}}
       <p class="ng-hint">Рискарей с владельцами-игроками нет.</p>
       {{/each}}
     </div>
-    <p class="ng-hint">«Включить» ставит кольцо в прототип и во все токены рискаря на всех сценах. Картинка токена не меняется. Приблизить или отдалить лицо в кольце — в настройках токена, вкладка «Внешний вид» → «Динамическое кольцо» → «Масштаб объекта».</p>
+    <p class="ng-hint">Foundry не обрезает картинку под кольцо сам — ему нужен круглый «вырез». «Вырез» — подвинуть и приблизить картинку в круге; вырез ложится в папку «{{dir}}» и ставится как объект кольца в прототип и во все токены рискаря на всех сценах. Основная картинка токена и портрет не меняются. Если вырез не загрузился или не открывается — токен не трогается. Сначала попробуй на одном рискаре.</p>
   </section>
 </div>

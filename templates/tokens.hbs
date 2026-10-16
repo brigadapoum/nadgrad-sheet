@@ -19,6 +19,12 @@
     <div class="ng-tool">
       <button type="button" class="ng-pri" data-action="allCut" {{#if busy}}disabled{{/if}}{{#unless todo}} disabled{{/unless}}>{{#if busy}}Вырезаю…{{else}}Вырезать всех по центру ({{todo}}){{/if}}</button>
     </div>
+    <div class="ng-tool ng-tk-scale-row">
+      <label class="ng-label ng-tk-scale-l" for="ng-tk-scale">Масштаб на столе</label>
+      <input type="number" id="ng-tk-scale" class="ng-tk-scale" min="{{scaleMin}}" max="{{scaleMax}}" step="0.25" value="{{scale}}">
+      <button type="button" class="ng-ghost" data-action="scaleAll">Применить всем ({{rows.length}})</button>
+    </div>
+    <p class="ng-hint">Ползунок «Масштаб» в настройках токена Foundry доходит только до 3 — здесь можно до {{scaleMax}}. Масштаб меняет только картинку с кольцом; клетка, которую занимает токен, та же (её задают «Ширина / Высота» токена).</p>
     <div class="ng-tk-list">
       {{#each rows}}
       <div class="ng-tk-row{{#if cut}} done{{/if}}" data-id="{{id}}">

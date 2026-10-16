@@ -7,7 +7,7 @@ import { JSDOM } from "jsdom";
 import {
   RINGS, RING_DEFAULT, ringPath, isNadgradRing, playerRunners, rowContext, ringToken, ringPrototype, restorePlan,
   CUT_R, TOKEN_VIEW, clampCrop, defaultCrop, sourceRect, zoomBy, drawCutout, cutDir, cutFileName, uploadedPath,
-  cutToken, cutPrototype, uncutToken, uncutPrototype,
+  cutToken, cutPrototype, uncutToken, uncutPrototype, SCALE_MAX, clampScale, scaleToken, scalePrototype,
 } from "../scripts/tokens-logic.mjs";
 
 const ROOT = new URL("../", import.meta.url);
@@ -150,4 +150,20 @@ test("шаблон кадра собирается; при ошибке — бе
   const err = new JSDOM(tpl("token-crop.hbs")({ name: "Кай", error: "нет картинки" })).window.document;
   assert.equal(err.querySelector("canvas"), null);
   assert.ok(err.querySelector("[data-action='save']").disabled);
+});
+
+test("масштаб на столе: больше 3 (ползунок ядра), в пределах 0.25–10, мусор — нет", () => {
+  assert.equal(clampScale(5), 5);
+  assert.equal(clampScale("6"), 6);
+  assert.equal(clampScale(42), SCALE_MAX);
+  assert.equal(clampScale(0.1), 0.25);
+  assert.equal(clampScale("abc"), null);
+  assert.equal(clampScale(0), null);
+  assert.equal(clampScale(-2), null);
+  assert.deepEqual(scaleToken(5), { "texture.scaleX": 5, "texture.scaleY": 5 });
+  assert.deepEqual(scalePrototype(6), { "prototypeToken.texture.scaleX": 6, "prototypeToken.texture.scaleY": 6 });
+  const doc = new JSDOM(tpl("tokens.hbs")({ rows: [{ id: "a", name: "Кай", ring: true, cut: true }], todo: 0, scale: 5, scaleMin: 0.25, scaleMax: 10, rings: [] })).window.document;
+  assert.equal(doc.querySelector("input.ng-tk-scale").value, "5");
+  assert.equal(doc.querySelector("input.ng-tk-scale").max, "10");
+  assert.match(doc.querySelector("[data-action='scaleAll']").textContent, /\(1\)/);
 });

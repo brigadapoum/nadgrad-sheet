@@ -148,3 +148,15 @@ export const cutPrototype = (path) =>
 /** «Снять»: кольцо выключено, вырез убран. */
 export const uncutToken = () => ({ "ring.enabled": false, "ring.subject.texture": null });
 export const uncutPrototype = () => ({ "prototypeToken.ring.enabled": false, "prototypeToken.ring.subject.texture": null });
+
+// ---------- Размер на столе (0.9.2) ----------
+// Ползунок «Масштаб» в настройках токена Foundry кончается на 3; модуль пишет масштаб напрямую.
+export const SCALE_MIN = 0.25;
+export const SCALE_MAX = 10;
+export const clampScale = (v) => {
+  const n = Number(v);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return Math.round(Math.min(SCALE_MAX, Math.max(SCALE_MIN, n)) * 100) / 100;
+};
+export const scaleToken = (v) => ({ "texture.scaleX": v, "texture.scaleY": v });
+export const scalePrototype = (v) => ({ "prototypeToken.texture.scaleX": v, "prototypeToken.texture.scaleY": v });

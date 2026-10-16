@@ -10,6 +10,7 @@ import {
   RINGS, RING_DEFAULT, RING_EFFECTS, ringPath, isNadgradRing, playerRunners, rowContext, restorePlan,
   CUT_OUT, CUT_R, TOKEN_VIEW, ZOOM_MIN, ZOOM_MAX, clampCrop, defaultCrop, zoomBy, drawCutout, cutDir, cutFileName,
   uploadedPath, cutToken, cutPrototype, uncutToken, uncutPrototype,
+  SCALE_MIN, SCALE_MAX, clampScale, scaleToken, scalePrototype,
 } from "./tokens-logic.mjs";
 
 const get = (k, d) => { try { return game.settings.get(MODULE_ID, k); } catch { return d; } };
@@ -121,7 +122,7 @@ export function makeTokensApp() {
       classes: ["nadgrad", "ng-tokens-app", "application", "runner-actor"],
       window: { title: "Кольца токенов рискарей", icon: "fa-solid fa-circle-user", resizable: true },
       position: { width: 560, height: 680 },
-      actions: { worldRing: TokensApp.#onWorldRing, cut: TokensApp.#onCut, remove: TokensApp.#onRemove, allCut: TokensApp.#onAllCut },
+      actions: { worldRing: TokensApp.#onWorldRing, cut: TokensApp.#onCut, remove: TokensApp.#onRemove, allCut: TokensApp.#onAllCut, scaleAll: TokensApp.#onScaleAll },
     };
     static PARTS = { body: { template: `modules/${MODULE_ID}/templates/tokens.hbs`, scrollable: [""] } };
 
@@ -135,6 +136,9 @@ export function makeTokensApp() {
       return {
         rows,
         todo: rows.filter((r) => !r.cut).length,
+        scale: clampScale(get("tokenScale", 3)) ?? 3,
+        scaleMin: SCALE_MIN,
+        scaleMax: SCALE_MAX,
         dir: cutDir(game.world.id, get("tokenDir", "")),
         rings: Object.entries(RINGS).map(([id, r]) => ({ id, label: r.label, on: id === current, missing: !(id in labels) })),
         currentLabel: labels[current] ?? current ?? "—",
@@ -149,6 +153,29 @@ export function makeTokensApp() {
     }
 
     /** Кольцо мира (настройка ядра). Ядро загружает спрайт-лист при запуске — нужна перезагрузка. */
+    /** Масштаб на столе — всем рискарям игроков (прототип и токены на всех сценах), без ограничения ползунка ядра. */
+    static async #onScaleAll() {
+      const input = this.element.querySelector("input.ng-tk-scale");
+      const v = clampScale(input?.value);
+      if (v === null) return ui.notifications.warn(`Масштаб — число от ${SCALE_MIN} до ${SCALE_MAX}.`);
+      await game.settings.set(MODULE_ID, "tokenScale", v);
+      let n = 0;
+      const failed = [];
+      for (const actor of runners()) {
+        try {
+          await actor.update(scalePrototype(v));
+          await updateTokens(actor, scaleToken(v));
+          n += 1;
+        } catch (e) {
+          console.error(e);
+          failed.push(actor.name);
+        }
+      }
+      ui.notifications.info(`Масштаб ${v} — у ${n} рискарей (прототип и токены на всех сценах).`);
+      if (failed.length) ui.notifications.error(`Не получилось: ${failed.join(", ")}`, { permanent: true });
+      this.render();
+    }
+
     static async #onWorldRing(event, target) {
       const id = target.dataset.ring;
       if (!isNadgradRing(id) || coreRing() === id) return;
@@ -374,6 +401,11 @@ export function registerTokens() {
   });
 
   Hooks.once("init", () => {
+    game.settings.register(MODULE_ID, "tokenScale", {
+      name: "Масштаб токенов рискарей",
+      hint: "Последний масштаб, применённый в окне «Кольца токенов рискарей» (ползунок Foundry доходит только до 3).",
+      scope: "world", config: false, type: Number, default: 3,
+    });
     game.settings.register(MODULE_ID, "tokenDir", {
       name: "Папка для вырезов под кольцо",
       hint: "Путь в данных Foundry. Пусто — worlds/<мир>/nadgrad-tokens.",

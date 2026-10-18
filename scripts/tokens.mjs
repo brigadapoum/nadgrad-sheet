@@ -6,6 +6,7 @@
 //    Вырез печётся в браузере мастера и загружается в папку мира; перед записью проверяем, что файл открывается.
 // 3) Откат 0.8.0: вернуть исходные картинки, которые та версия заменила на незагруженные.
 import { MODULE_ID } from "./logic.mjs";
+import { applyThemeClass } from "./dom.mjs";
 import {
   RINGS, RING_DEFAULT, RING_EFFECTS, ringPath, isNadgradRing, playerRunners, rowContext, restorePlan,
   CUT_OUT, CUT_R, TOKEN_VIEW, ZOOM_MIN, ZOOM_MAX, clampCrop, defaultCrop, zoomBy, drawCutout, cutDir, cutFileName,
@@ -18,8 +19,7 @@ const coreRing = () => { try { return game.settings.get("core", "dynamicTokenRin
 
 function applyTheme(el) {
   const t = get("theme", "auto");
-  el.classList.toggle("ng-tush", t === "tush");
-  el.classList.toggle("ng-smog", t === "smog");
+  applyThemeClass(el, t);
 }
 
 const runners = () => playerRunners(game.actors.contents, game.users.contents);

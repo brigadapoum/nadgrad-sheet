@@ -1,0 +1,326 @@
+/* =========================================================
+   Надград: ещё два скина листа рискаря (0.9.4)
+   «Кислота» — по арту автора: копоть #1C1C1A, кислотно-жёлтый текст и линии,
+               оранжевый #FF551C — заголовок, вкладки, акценты и рамка по краю окна.
+   «Классика» — дневной лист CBR+PNK 1.05: белый, чёрный, жёлтый, голубой,
+               малиновый; шрифты Play и Tiny5.
+   Класс на окне: .ng-acid / .ng-classic (scripts/dom.mjs → applyThemeClass).
+   На <body> для чата и паузы: .ng-ui-acid / .ng-ui-classic.
+   ========================================================= */
+
+/* ---------- палитры ---------- */
+.application.runner-actor.ng-acid {
+  --ng-bg: #1C1C1A;
+  --ng-bg-img: none;
+  --ng-bg-size: auto;
+  --ng-ink: #E3E34B;                /* кислотно-жёлтый */
+  --ng-muted: #9C9C4A;
+  --ng-line: #E3E34B;
+  --ng-stripe: #252522;
+  --ng-plate: #262623;
+  --ng-plate-ink: #E3E34B;
+  --ng-plate-muted: #9C9C4A;
+  --ng-plate-acc: #FF551C;
+  --ng-act: #FF551C;                /* оранжевый с арта */
+  --ng-red: #FF2D55;
+  --ng-cool: #3DDC97;
+  --ng-sign: #E3E34B;
+  --ng-sign-ink: #1C1C1A;
+  --ng-on-acc: #1C1C1A;
+  --ng-field: #232320;
+  --ng-off: #30302B;
+  --ng-glow: none;
+  --ng-overlay: rgb(28 28 26 / .82);
+  --ng-overlay-ink: #E3E34B;
+  --ng-header: #FF551C;
+  --ng-header-ink: #1C1C1A;
+  --ng-frame: #FF551C;
+  --action: 255 85 28; --resist: 255 45 85; --breath: 61 220 151; --text: 28 28 26;
+  --good: 61 220 151; --bad: 255 45 85; --mixed: 227 227 75; --dark: 28 28 26;
+}
+.application.runner-actor.ng-classic {
+  --ng-bg: #FFFFFF;
+  --ng-bg-img: none;
+  --ng-bg-size: auto;
+  --ng-ink: #000000;
+  --ng-muted: #5A5A5A;
+  --ng-line: #000000;
+  --ng-stripe: #F0F0F0;
+  --ng-plate: #000000;
+  --ng-plate-ink: #FFFFFF;
+  --ng-plate-muted: #C8C8C8;
+  --ng-plate-acc: #00A7D8;
+  --ng-act: #00A7D8;                /* голубой 1.05 — выбранное */
+  --ng-red: #ED1158;                /* малиновый 1.05 */
+  --ng-cool: #00A7D8;
+  --ng-sign: #FFE700;               /* жёлтый 1.05 */
+  --ng-sign-ink: #000000;
+  --ng-on-acc: #000000;
+  --ng-field: #F4F4F4;
+  --ng-off: #E3E3E3;
+  --ng-glow: none;
+  --ng-overlay: rgb(0 0 0 / .66);
+  --ng-overlay-ink: #FFFFFF;
+  --ng-header: #00A7D8;
+  --ng-header-ink: #FFFFFF;
+  --action: 255 231 0; --resist: 224 38 120; --breath: 0 167 216; --text: 0 0 0;
+  --good: 0 167 216; --bad: 237 17 88; --mixed: 227 227 227; --dark: 0 0 0;
+}
+
+/* =========================================================
+   КИСЛОТА
+   ========================================================= */
+/* рамка по краю окна — как на арте */
+.application.runner-actor.ng-acid {
+  border: 4px solid var(--ng-frame); border-radius: 0;
+  box-shadow: 0 0 0 1px #000, 0 12px 40px rgb(0 0 0 / .65);
+}
+.application.runner-actor.ng-acid > .window-header {
+  background: var(--ng-header); color: var(--ng-header-ink); border-bottom: 0;
+}
+.application.runner-actor.ng-acid > .window-header .window-title {
+  color: var(--ng-header-ink); font-weight: 600; font-size: 20px; letter-spacing: .04em;
+  filter: none; animation: none; background: transparent; text-shadow: none;
+}
+.application.runner-actor.ng-acid > .window-header .window-icon { color: var(--ng-header-ink); }
+.application.runner-actor.ng-acid > .window-header button,
+.application.runner-actor.ng-acid > .window-header button[data-tooltip] {
+  background: transparent; color: var(--ng-header-ink); border: 0; font-size: 18px;
+}
+.application.runner-actor.ng-acid > .window-header button:hover { background: rgb(0 0 0 / .12); }
+
+/* вкладки: тёмные с оранжевыми буквами, открытая — оранжевая */
+.application.runner-actor.ng-acid .ng-tabs { background: var(--ng-bg); border-bottom: 3px solid var(--ng-act); gap: 0; }
+.application.runner-actor.ng-acid .ng-tabs button {
+  color: var(--ng-act); opacity: 1; font-size: 15px; font-weight: 500; padding: 7px 2px 6px;
+  border-right: 2px solid var(--ng-act);
+}
+.application.runner-actor.ng-acid .ng-tabs button:last-child { border-right: 0; }
+.application.runner-actor.ng-acid .ng-tabs button:hover { background: rgb(255 85 28 / .12); }
+.application.runner-actor.ng-acid .ng-tabs button.active { background: var(--ng-act); color: var(--ng-on-acc); }
+
+/* блоки «Статуса»: жёлтые рамки, подпись по центру, −/+ без коробок */
+.application.runner-actor.ng-acid .ng-block { border-width: 2px; }
+.application.runner-actor.ng-acid .ng-h { border-bottom-width: 2px; font-weight: 500; }
+.application.runner-actor.ng-acid .ng-row .ng-h { justify-content: center; }
+.application.runner-actor.ng-acid .ng-row .ng-block { padding-top: 6px; }
+.application.runner-actor.ng-acid .ng-counter button { border: 0; font-size: 20px; }
+.application.runner-actor.ng-acid .ng-counter button:hover:not(:disabled) { color: var(--ng-act); }
+.application.runner-actor.ng-acid .ng-counter input[type="number"] { background: transparent; border: 0; color: var(--ng-ink); }
+.application.runner-actor.ng-acid .ng-money .ng-counter input { color: var(--ng-ink); }
+.application.runner-actor.ng-acid .ng-status button { border-width: 2px; }
+.application.runner-actor.ng-acid .ng-status button:hover:not(:disabled) { border-color: var(--ng-act); color: var(--ng-act); }
+.application.runner-actor.ng-acid .ng-status button.ng-pri:hover:not(:disabled) { color: var(--ng-on-acc); filter: brightness(1.1); }
+.application.runner-actor.ng-acid .ng-status input[type="number"],
+.application.runner-actor.ng-acid .ng-status input[type="text"] { border-bottom-color: var(--ng-muted); }
+
+/* родной лист */
+.application.runner-actor.ng-acid section.header h1 { border-top-color: var(--ng-act); }
+.application.runner-actor.ng-acid section.header h1 input[name="name"] { color: var(--ng-ink); }
+.application.runner-actor.ng-acid .approach { border-left-color: var(--ng-muted); }
+.application.runner-actor.ng-acid section.gears { border-width: 2px; }
+.application.runner-actor.ng-acid .throws button { font-weight: 600; }
+
+/* =========================================================
+   КЛАССИКА — дневной лист 1.05
+   ========================================================= */
+/* шрифты: Play для текста, Tiny5 для «пиксельных» мест */
+.application.runner-actor.ng-classic .window-content *:not(i):not([class*="fa-"]) { font-family: "NG Play", "Play", sans-serif !important; }
+.application.runner-actor.ng-classic :is(h1, h3, .label, .rollSection label, .rollSection span.label, .throws button,
+  .approach h3, .approach .texts p, .approach .flaw, .skillList h3, .harm *, .stress .label, .stress p,
+  section.augmentations h3, .gears h3, .header .options button, .ng-tabs button, .ng-h, .ng-theme-label,
+  .ng-counter input, .ng-ranks button, .ng-levels button, .ng-seg button, .ng-load-text, .ng-wrf,
+  .ng-rel-colh, .ng-rel-name, .ng-rel-val span, .ng-rk, .ng-tag, .ng-pj-name, .ng-pj-count, .ng-sizes button,
+  .ng-dt-act-name, .ng-dt-count b, .ng-dt-count span, .ng-dt-die, .ng-dt-tier, .ng-dt-table b,
+  .ng-status button.ng-pri, .ng-status button.ng-ghost, .ng-f-head, .ng-f-rank button, .ng-f-kind button,
+  .ng-tk-name, .ng-tk-frames button, .ng-tk-current):not(i):not([class*="fa-"]) {
+  font-family: "NG Tiny5", "Tiny5", sans-serif !important; font-weight: 400 !important; letter-spacing: .02em;
+}
+.application.runner-actor.ng-classic section.header h1 input.ng-why { font-family: "NG Play", "Play", sans-serif !important; font-style: italic; }
+
+/* окно и заголовок окна */
+.application.runner-actor.ng-classic { border-radius: 0; }
+.application.runner-actor.ng-classic > .window-header { background: rgb(0 167 216); color: #fff; border-bottom: 0; }
+.application.runner-actor.ng-classic > .window-header .window-title {
+  font-family: "NG Play", "Play", sans-serif; color: #fff; letter-spacing: .04em; text-transform: none;
+  filter: none; animation: none; background: transparent;
+}
+.application.runner-actor.ng-classic > .window-header button { color: #000; border: 0; border-left: 1px solid #000; }
+.application.runner-actor.ng-classic > .window-header button[data-tooltip="Toggle Controls"] { background: rgb(255 231 0); }
+.application.runner-actor.ng-classic > .window-header button[data-action="copyUuid"] { background: rgb(237 17 88); }
+.application.runner-actor.ng-classic > .window-header button[data-tooltip="Close Window"],
+.application.runner-actor.ng-classic > .window-header button[data-action="close"] { background: rgb(217 86 86); color: #000; }
+
+/* вкладки: голубая полоса, открытая — жёлтая */
+.application.runner-actor.ng-classic .ng-tabs { background: rgb(0 167 216); border-bottom: 2px solid #000; }
+.application.runner-actor.ng-classic .ng-tabs button { color: #fff; opacity: .85; font-size: 14px; text-transform: uppercase; }
+.application.runner-actor.ng-classic .ng-tabs button.active { background: rgb(255 231 0); color: #000; opacity: 1; }
+
+/* портрет: тёмные полупрозрачные плашки, как EXPAND и имя в 1.05 */
+.application.runner-actor.ng-classic section.header .options { background: rgb(0 0 0 / .66); color: #fff; border-bottom: 0; }
+.application.runner-actor.ng-classic section.header h1 {
+  background: rgb(0 0 0 / .66); border-top: 0; border-bottom: 1px solid rgb(227 227 227);
+}
+.application.runner-actor.ng-classic section.header h1 input[name="name"] {
+  color: #fff; font-family: "NG Tiny5", "Tiny5", sans-serif !important; font-weight: 400; font-size: 28px;
+  letter-spacing: .02em; padding: 12px 18px 4px; text-shadow: none;
+}
+.application.runner-actor.ng-classic section.header h1 input.ng-why { color: rgb(255 231 0); }
+.application.runner-actor.ng-classic .header h1 button { background: transparent; color: rgb(237 17 88); border: 0; }
+.application.runner-actor.ng-classic .header h1 button i { color: rgb(237 17 88); }
+.application.runner-actor.ng-classic section.header .options .ng-theme button.active { background: rgb(255 231 0); border-color: rgb(255 231 0); color: #000; }
+
+/* броски: дорожки EFFECT / THREAT / доп. кубы как в 1.05 */
+.application.runner-actor.ng-classic section.rollSection { gap: 2px; margin-top: 0; }
+.application.runner-actor.ng-classic .rollSection > div { gap: 2px; }
+.application.runner-actor.ng-classic .rollSection label { color: #000; }
+.application.runner-actor.ng-classic .rollSection span.label { color: #000; padding: 0 6px; }
+/* эффект: до выбранного включительно — голубой, дальше — малиновый */
+.application.runner-actor.ng-classic .efect label,
+.application.runner-actor.ng-classic .efect label:has(:checked) { background: rgb(0 167 216); color: #000; box-shadow: none; }
+.application.runner-actor.ng-classic .efect label:has(:checked) ~ label { background: rgb(237 17 88); color: #000; }
+/* угроза идёт 4→1: выбранная и справа от неё — красный, слева — серый */
+.application.runner-actor.ng-classic .threat label { background: rgb(227 227 227); color: #000; }
+.application.runner-actor.ng-classic .threat label:has(:checked),
+.application.runner-actor.ng-classic .threat label:has(:checked) ~ label { background: rgb(217 86 86); color: #000; box-shadow: none; }
+/* доп. кубы: до выбранного — жёлтый, после — голубой */
+.application.runner-actor.ng-classic .addDice label,
+.application.runner-actor.ng-classic .addDice label:has(:checked) { background: rgb(255 231 0); color: #000; }
+.application.runner-actor.ng-classic .addDice label:has(:checked) ~ label { background: rgb(0 167 216); color: #000; }
+.application.runner-actor.ng-classic .rollSection :is(.efect, .threat, .addDice) label:has(:checked) { outline-color: #000; }
+/* жучок «глюк-куб» — красная плашка с жёлтым жуком */
+.application.runner-actor.ng-classic label:has([name="system.roll.isGlichDice"]) { background: rgb(217 86 86); }
+.application.runner-actor.ng-classic label:has([name="system.roll.isGlichDice"]) i { color: rgb(255 231 0); }
+.application.runner-actor.ng-classic label:has([name="system.roll.isGlichDice"]:checked) { background: rgb(255 231 0); }
+.application.runner-actor.ng-classic label:has([name="system.roll.isGlichDice"]:checked) i { color: rgb(217 86 86); }
+/* три кнопки: сопротивление — малиновый, действие — жёлтый, передышка — голубой */
+.application.runner-actor.ng-classic .throws { gap: 2px; }
+.application.runner-actor.ng-classic .throws button { color: #000; font-size: 15px; box-shadow: none; }
+.application.runner-actor.ng-classic [data-action="rollResist"] { background: rgb(224 38 120); }
+.application.runner-actor.ng-classic [data-action="rollAction"] { background: rgb(255 231 0); }
+.application.runner-actor.ng-classic [data-action="rollBreath"] { background: rgb(0 167 216); }
+
+/* стресс: ромбы, заполненные — голубые с жёлтым, последний — в жёлтой рамке */
+.application.runner-actor.ng-classic [data-action="stressChange"] i { border: 1px solid #000; }
+.application.runner-actor.ng-classic [data-action="stressChange"] i.fa-solid { background: rgb(0 167 216); color: rgb(255 231 0); border-color: #000; box-shadow: none; }
+.application.runner-actor.ng-classic [data-action="stressChange"] i:last-child { border: 4px solid rgb(255 231 0); }
+.application.runner-actor.ng-classic .stress p { font-size: 11px; }
+
+/* подходы: чёрные плашки со срезанным углом */
+.application.runner-actor.ng-classic .approach {
+  background: #000; color: #fff; border-left: 0; padding: 6px 10px;
+  clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%);
+}
+.application.runner-actor.ng-classic .approach h3 { color: #fff; font-size: 19px; text-shadow: none; }
+.application.runner-actor.ng-classic .approach .texts p,
+.application.runner-actor.ng-classic .approach .flaw { color: #fff; font-size: 9px; }
+.application.runner-actor.ng-classic .approach.select h3 { color: rgb(0 167 216); }
+.application.runner-actor.ng-classic .approach .fa-regular { color: #fff; }
+.application.runner-actor.ng-classic .approach .fa-solid { color: rgb(0 167 216); }
+.application.runner-actor.ng-classic .approach.GLICHED { background: rgb(217 86 86); }
+
+/* навыки: строки через одну серые, выбранный — голубой */
+.application.runner-actor.ng-classic .skillList h3 { color: #000; font-size: 16px; }
+.application.runner-actor.ng-classic .skills label:has(input:checked) * { color: rgb(0 167 216); text-shadow: none; }
+.application.runner-actor.ng-classic .skillList .fa-regular { color: #000; }
+.application.runner-actor.ng-classic .skillList .fa-solid { color: rgb(0 167 216); }
+.application.runner-actor.ng-classic .expertises { border-bottom: 1px solid #000; }
+.application.runner-actor.ng-classic [data-action="setExpertise"] { color: #000; }
+.application.runner-actor.ng-classic [data-action="setExpertise"].select { color: rgb(217 86 86); font-weight: 700; }
+
+/* аугментации: жёлтый «+», глюк — красный */
+.application.runner-actor.ng-classic section.augmentations h3 { color: #000; font-size: 18px; }
+.application.runner-actor.ng-classic button.add { background: rgb(255 231 0); color: #000; border: 0; border-radius: 0 0 6px 0; }
+.application.runner-actor.ng-classic .aug.GLICHED { background: rgb(217 86 86); }
+.application.runner-actor.ng-classic .aug input[type="text"] { color: #000; background: rgb(0 0 0 / .05); border-color: transparent; }
+.application.runner-actor.ng-classic .aug .ng-aug-open.on { color: rgb(0 167 216); }
+
+/* снаряжение: белое поле, отмеченное — жёлтым */
+.application.runner-actor.ng-classic section.gears { border: 0; }
+.application.runner-actor.ng-classic .gears h3 { color: #000; }
+.application.runner-actor.ng-classic .gears h3 button.stack { color: #000; border: 1px solid #000;
+  background: linear-gradient(90deg, rgb(255 231 0) 0 calc(var(--stack)/var(--max)*100%), transparent 0); }
+.application.runner-actor.ng-classic .gear button { color: #000; }
+.application.runner-actor.ng-classic .gear button i { border: 1px solid #000; }
+.application.runner-actor.ng-classic .gear button i.fa-solid { background: rgb(255 231 0); border-color: #000; box-shadow: none; }
+.application.runner-actor.ng-classic .gear button:has(.fa-solid) { color: #000; }
+.application.runner-actor.ng-classic .gear button.stack { color: rgb(237 17 88); border: 1px solid rgb(237 17 88);
+  background: linear-gradient(90deg, rgb(237 17 88 / .25) 0 calc(var(--stack)/var(--max)*100%), transparent 0); }
+.application.runner-actor.ng-classic section.gears > button.ng-load { box-shadow: none; border: 1px solid #000; }
+
+/* раны: жёлтая вертикальная плашка HARM справа */
+.application.runner-actor.ng-classic .harm h3.label { background: rgb(255 231 0); color: #000; }
+.application.runner-actor.ng-classic .armors label { color: #000; }
+.application.runner-actor.ng-classic .armors label i { border: 1px solid #000; }
+.application.runner-actor.ng-classic .armors label:has([checked]) { color: #000; }
+.application.runner-actor.ng-classic .armors label:has([checked]) i { background: rgb(0 167 216); border-color: #000; }
+.application.runner-actor.ng-classic .harm ol input[type="text"] {
+  background: linear-gradient(#F4F4F4, #DCDCDC); border: 1px solid #BBB; color: #000;
+}
+.application.runner-actor.ng-classic .harm ol input[type="text"][harmopen] { background: rgb(255 231 0); color: #000; }
+.application.runner-actor.ng-classic .harm ol div:has(:checked) input[harmopen] { background: rgb(227 227 227); color: #666; }
+.application.runner-actor.ng-classic .harm ol i.fa-bandage.fa-thin { color: rgb(217 86 86); }
+.application.runner-actor.ng-classic .harm ol i.fa-bandage.fa-solid { color: rgb(0 167 216); }
+
+/* экраны модуля: кнопки −/+ и выборы — в цветах 1.05 */
+.application.runner-actor.ng-classic .ng-ranks button.on,
+.application.runner-actor.ng-classic .ng-sizes button.on { color: #000; }
+.application.runner-actor.ng-classic .ng-levels button.on { color: #fff; }
+.application.runner-actor.ng-classic .ng-levels button.ng-zero.on { color: #fff; }
+.application.runner-actor.ng-classic .ng-money .ng-counter input { color: #000; }
+.application.runner-actor.ng-classic .ng-val,
+.application.runner-actor.ng-classic .ng-pj-count,
+.application.runner-actor.ng-classic .ng-wrf { color: rgb(0 120 160); }
+.application.runner-actor.ng-classic .ng-life-text strong { color: rgb(0 120 160); }
+
+/* =========================================================
+   Чат и пауза в новых скинах
+   ========================================================= */
+body.ng-ui-acid {
+  --ngc-bg: #1C1C1A; --ngc-ink: #E3E34B; --ngc-muted: #9C9C4A; --ngc-line: #FF551C;
+  --ngc-panel: rgb(28 28 26 / .9);
+  --ngc-cool: #3DDC97; --ngc-red: #FF2D55; --ngc-act: #FF551C; --ngc-plate: #262623; --ngc-plate-ink: #E3E34B;
+  --ngc-glow: none;
+  --ngc-pip: #1C1C1A;
+  --ngc-crit: #E3E34B; --ngc-crit-ink: #1C1C1A; --ngc-crit-fg: #E3E34B;
+  --ngc-good: #3DDC97; --ngc-good-ink: #1C1C1A; --ngc-good-fg: #3DDC97;
+  --ngc-mixed: #FF551C; --ngc-mixed-ink: #1C1C1A; --ngc-mixed-fg: #FF551C;
+  --ngc-bad: #FF2D55; --ngc-bad-ink: #1C1C1A; --ngc-bad-fg: #FF2D55;
+  --ngc-none: #FF551C; --ngc-none-ink: #1C1C1A; --ngc-none-fg: #FF551C;
+  --ngc-pause-bg: #1C1C1A; --ngc-pause-ink: #FF551C; --ngc-pause-acc: #FF551C;
+}
+body.ng-ui-classic {
+  --ngc-bg: #FFFFFF; --ngc-ink: #000000; --ngc-muted: #5A5A5A; --ngc-line: #000000;
+  --ngc-panel: rgb(0 0 0 / .66);
+  --ngc-cool: #00A7D8; --ngc-red: #ED1158; --ngc-act: #00A7D8; --ngc-plate: #000000; --ngc-plate-ink: #FFFFFF;
+  --ngc-glow: none;
+  --ngc-pip: #000000;
+  --ngc-crit: #FFE700; --ngc-crit-ink: #000000; --ngc-crit-fg: #FFE700;
+  --ngc-good: #00A7D8; --ngc-good-ink: #000000; --ngc-good-fg: #00A7D8;
+  --ngc-mixed: #E3E3E3; --ngc-mixed-ink: #000000; --ngc-mixed-fg: #E3E3E3;
+  --ngc-bad: #ED1158; --ngc-bad-ink: #FFFFFF; --ngc-bad-fg: #ED1158;
+  --ngc-none: #FFE700; --ngc-none-ink: #000000; --ngc-none-fg: #FFE700;
+  --ngc-pause-bg: #000000; --ngc-pause-ink: #FFFFFF; --ngc-pause-acc: #FFE700;
+}
+/* Кислота: оранжевая черта слева у сообщений */
+body.ng-ui-acid li.chat-message.message.flexcol { border-left: 3px solid #FF551C; }
+/* Классика, как 1.05: тёмные полупрозрачные панели поверх портрета, белый текст, Tiny5 в заголовках */
+body.ng-ui-classic li.chat-message.message.flexcol .message-content > div:has(> .situation) *:not(i) { font-family: "NG Play", "Play", sans-serif; }
+body.ng-ui-classic li.chat-message.message.flexcol .message-content > div:has(> .situation) :is(h1, h3, .situation p) {
+  font-family: "NG Tiny5", "Tiny5", sans-serif; font-weight: 400; letter-spacing: .02em;
+}
+body.ng-ui-classic li.chat-message.message.flexcol .message-content :is(.text, .situation),
+body.ng-ui-classic li.chat-message.message.flexcol .message-content :is(.text, .situation) * { color: #FFFFFF; }
+body.ng-ui-classic li.chat-message.message.flexcol .message-content .situation p:first-child:not(:only-child) { color: #00A7D8; }
+body.ng-ui-classic li.chat-message.message.flexcol .message-content .situation p:last-child:not(:only-child) { color: #FF5A8A; }
+body.ng-ui-classic li.chat-message.message.flexcol .message-content .text .result h3 { color: var(--o-ink); }
+body.ng-ui-classic li.chat-message.message.flexcol .message-content .text .dice i { color: var(--o-fg); }
+body.ng-ui-classic li.chat-message.message.flexcol .message-content .text .dice i.gliched { color: #ED1158; }
+body.ng-ui-classic li.chat-message.message.flexcol .message-content .desc .GLICHED { color: #FF5A8A; border-left-color: #FF5A8A; }
+body.ng-ui-classic li.chat-message.message.flexcol .message-content .desc strong { color: #00A7D8; }
+body.ng-ui-classic li.chat-message.message.flexcol .message-content .desc em { color: #FFE700; }
+body.ng-ui-classic figure.paused figcaption { font-family: "NG Tiny5", "Tiny5", sans-serif; font-weight: 400; }
+body.ng-ui-classic li.chat-message.message.flexcol .message-content .text h1,
+body.ng-ui-classic li.chat-message.message.flexcol .message-content .desc { color: #FFFFFF; }
+body.ng-ui-classic li.chat-message.message.flexcol .message-content .situation p:only-child,
+body.ng-ui-classic li.chat-message.message.flexcol .message-content .situation p:not(:first-child):not(:last-child) { color: #FFFFFF; }

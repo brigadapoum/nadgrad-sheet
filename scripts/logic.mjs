@@ -129,6 +129,56 @@ export function isExtraLoad(it) {
   return it?.type === "gear" && !Number(it.system?.value) && Number(it.system?.max) > 0;
 }
 
+/**
+ * Задвоенное снаряжение. Лист 1.2 создаёт базовый набор (21 предмет) при каждой перерисовке, пока у рискаря
+ * нет ни одного предмета-снаряжения, и не ждёт, пока они создадутся. Две перерисовки подряд (или два открытых
+ * листа у мастера и игрока) — и набор ложится дважды.
+ * Дубли — снаряжение с одинаковыми названием, весом и максимумом счётчика. Из группы остаётся один предмет:
+ * отмеченный, если такой есть, иначе с бо́льшим счётчиком, иначе первый. Ему достаются отметка, если отмечен
+ * хоть один, самый большой счётчик и самое длинное описание. Остальные удаляются.
+ * items: массив { id | _id, type, name, sort, system: { value, max, isUse, stack, desc } }.
+ * Возвращает { updates: [{ _id, ...поля }], deletes: [id], groups: число групп с дублями }.
+ */
+export function gearDupes(items = []) {
+  const key = (it) => `${String(it.name ?? "").trim().toLowerCase()}|${Number(it.system?.value) || 0}|${Number(it.system?.max) || 0}`;
+  const groups = new Map();
+  for (const it of items) {
+    if (it?.type !== "gear") continue;
+    const k = key(it);
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(it);
+  }
+  const updates = [];
+  const deletes = [];
+  let count = 0;
+  const idOf = (it) => it.id ?? it._id;
+  const stackOf = (it) => Math.max(0, Math.trunc(Number(it.system?.stack) || 0));
+  const descOf = (it) => String(it.system?.desc ?? "");
+  for (const list of groups.values()) {
+    if (list.length < 2) continue;
+    count++;
+    const ordered = list
+      .map((it, i) => ({ it, i }))
+      .sort((a, b) =>
+        (b.it.system?.isUse ? 1 : 0) - (a.it.system?.isUse ? 1 : 0) ||
+        stackOf(b.it) - stackOf(a.it) ||
+        (Number(a.it.sort) || 0) - (Number(b.it.sort) || 0) ||
+        a.i - b.i)
+      .map((x) => x.it);
+    const keep = ordered[0];
+    const isUse = list.some((it) => !!it.system?.isUse);
+    const stack = Math.max(...list.map(stackOf));
+    const desc = list.map(descOf).reduce((a, b) => (b.trim().length > a.trim().length ? b : a), descOf(keep));
+    const upd = { _id: idOf(keep) };
+    if (!!keep.system?.isUse !== isUse) upd["system.isUse"] = isUse;
+    if (stackOf(keep) !== stack) upd["system.stack"] = stack;
+    if (descOf(keep) !== desc) upd["system.desc"] = desc;
+    if (Object.keys(upd).length > 1) updates.push(upd);
+    for (const it of ordered.slice(1)) deletes.push(idOf(it));
+  }
+  return { updates, deletes, groups: count };
+}
+
 /** Блокировка чеков под уровень жизни: + берёт чек из общего пула, − возвращает. */
 export function blockStep({ cheki = 0, blocked = 0 } = {}, delta = 0) {
   const d = Math.trunc(Number(delta) || 0);
@@ -156,10 +206,13 @@ export function splitAugFields(data = {}) {
       (items[id] ??= {}).name = v;
     } else if (field === "desc") {
       (items[id] ??= {})["system.desc"] = String(value ?? "");
+    } else if (field === "text") {
+      // обычный текст из поля описания: в предмет он уходит HTML-абзацами, сравнение — в листе (augTextUpdate)
+      (items[id] ??= {}).text = String(value ?? "");
     }
   };
   for (const key of Object.keys(data)) {
-    const m = key.match(/^ngAug\.([^.]+)\.(name|desc)$/);
+    const m = key.match(/^ngAug\.([^.]+)\.(name|desc|text)$/);
     if (m) { put(m[1], m[2], data[key]); delete data[key]; }
   }
   // если данные пришли развёрнутыми ({ ngAug: { id: { name } } })
@@ -168,6 +221,41 @@ export function splitAugFields(data = {}) {
     delete data.ngAug;
   }
   return items;
+}
+
+// ---------- Описание аугментаций: простое текстовое поле вместо редактора ----------
+
+const ENT = { amp: "&", lt: "<", gt: ">", quot: '"', "#39": "'", apos: "'", nbsp: " " };
+
+/** HTML описания (как его хранит система) → обычный текст для поля: абзацы через пустую строку. */
+export function htmlToText(html = "") {
+  return String(html ?? "")
+    .replace(/\r/g, "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<li[^>]*>/gi, "• ")
+    .replace(/<\/(p|div|h[1-6]|blockquote|pre)>/gi, "\n\n")
+    .replace(/<\/li>/gi, "\n")
+    .replace(/<[^>]*>/g, "")
+    .replace(/&(amp|lt|gt|quot|#39|apos|nbsp);/g, (_, e) => ENT[e])
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+const esc = (t) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+/** Текст из поля → HTML: пустая строка — новый абзац, перенос строки — <br>. */
+export function textToHtml(text = "") {
+  const t = String(text ?? "").replace(/\r/g, "").trim();
+  if (!t) return "";
+  return t.split(/\n[ \t]*\n+/).map((p) => `<p>${esc(p.trim()).replace(/\n/g, "<br>")}</p>`).join("");
+}
+
+/** Обновление описания из поля: null, если текст не менялся (форма отправляется целиком при любой правке). */
+export function augTextUpdate(storedHtml, text) {
+  if (text == null) return null;
+  if (htmlToText(storedHtml) === String(text).replace(/\r/g, "").trim()) return null;
+  return textToHtml(text);
 }
 
 // ---------- Отношения и силы мира ----------

@@ -39,8 +39,8 @@
   --good: 53 111 99; --bad: 166 60 44; --mixed: 201 162 94; --dark: 28 24 20;
 }
 /* тёмная «Смог» — тёмная тема у окна или у всего интерфейса */
-.application.runner-actor.theme-dark:not(.ng-tush),
-body.theme-dark .application.runner-actor:not(.theme-light):not(.ng-tush),
+.application.runner-actor.theme-dark:not(.ng-tush):not(.ng-acid):not(.ng-classic),
+body.theme-dark .application.runner-actor:not(.theme-light):not(.ng-tush):not(.ng-acid):not(.ng-classic),
 .application.runner-actor.ng-smog {
   --ng-bg: #14120F;
   --ng-bg-img: radial-gradient(130% 45% at 50% 0%, rgb(84 90 77 / .35), transparent 70%),
@@ -102,8 +102,8 @@ body.theme-dark .application.runner-actor:not(.theme-light):not(.ng-tush),
   color: var(--ng-overlay-ink); font-family: "Oswald", sans-serif !important; font-weight: 600;
   font-size: 30px; letter-spacing: .08em; text-transform: uppercase; padding: 10px 18px; height: auto;
 }
-.application.runner-actor.theme-dark:not(.ng-tush) section.header h1 input,
-body.theme-dark .application.runner-actor:not(.theme-light):not(.ng-tush) section.header h1 input,
+.application.runner-actor.theme-dark:not(.ng-tush):not(.ng-acid):not(.ng-classic) section.header h1 input,
+body.theme-dark .application.runner-actor:not(.theme-light):not(.ng-tush):not(.ng-acid):not(.ng-classic) section.header h1 input,
 .application.runner-actor.ng-smog section.header h1 input { text-shadow: 0 0 8px rgb(226 64 47 / .55); }
 .application.runner-actor .header h1 button { background: var(--ng-act); color: var(--ng-on-acc); border: 0; border-radius: 0; }
 .application.runner-actor i.fa-duotone.fa-solid { color: var(--ng-act); }
@@ -140,8 +140,8 @@ body.theme-dark .application.runner-actor:not(.theme-light):not(.ng-tush) sectio
 .application.runner-actor [data-action="rollResist"] { background: var(--ng-red); }
 .application.runner-actor [data-action="rollAction"] { background: var(--ng-act); }
 .application.runner-actor [data-action="rollBreath"] { background: var(--ng-cool); }
-.application.runner-actor.theme-dark:not(.ng-tush) .throws button,
-body.theme-dark .application.runner-actor:not(.theme-light):not(.ng-tush) .throws button,
+.application.runner-actor.theme-dark:not(.ng-tush):not(.ng-acid):not(.ng-classic) .throws button,
+body.theme-dark .application.runner-actor:not(.theme-light):not(.ng-tush):not(.ng-acid):not(.ng-classic) .throws button,
 .application.runner-actor.ng-smog .throws button { box-shadow: inset 0 -3px 0 rgb(0 0 0 / .35); }
 
 /* ---------- стресс: ромбы ---------- */
@@ -390,6 +390,7 @@ body.ng-ui-tush {
   --ngc-panel: rgb(236 231 218 / .92);
   --ngc-cool: #356F63; --ngc-red: #A63C2C; --ngc-act: #A64F2B; --ngc-plate: #1C1814; --ngc-plate-ink: #ECE7DA;
   --ngc-glow: none;
+  --ngc-pip: #FFFDF6;               /* точки на кубиках */
   /* исход: заливка таблички, текст на ней, цвет кубиков и линий на панели */
   --ngc-crit: #C9A25E; --ngc-crit-ink: #1C1814; --ngc-crit-fg: #8A6A2E;
   --ngc-good: #356F63; --ngc-good-ink: #F4EFE3; --ngc-good-fg: #356F63;
@@ -404,6 +405,7 @@ body.ng-ui-smog {
   --ngc-panel: rgb(16 12 10 / .84);
   --ngc-cool: #5CCFC0; --ngc-red: #E2402F; --ngc-act: #E0763A; --ngc-plate: #231F1A; --ngc-plate-ink: #D0D4C9;
   --ngc-glow: 0 0 6px;
+  --ngc-pip: #100C0A;
   --ngc-crit: #E3BE73; --ngc-crit-ink: #100C0A; --ngc-crit-fg: #E3BE73;
   --ngc-good: #5CCFC0; --ngc-good-ink: #100C0A; --ngc-good-fg: #5CCFC0;
   --ngc-mixed: #E0763A; --ngc-mixed-ink: #100C0A; --ngc-mixed-fg: #E0763A;
@@ -473,11 +475,13 @@ body.ng-ui li.chat-message.message.flexcol .message-content .text .result h3 {
   clip-path: polygon(0 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
 }
 body.ng-ui li.chat-message.message.flexcol .message-content .text .dice { display: flex; gap: 3px; margin-left: auto; }
+/* кубики: без свечения; точки — сплошной контрастный цвет, а не просвет на полупрозрачную панель */
 body.ng-ui li.chat-message.message.flexcol .message-content .text .dice i {
-  font-size: 22px; color: var(--o-fg); text-shadow: var(--ngc-glow) var(--o-fg);
+  font-size: 26px; line-height: 1; display: inline-block; color: var(--o-fg); text-shadow: none; filter: none;
+  background: linear-gradient(var(--ngc-pip), var(--ngc-pip)) center / 70% 64% no-repeat;
 }
 body.ng-ui li.chat-message.message.flexcol .message-content .text .dice i.gliched {
-  color: var(--ngc-red); text-shadow: var(--ngc-glow) var(--ngc-red); outline: 1px dashed var(--ngc-red); outline-offset: 1px;
+  color: var(--ngc-red); text-shadow: none; outline: 1px dashed var(--ngc-red); outline-offset: 2px;
 }
 body.ng-ui li.chat-message.message.flexcol .message-content .desc {
   padding: 6px 8px 8px; font-size: 11.5px; line-height: 1.4; color: var(--ngc-ink);
@@ -526,7 +530,14 @@ body.ng-ui figure.paused figcaption {
   padding: 6px 8px; background: var(--ng-field); color: var(--ng-ink);
   border-left: 3px solid var(--ng-act); font-size: 12px;
 }
-.application.runner-actor .aug .desc.ng-aug-desc prose-mirror { min-height: 60px; display: block; }
+.application.runner-actor .aug .desc.ng-aug-desc textarea.ng-aug-text {
+  display: block; width: 100%; box-sizing: border-box; min-height: 64px; resize: vertical;
+  margin: 0; padding: 4px 6px; border: 1px solid var(--ng-line); border-radius: 0;
+  background: var(--ng-bg); color: var(--ng-ink); font: 12px/1.45 "IBM Plex Mono", monospace;
+  cursor: text; pointer-events: auto; user-select: text;
+}
+.application.runner-actor .aug .desc.ng-aug-desc textarea.ng-aug-text:focus { outline: 2px solid var(--ng-act); outline-offset: -1px; }
+.application.runner-actor .aug .desc.ng-aug-desc textarea.ng-aug-text::placeholder { color: var(--ng-muted); font-style: italic; }
 .application.runner-actor .aug .desc.ng-aug-desc .ng-hint { margin: 4px 0 0; color: var(--ng-muted); font-size: 11px; }
 .application.runner-actor .aug.GLICHED .desc.ng-aug-desc { color: var(--ng-ink); }
 

@@ -88,3 +88,38 @@ test("загрузка: по кругу в обе стороны, «light» из
   assert.deepEqual(loadStep("light", 1), { selected: 1, key: "LOAD.MEDIUM", max: 5 });
   assert.equal(loadIndex(undefined), 0);
 });
+
+test("снаряжение: дубли — один предмет из группы, отметка и счётчик сохраняются", async () => {
+  const { gearDupes } = await import("../scripts/logic.mjs");
+  const g = (id, name, sys = {}, sort = 0) => ({ id, type: "gear", name, sort, system: { value: 1, max: 0, isUse: false, stack: 0, desc: "", ...sys } });
+  const items = [
+    g("a1", "Клинок"), g("a2", "Пистолет", { isUse: true }), g("a3", "Доп. нагрузка", { value: 0, max: 4, stack: 1 }),
+    g("b1", "Клинок", { isUse: true }), g("b2", "Пистолет"), g("b3", "Доп. нагрузка", { value: 0, max: 4, stack: 3 }),
+    g("c1", "Аптечка"), { id: "x", type: "augmentation", name: "Клинок", system: {} },
+  ];
+  const plan = gearDupes(items);
+  assert.equal(plan.groups, 3);
+  assert.deepEqual(plan.deletes.sort(), ["a1", "a3", "b2"]);
+  assert.deepEqual(plan.updates, []);
+  // оба не отмечены, счётчик у второго больше — остаётся второй
+  const p2 = gearDupes([g("a", "Дрон", { stack: 0 }, 1), g("b", "Дрон", { stack: 0 }, 2)]);
+  assert.deepEqual(p2.deletes, ["b"]);
+  // описание переносится, если у оставшегося его нет
+  const p3 = gearDupes([g("a", "Кибердека", { isUse: true }), g("b", "Кибердека", { desc: "мощная" })]);
+  assert.deepEqual(p3.updates, [{ _id: "a", "system.desc": "мощная" }]);
+  assert.equal(gearDupes([g("a", "Клинок"), g("b", "Клинок", { value: 2 })]).groups, 0, "разный вес — не дубль");
+});
+
+test("описание аугментации: HTML ↔ текст, неизменённое поле не пишется", async () => {
+  const { htmlToText, textToHtml, augTextUpdate, splitAugFields } = await import("../scripts/logic.mjs");
+  const html = "<p>Глаз &amp; ухо</p><p>вторая<br>строка</p>";
+  assert.equal(htmlToText(html), "Глаз & ухо\n\nвторая\nстрока");
+  assert.equal(textToHtml("Глаз & ухо\n\nвторая\nстрока"), html);
+  assert.equal(augTextUpdate(html, "Глаз & ухо\n\nвторая\nстрока"), null);
+  assert.equal(augTextUpdate("", "  "), null);
+  assert.equal(augTextUpdate("", "видит <сквозь> стены"), "<p>видит &lt;сквозь&gt; стены</p>");
+  assert.equal(augTextUpdate("<p>было</p>", ""), "");
+  const data = { "ngAug.a1.text": "новое", name: "Рискарь" };
+  assert.deepEqual(splitAugFields(data), { a1: { text: "новое" } });
+  assert.deepEqual(data, { name: "Рискарь" });
+});

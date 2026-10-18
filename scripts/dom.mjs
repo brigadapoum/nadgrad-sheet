@@ -1,4 +1,17 @@
 // Правки DOM родного листа после каждой перерисовки (общие для модуля и стенда).
+import { htmlToText } from "./logic.mjs";
+
+/** Скины листа. Тушь — светлая, Смог — тёмная, Кислота — по арту автора, Классика — дневной лист 1.05. */
+export const SKINS = [
+  { id: "tush", label: "Тушь" },
+  { id: "smog", label: "Смог" },
+  { id: "acid", label: "Кислота" },
+  { id: "classic", label: "Классика" },
+];
+const SKIN_IDS = SKINS.map((t) => t.id);
+
+/** Арты часов есть только в двух темах: тёмные скины берут «Смог», светлые — «Тушь». */
+export const artTheme = (t) => (t === "smog" || t === "acid" ? "smog" : "tush");
 
 /** Полоса над портретом: убрать CRED, DEBT, бросок по мотиву, «охотника»; поставить переключатель тем. */
 export function tidyHeader(root, { active }) {
@@ -11,8 +24,7 @@ export function tidyHeader(root, { active }) {
       sw.className = "ng-theme";
       sw.innerHTML =
         `<span class="ng-theme-label">Тема</span>` +
-        `<button type="button" data-action="ngTheme" data-theme="tush">Тушь</button>` +
-        `<button type="button" data-action="ngTheme" data-theme="smog">Смог</button>`;
+        SKINS.map((t) => `<button type="button" data-action="ngTheme" data-theme="${t.id}">${t.label}</button>`).join("");
       bar.append(sw);
     }
     for (const b of sw.querySelectorAll("button")) b.classList.toggle("active", b.dataset.theme === active);
@@ -23,13 +35,12 @@ export function tidyHeader(root, { active }) {
 
 /** Темы: явный выбор вешает класс на окно; «auto» — по теме Foundry. */
 export function applyThemeClass(root, theme) {
-  root.classList.toggle("ng-tush", theme === "tush");
-  root.classList.toggle("ng-smog", theme === "smog");
+  for (const id of SKIN_IDS) root.classList.toggle(`ng-${id}`, theme === id);
 }
 
 /** Какая тема сейчас видна (для подсветки переключателя). */
 export function effectiveTheme(root, theme) {
-  if (theme === "tush" || theme === "smog") return theme;
+  if (SKIN_IDS.includes(theme)) return theme;
   const body = root.ownerDocument.body;
   const dark = root.classList.contains("theme-dark") ||
     (body.classList.contains("theme-dark") && !root.classList.contains("theme-light"));
@@ -61,8 +72,7 @@ export function loadButton(root, { index, label, levels }) {
 export function applyUiTheme(body, theme) {
   const t = effectiveTheme(body, theme);
   body.classList.toggle("ng-ui", true);
-  body.classList.toggle("ng-ui-tush", t === "tush");
-  body.classList.toggle("ng-ui-smog", t === "smog");
+  for (const id of SKIN_IDS) body.classList.toggle(`ng-ui-${id}`, t === id);
   return t;
 }
 
@@ -98,7 +108,7 @@ export function dicePlus(root) {
 
 /**
  * Аугментации: имя сохраняется (поле получает имя формы), стрелка «описание» слева, как в 1.05,
- * у открытой аугментации — поле описания (редактор Foundry с кнопкой правки).
+ * у открытой аугментации — поле описания (обычный текст, сохраняется при уходе из поля).
  * items: Map-подобное с get(id) → { name, system: { isOpen, desc } }.
  */
 export function augDecorate(root, { items, editable }) {
@@ -135,19 +145,18 @@ export function augDecorate(root, { items, editable }) {
     const html = String(item.system?.desc ?? "");
     desc.classList.add("ng-aug-desc");
     if (editable) {
-      if (desc.querySelector("prose-mirror")) continue;
-      const pm = doc.createElement("prose-mirror");
-      pm.setAttribute("name", `ngAug.${id}.desc`);
-      pm.setAttribute("toggled", "");
-      pm.setAttribute("value", html);
-      pm.innerHTML = html;
-      desc.replaceChildren(pm);
-      if (!html.replace(/<[^>]*>/g, "").trim()) {
-        const hint = doc.createElement("p");
-        hint.className = "ng-hint";
-        hint.textContent = "Описания пока нет — кнопка правки справа.";
-        desc.append(hint);
-      }
+      // Простое поле вместо редактора Foundry: в редактор в листе 1.2 нельзя было кликнуть.
+      // Сохраняется при уходе из поля, как остальные поля листа (ngAug.<id>.text → system.desc).
+      if (desc.querySelector("textarea.ng-aug-text")) continue;
+      const ta = doc.createElement("textarea");
+      ta.className = "ng-aug-text";
+      ta.name = `ngAug.${id}.text`;
+      ta.placeholder = "Описание мода — что делает, побочки, глюк…";
+      ta.textContent = htmlToText(html);
+      ta.value = ta.textContent;
+      ta.rows = Math.min(14, Math.max(3, ta.value.split("\n").length + 1));
+      ta.addEventListener("input", () => { ta.rows = Math.min(14, Math.max(3, ta.value.split("\n").length + 1)); });
+      desc.replaceChildren(ta);
     } else {
       desc.innerHTML = html || `<p class="ng-hint">Описания нет.</p>`;
     }

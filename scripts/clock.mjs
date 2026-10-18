@@ -5,7 +5,7 @@ import {
   CLOCK_TYPE, CLOCK_SIZES, CLOCK_THEMES, CLOCK_FOLDER,
   normClock, clockSrc, clockStep, clockSegClick, clockUpdateExtras, clockView,
 } from "./clock-logic.mjs";
-import { effectiveTheme } from "./dom.mjs";
+import { effectiveTheme, artTheme } from "./dom.mjs";
 
 const isClock = (actor) => actor?.type === CLOCK_TYPE;
 /** Поля счётчика простым объектом (system у Foundry — модель данных, её не разворачиваем). */
@@ -17,7 +17,7 @@ const themeSetting = () => {
   try { return game.settings.get(MODULE_ID, "theme"); } catch { return "auto"; }
 };
 /** Тема нового счётчика — та, что сейчас видна у создающего. */
-const defaultTheme = () => effectiveTheme(document.body, themeSetting());
+const defaultTheme = () => artTheme(effectiveTheme(document.body, themeSetting()));
 
 /** Окно счётчика. Base — ActorSheetV2 с HandlebarsApplicationMixin (на стенде — заглушка). */
 export function makeClockSheet(Base) {

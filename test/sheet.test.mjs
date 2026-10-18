@@ -50,6 +50,7 @@ class Runner {
     this.element = this.dom.window.document.querySelector("form");
   }
   async _prepareContext() { return { base: true }; }
+  async baseGear() { return [{ name: "BLADE", value: 1 }]; }
   async _onRender() {}
   async render() { this.renders = (this.renders ?? 0) + 1; }
 }
@@ -96,7 +97,7 @@ test("полоса над портретом: CRED, DEBT, бросок и «ох
   await sh._onRender({}, {});
   const bar = sh.element.querySelector("section.header .options");
   assert.equal(bar.querySelector('[data-flag], [data-action="rollAngle"], input[name="system.angle.hunted"]'), null);
-  assert.deepEqual([...bar.querySelectorAll('[data-action="ngTheme"]')].map((b) => b.dataset.theme), ["tush", "smog"]);
+  assert.deepEqual([...bar.querySelectorAll('[data-action="ngTheme"]')].map((b) => b.dataset.theme), ["tush", "smog", "acid", "classic"]);
   assert.equal(part(sh, "form").classList.contains("hunted"), false);
   // окно светлое → подсвечена «Тушь», хотя интерфейс тёмный
   assert.equal(bar.querySelector(".active").dataset.theme, "tush");
@@ -332,15 +333,34 @@ test("аугментации и броски в DOM: стрелка описан
   assert.equal(r1.querySelector("input").dataset.action, undefined);
   assert.equal(r1.querySelector(":scope > div").firstElementChild.dataset.flag, "isOpen");
   assert.equal(r1.querySelector(".desc"), null);
-  const pm = r2.querySelector(".desc prose-mirror");
-  assert.equal(pm.getAttribute("name"), "ngAug.a2.desc");
-  assert.equal(pm.getAttribute("value"), "<p>Видит</p>");
+  const ta = r2.querySelector(".desc textarea.ng-aug-text");
+  assert.equal(ta.name, "ngAug.a2.text");
+  assert.equal(ta.value, "Видит");
+  assert.equal(ta.disabled, false);
   assert.deepEqual([...root.querySelectorAll(".addDice label")].map((l) => l.textContent.trim()), ["-1", "0", "+1", "+2"]);
   assert.equal(root.querySelectorAll("button:not([type='button'])").length, 0);
-  // повторная правка не плодит стрелки и редакторы
+  // повторная правка не плодит стрелки и поля
   augDecorate(root, { items, editable: true });
   assert.equal(root.querySelectorAll(".ng-aug-open").length, 2);
-  assert.equal(root.querySelectorAll("prose-mirror").length, 1);
+  assert.equal(root.querySelectorAll("textarea.ng-aug-text").length, 1);
+  assert.equal(root.querySelectorAll("prose-mirror").length, 0);
+});
+
+test("скины: класс на окне и на <body>, арты часов — только Тушь / Смог", async () => {
+  const { applyThemeClass, applyUiTheme, effectiveTheme, artTheme, SKINS } = await import("../scripts/dom.mjs");
+  assert.deepEqual(SKINS.map((t) => t.id), ["tush", "smog", "acid", "classic"]);
+  const { window } = new JSDOM(`<body class="theme-dark"><div class="application"></div></body>`);
+  const el = window.document.querySelector(".application");
+  applyThemeClass(el, "acid");
+  assert.ok(el.classList.contains("ng-acid"));
+  applyThemeClass(el, "classic");
+  assert.ok(el.classList.contains("ng-classic") && !el.classList.contains("ng-acid"));
+  assert.equal(effectiveTheme(el, "classic"), "classic");
+  assert.equal(effectiveTheme(el, "auto"), "smog");
+  const b = window.document.body;
+  assert.equal(applyUiTheme(b, "acid"), "acid");
+  assert.ok(b.classList.contains("ng-ui-acid") && !b.classList.contains("ng-ui-smog"));
+  assert.deepEqual(["tush", "smog", "acid", "classic"].map(artTheme), ["tush", "smog", "smog", "tush"]);
 });
 
 // ---- отношения и проекты ----
@@ -492,4 +512,27 @@ test("мотивация: поле под именем, старое значе�
   d.isEditable = false;
   await d._onRender({}, {});
   assert.equal(d.element.querySelector("input.ng-why").disabled, true);
+});
+
+test("описание мода из поля листа: текст уходит в предмет HTML-абзацами, неизменённый не пишется", async () => {
+  const a = makeActor();
+  const aug = { id: "a1", name: "Глаз", type: "augmentation", system: { desc: "<p>Видит</p>", isOpen: true }, upd: [] };
+  aug.update = async (d) => { aug.upd.push(d); if (d["system.desc"] !== undefined) aug.system.desc = d["system.desc"]; };
+  a.items = Object.assign([aug], { get: (id) => (id === "a1" ? aug : undefined) });
+  const sh = new S(a);
+  const submit = (object) => sh.options.form.handler.call(sh, { preventDefault() {} }, sh.element, { object });
+  await submit({ "ngAug.a1.text": "Видит", "flags.nadgrad.dela": 1 });
+  assert.equal(aug.upd.length, 0);
+  await submit({ "ngAug.a1.text": "Видит в темноте\n\nГлючит под дождём" });
+  assert.deepEqual(aug.upd, [{ "system.desc": "<p>Видит в темноте</p><p>Глючит под дождём</p>" }]);
+});
+
+test("базовое снаряжение засевается один раз, даже если лист перерисовался дважды", async () => {
+  const a = makeActor(); a.id = "seed1"; a.isOwner = true;
+  a.items = Object.assign([], { some: Array.prototype.some });
+  const sh = new S(a);
+  assert.equal((await sh.baseGear()).length, 1);
+  assert.equal((await sh.baseGear()).length, 0);
+  const b = makeActor(); b.id = "seed2"; b.isOwner = false;
+  assert.equal((await new S(b).baseGear()).length, 0, "не владелец — не засевает");
 });

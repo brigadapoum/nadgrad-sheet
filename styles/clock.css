@@ -31,13 +31,18 @@
   background-color: var(--c-bg); background-image: var(--c-bg-img); background-size: var(--c-bg-size);
   color: var(--c-ink);
 }
-:is(.ng-clock-sheet, .ng-clock-dialog) > .window-header {
+.application:is(.ng-clock-sheet, .ng-clock-dialog) > .window-header {
   background: var(--c-header); color: var(--c-header-ink); border-bottom: 2px solid var(--c-ring);
 }
-:is(.ng-clock-sheet, .ng-clock-dialog) > .window-header .window-title {
+.application:is(.ng-clock-sheet, .ng-clock-dialog) > .window-header .window-title {
   font-family: "Oswald", sans-serif; text-transform: uppercase; letter-spacing: .06em; font-size: 17px;
 }
-:is(.ng-clock-sheet, .ng-clock-dialog) > .window-header button { color: var(--c-header-ink); background: transparent; border: 0; }
+.application:is(.ng-clock-sheet, .ng-clock-dialog) > .window-header button {
+  color: var(--c-header-ink); background: transparent; border: 0; border-radius: 0; box-shadow: none;
+  width: auto; height: auto; aspect-ratio: auto; min-width: 28px; padding: 4px 6px; font-size: 15px; line-height: 1;
+}
+.application:is(.ng-clock-sheet, .ng-clock-dialog) > .window-header button:hover { color: var(--c-ring); background: transparent; }
+.application:is(.ng-clock-sheet, .ng-clock-dialog) > .window-header .window-icon { color: var(--c-ring); }
 .ng-clock-sheet .window-content { padding: 10px 14px 12px; background: transparent; }
 .ng-clock-sheet .window-content *:not(i),
 .ng-clock-dialog .window-content *:not(i) { font-family: "IBM Plex Mono", monospace; }
@@ -74,14 +79,15 @@
 /* ---------- кнопки ---------- */
 .ng-clock-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .ng-clock-steps { justify-content: center; }
-.ng-clock-sheet button,
-.ng-clock-dialog button {
+/* только кнопки внутри окна: заголовок окна (крестик, меню) — иконки Font Awesome, им нельзя менять шрифт */
+.ng-clock-sheet .window-content button,
+.ng-clock-dialog .window-content button {
   font-family: "Oswald", sans-serif !important; text-transform: uppercase; letter-spacing: .04em;
   background: transparent; color: var(--c-ink); border: 1px solid var(--c-line); border-radius: 0;
   height: 28px; line-height: 1; padding: 0 8px; box-shadow: none;
 }
-.ng-clock-sheet button:hover:not(:disabled),
-.ng-clock-dialog button:hover:not(:disabled) { border-color: var(--c-ring); color: var(--c-ring); }
+.ng-clock-sheet .window-content button:hover:not(:disabled),
+.ng-clock-dialog .window-content button:hover:not(:disabled) { border-color: var(--c-ring); color: var(--c-ring); }
 .ng-clock-steps button { width: 36px; font-size: 18px; }
 .ng-clock-val { font-family: "Oswald", sans-serif !important; font-size: 22px; font-weight: 500; min-width: 80px; text-align: center; }
 .ng-clock.full .ng-clock-val { color: var(--c-full); }

@@ -1,4 +1,5 @@
 // Окно мастера «Силы мира»: общий список сил с группами и рангами (настройка мира nadgrad.forces).
+import { applyThemeClass } from "./dom.mjs";
 import { MODULE_ID, FORCE_RANKS, FORCE_GROUPS, FORCE_KINDS, forceKind, normForces, newId, romanRank } from "./logic.mjs";
 
 export const readForces = () => {
@@ -43,8 +44,7 @@ export function makeForcesApp() {
 
     _onRender() {
       const theme = (() => { try { return game.settings.get(MODULE_ID, "theme"); } catch { return "auto"; } })();
-      this.element.classList.toggle("ng-tush", theme === "tush");
-      this.element.classList.toggle("ng-smog", theme === "smog");
+      applyThemeClass(this.element, theme);
     }
 
     /** Перенести то, что набрано в полях, в черновик (перед перерисовкой и сохранением). */

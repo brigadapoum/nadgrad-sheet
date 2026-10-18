@@ -2,15 +2,16 @@
 // Родной лист не трогаем — добавляем к нему полосу вкладок и экраны «Статус», «Отношения», «Проекты», «Передышка».
 import {
   MODULE_ID, buildStatusContext, readState, repMax, tensionAdd, clampInt,
-  LOAD_LEVELS, loadStep, loadIndex, gearLoad, isExtraLoad, blockStep, splitAugFields,
+  LOAD_LEVELS, loadStep, loadIndex, gearLoad, isExtraLoad, blockStep, splitAugFields, gearDupes, augTextUpdate,
   readRelations, relContext, readProjects, projContext, splitListFields, projSize, newId, REL_LIMIT,
   readWhy, WHY_MAX,
 } from "./logic.mjs";
 import { readForces, openForces } from "./forces.mjs";
 import { DT_ACTIONS, breatherContext, wireBreather } from "./downtime.mjs";
 import { CLOCK_TYPE, CLOCK_FOLDER } from "./clock-logic.mjs";
+import { fixGearDupes, gearJanitor, startSeeding } from "./gear.mjs";
 import {
-  tidyHeader, applyThemeClass, effectiveTheme, loadButton,
+  tidyHeader, applyThemeClass, effectiveTheme, artTheme, loadButton,
   noSubmitButtons, enterBlurs, dicePlus, augDecorate, whyLine,
 } from "./dom.mjs";
 
@@ -87,7 +88,7 @@ export function makeSheetClass(Runner) {
       const context = await super._prepareContext(options);
       context.ng = buildStatusContext(this.actor);
       const flags = this.actor.flags?.[MODULE_ID];
-      const theme = this.element ? effectiveTheme(this.element, themeSetting()) : (themeSetting() === "smog" ? "smog" : "tush");
+      const theme = artTheme(this.element ? effectiveTheme(this.element, themeSetting()) : themeSetting());
       context.ng.rel = relContext(readRelations(flags), readForces());
       context.ng.proj = projContext(readProjects(flags), theme, this._ngProjDraft);
       context.ng.isGM = !!game.user?.isGM;
@@ -101,7 +102,28 @@ export function makeSheetClass(Runner) {
       await super._onRender(context, options);
       this.#decorate();
       this.#applyTab();
+      if (this.#healGear()) return;
       this.#healLoad();
+    }
+
+    /**
+     * Базовый набор снаряжения система засевает из _prepareContext при каждой перерисовке, пока снаряжения нет,
+     * и не ждёт создания — две перерисовки подряд давали два набора. Засеваем только один раз и только владельцем.
+     */
+    async baseGear() {
+      const actor = this.actor;
+      if (!actor?.isOwner || !startSeeding(actor)) return [];
+      const list = await super.baseGear();
+      if (actor.items.some((i) => i.type === "gear")) return [];
+      return list;
+    }
+
+    /** Задвоенное снаряжение — убрать (один клиент: мастер, а без мастера — владелец). true — чистка запущена. */
+    #healGear() {
+      if (!this.isEditable || !gearJanitor(this.actor)) return false;
+      if (!gearDupes(Array.from(this.actor.items)).groups) return false;
+      fixGearDupes(this.actor);
+      return true;
     }
 
     /** Пока идёт своя отметка снаряжения, счётчик не чиним — он вот-вот запишется. */
@@ -191,6 +213,11 @@ export function makeSheetClass(Runner) {
         if (!item) continue;
         if (upd.name === item.name) delete upd.name;
         if (upd["system.desc"] === (item.system?.desc ?? "")) delete upd["system.desc"];
+        if ("text" in upd) {
+          const html = augTextUpdate(item.system?.desc ?? "", upd.text);
+          delete upd.text;
+          if (html !== null) upd["system.desc"] = html;
+        }
         if (Object.keys(upd).length) await item.update(upd);
       }
       if (Object.keys(data).length) await this.actor.update(data);
@@ -361,7 +388,7 @@ export function makeSheetClass(Runner) {
       if (!p) return;
       if (!game.user?.can?.("ACTOR_CREATE")) return ui.notifications.warn("Выложить на стол может мастер (или игрок с правом создавать актёров).");
       if (!canvas?.scene) return ui.notifications.warn("Нет открытой сцены.");
-      const theme = effectiveTheme(this.element, themeSetting());
+      const theme = artTheme(effectiveTheme(this.element, themeSetting()));
       let folder = game.folders.find((f) => f.type === "Actor" && f.name === CLOCK_FOLDER);
       if (!folder) { try { folder = await Folder.create({ name: CLOCK_FOLDER, type: "Actor" }); } catch { folder = null; } }
       const actor = await Actor.create({

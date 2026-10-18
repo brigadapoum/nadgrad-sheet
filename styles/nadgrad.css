@@ -685,3 +685,88 @@ body.ng-ui figure.paused figcaption {
 .application.runner-actor input.ng-crop-zoom { flex: 1; accent-color: var(--ng-act); }
 .application.runner-actor .ng-tk-scale-l { min-width: 0; }
 .application.runner-actor input.ng-tk-scale { width: 72px; height: 28px; }
+
+/* ---------- передышка ---------- */
+.application.runner-actor .ng-dt-left { display: flex; align-items: center; gap: 10px; }
+.application.runner-actor .ng-dt-cells { display: flex; gap: 4px; flex-wrap: wrap; max-width: 60%; }
+.application.runner-actor .ng-dt-cell { width: 24px; height: 24px; border: 1px solid var(--ng-act); box-sizing: border-box; }
+.application.runner-actor .ng-dt-cell.used { background: var(--ng-act); box-shadow: var(--ng-glow) var(--ng-act); }
+.application.runner-actor .ng-dt-cell.bought { border-style: dashed; border-color: var(--ng-sign); }
+.application.runner-actor .ng-dt-cell.bought.used { background: var(--ng-sign); }
+.application.runner-actor .ng-dt-count { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; }
+.application.runner-actor .ng-dt-count b { font: 600 22px "Oswald", sans-serif; }
+.application.runner-actor .ng-dt-count span { font: 500 16px "Oswald", sans-serif; color: var(--ng-muted); }
+.application.runner-actor .ng-dt-count small { flex-basis: 100%; font-size: 10.5px; color: var(--ng-muted); }
+.application.runner-actor .ng-dt-buy { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.application.runner-actor .ng-status button.ng-dt-flash { border-style: dashed; border-color: var(--ng-sign); color: var(--ng-sign); }
+.application.runner-actor .ng-dt-res { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 10.5px; color: var(--ng-muted); border-top: 1px dashed var(--ng-line); padding-top: 6px; }
+.application.runner-actor .ng-dt-res b { color: var(--ng-ink); font-weight: 500; }
+
+.application.runner-actor .ng-dt-actions { gap: 3px; }
+.application.runner-actor .ng-dt-act { background: var(--ng-stripe); border: 1px solid transparent; }
+.application.runner-actor .ng-dt-act.free { background: transparent; border: 1px dashed var(--ng-line); }
+.application.runner-actor .ng-dt-act.open { border: 1px solid var(--ng-act); }
+.application.runner-actor .ng-status button.ng-dt-act-head {
+  width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center;
+  padding: 7px 10px; background: transparent; border: 0; border-radius: 0; text-align: left; min-height: 0; height: auto;
+}
+.application.runner-actor .ng-dt-act-name { font: 500 14px "Oswald", sans-serif; letter-spacing: .05em; text-transform: uppercase; color: var(--ng-ink); }
+.application.runner-actor .ng-dt-act.open .ng-dt-act-name { color: var(--ng-act); }
+.application.runner-actor .ng-dt-act-hint { font: 10.5px "IBM Plex Mono", monospace; color: var(--ng-muted); text-transform: none; }
+.application.runner-actor .ng-dt-act.free .ng-dt-act-hint { color: var(--ng-cool); }
+.application.runner-actor .ng-dt-body { padding: 8px 10px 10px; border-top: 1px solid var(--ng-line); display: flex; flex-direction: column; gap: 8px; }
+.application.runner-actor .ng-dt-field { display: flex; flex-direction: column; gap: 3px; font-size: 10.5px; color: var(--ng-muted); min-width: 0; }
+.application.runner-actor .ng-dt-field :is(input, select) { height: 28px; width: 100%; min-width: 0; }
+.application.runner-actor .ng-dt-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.application.runner-actor .ng-dt-two > button:only-child,
+.application.runner-actor .ng-dt-two > .ng-dt-apply:first-child { grid-column: 1 / -1; }
+.application.runner-actor .ng-dt-flags { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 10.5px; color: var(--ng-muted); }
+.application.runner-actor .ng-dt-flags b { color: var(--ng-ink); }
+.application.runner-actor .ng-dt-flags label { display: inline-flex; align-items: center; gap: 4px; }
+.application.runner-actor .ng-dt-clinics { display: flex; flex-direction: column; gap: 2px; }
+.application.runner-actor .ng-dt-clinics label { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 6px; align-items: center; }
+.application.runner-actor .ng-dt-clinics small { color: var(--ng-muted); font-size: 10.5px; }
+.application.runner-actor .ng-dt-harm,
+.application.runner-actor .ng-dt-price { margin: 0; }
+.application.runner-actor .ng-dt-price b { color: var(--ng-act); }
+
+.application.runner-actor .ng-dt-result { border-top: 2px solid var(--ng-sign); margin: 0 -10px -10px; padding: 8px 10px 10px; display: flex; flex-direction: column; gap: 8px; background: rgb(0 0 0 / .06); }
+.application.runner-actor .ng-dt-result.done { opacity: .75; }
+.application.runner-actor .ng-dt-dice { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.application.runner-actor .ng-dt-die { width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--ng-line); font: 600 15px "Oswald", sans-serif; color: var(--ng-muted); box-sizing: border-box; }
+.application.runner-actor .ng-dt-die.on { border: 2px solid var(--ng-act); color: var(--ng-act); }
+.application.runner-actor .ng-dt-tier { margin-left: 6px; font: 600 14px "Oswald", sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+.application.runner-actor .ng-dt-table { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; text-align: center; }
+.application.runner-actor .ng-dt-table > div { border: 1px solid var(--ng-line); padding: 3px 0; color: var(--ng-muted); display: flex; flex-direction: column; }
+.application.runner-actor .ng-dt-table small { font-size: 9.5px; }
+.application.runner-actor .ng-dt-table b { font: 600 14px "Oswald", sans-serif; }
+.application.runner-actor .ng-dt-table > div.on { border: 2px solid var(--ng-act); color: var(--ng-act); padding: 2px 0; }
+.application.runner-actor .ng-status button.ng-dt-gold { border-color: var(--ng-sign); color: var(--ng-sign); }
+.application.runner-actor .ng-status button.ng-dt-apply { background: var(--ng-cool); border-color: var(--ng-cool); color: var(--ng-on-acc); }
+.application.runner-actor .ng-status button.ng-dt-apply:disabled { opacity: .4; }
+
+.application.runner-actor .ng-dt-row { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 4px 0; border-bottom: 1px dashed var(--ng-line); font-size: 11.5px; }
+.application.runner-actor .ng-dt-row:last-of-type { border-bottom: 0; }
+.application.runner-actor .ng-dt-row.declined .ng-dt-line { text-decoration: line-through; color: var(--ng-muted); }
+.application.runner-actor .ng-dt-n { color: var(--ng-muted); }
+.application.runner-actor .ng-dt-btns { display: flex; align-items: center; gap: 2px; }
+.application.runner-actor .ng-dt-st { font-size: 10.5px; color: var(--ng-muted); }
+.application.runner-actor .ng-dt-st.applied { color: var(--ng-cool); }
+
+/* окна подтверждения передышки (DialogV2) */
+.application.ng-dt-dialog .ng-dt-dlg { display: flex; flex-direction: column; gap: 4px; margin: 6px 0; }
+.application.ng-dt-dialog .ng-dt-dlg-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; gap: 8px; align-items: baseline; padding: 5px 8px; background: rgb(0 0 0 / .08); }
+.application.ng-dt-dialog .ng-dt-dlg-row b { font: 600 16px "Oswald", sans-serif; }
+.application.ng-dt-dialog .ng-dt-dlg-row b.to { color: var(--ngc-act, #E0763A); }
+.application.ng-dt-dialog .ng-dt-dlg-row i { font-style: normal; opacity: .6; }
+.application.ng-dt-dialog .ng-dt-dlg-extra { display: flex; align-items: flex-start; gap: 8px; padding: 8px; border: 1px solid var(--ngc-red, #E2402F); margin: 6px 0; }
+.application.ng-dt-dialog .ng-dt-dlg-note { font-size: 11px; opacity: .75; }
+
+/* строки передышки в чате */
+.ng-dt-chat { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; border-left: 3px solid var(--ngc-act, #B08E59); font-size: 12px; }
+.ng-dt-chat > b { font: 500 11px "Oswald", sans-serif; letter-spacing: .12em; text-transform: uppercase; }
+.ng-dt-chat.applied { border-left-color: var(--ngc-cool, #5CCFC0); }
+.ng-dt-chat.applied > b { color: var(--ngc-cool, #5CCFC0); }
+.ng-dt-chat.buy > b, .ng-dt-chat.record > b { color: var(--ngc-act, #B08E59); }
+.application.runner-actor .ng-breather { font-family: "IBM Plex Mono", monospace; font-size: 12px; }
+.application.runner-actor .ng-breather :is(input, select, small, label) { font-family: "IBM Plex Mono", monospace; }

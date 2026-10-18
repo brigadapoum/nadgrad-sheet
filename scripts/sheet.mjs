@@ -7,6 +7,7 @@ import {
   readWhy, WHY_MAX,
 } from "./logic.mjs";
 import { readForces, openForces } from "./forces.mjs";
+import { DT_ACTIONS, breatherContext, wireBreather } from "./downtime.mjs";
 import { CLOCK_TYPE, CLOCK_FOLDER } from "./clock-logic.mjs";
 import {
   tidyHeader, applyThemeClass, effectiveTheme, loadButton,
@@ -64,6 +65,8 @@ export function makeSheetClass(Runner) {
         ngProjStep: NadgradRunner.#onProjStep,
         ngProjDel: NadgradRunner.#onProjDel,
         ngProjTable: NadgradRunner.#onProjTable,
+        // передышка (scripts/downtime.mjs)
+        ...DT_ACTIONS,
       },
     };
 
@@ -88,6 +91,7 @@ export function makeSheetClass(Runner) {
       context.ng.rel = relContext(readRelations(flags), readForces());
       context.ng.proj = projContext(readProjects(flags), theme, this._ngProjDraft);
       context.ng.isGM = !!game.user?.isGM;
+      context.ng.dt = breatherContext(this);
       context.ngTabs = TABS.map((t) => ({ ...t, active: t.id === this._ngTab }));
       context.ngEditable = this.isEditable;
       return context;
@@ -159,6 +163,9 @@ export function makeSheetClass(Runner) {
     static async #onSubmit(event, form, formData) {
       event?.preventDefault?.();
       const data = { ...(formData?.object ?? {}) };
+      // поля передышки живут в черновике листа, не в актёре
+      for (const k of Object.keys(data)) if (k.startsWith("ngDt")) delete data[k];
+      delete data.ngDt;
       const augs = splitAugFields(data);
       const relF = splitListFields(data, "ngRel");
       const projF = splitListFields(data, "ngProj");
@@ -213,6 +220,7 @@ export function makeSheetClass(Runner) {
       noSubmitButtons(root);
       enterBlurs(root);
       this.#wireDraft();
+      wireBreather(this);
       const index = loadIndex(this.actor.system?.GEAR?.LOAD?.selected);
       loadButton(root, {
         index,

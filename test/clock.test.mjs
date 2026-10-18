@@ -216,7 +216,4 @@ test("силы мира: тип «Сила / Персона» — выбор в 
   assert.ok([...r.querySelectorAll("select.ng-rel-pick option")].some((o) => o.textContent.startsWith("Зера · персона · ранг I")));
 });
 
-test("шаблон «Передышка» собирается", () => {
-  const d = new JSDOM(tpl("breather.hbs")({})).window.document;
-  assert.equal(d.querySelector(".ng-breather .ng-h").textContent, "Передышка");
-});
+

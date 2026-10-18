@@ -1,6 +1,166 @@
 <div class="ng-status ng-breather">
-  <section class="ng-block">
-    <h3 class="ng-h">Передышка</h3>
-    <p class="ng-hint">Экран пока пустой.</p>
+  <section class="ng-block ng-dt-budget">
+    <h3 class="ng-h">Действия передышки
+      {{#if ngEditable}}<button type="button" class="ng-small" data-action="ngDtNew" title="Перед следующей сессией: снова 2 бесплатных действия, журнал — в архив">Новая передышка</button>{{/if}}
+    </h3>
+    <div class="ng-dt-left">
+      <div class="ng-dt-cells">
+        {{#each ng.dt.budget.cells}}<span class="ng-dt-cell{{#if used}} used{{/if}}{{#if bought}} bought{{/if}}"></span>{{/each}}
+      </div>
+      <div class="ng-dt-count">
+        <b>{{ng.dt.budget.left}}</b> <span>/ {{ng.dt.budget.total}}</span>
+        <small>осталось · 2 бесплатных{{#if ng.dt.budget.bought}} + {{ng.dt.budget.bought}} куплено{{/if}}</small>
+      </div>
+    </div>
+    {{#if ngEditable}}
+    <div class="ng-dt-buy">
+      <button type="button" class="ng-ghost" data-action="ngDtBuy" data-kind="cheki">+1 действие · 5 чеков</button>
+      <button type="button" class="ng-ghost" data-action="ngDtBuy" data-kind="tension">+1 действие · +2 напряж.</button>
+    </div>
+    <button type="button" class="ng-ghost ng-dt-flash" data-action="ngDtBuy" data-kind="flash">Флешбек на деле · 5 чеков и +2 напряжения</button>
+    {{/if}}
+    <div class="ng-dt-res">
+      <span>Чеки <b>{{ng.dt.res.cheki}}</b></span>
+      <span>Напряжение <b>ур. {{ng.dt.res.tension.level}} · {{ng.dt.res.tension.points}}/8</b></span>
+      <span>Стресс <b>{{ng.dt.res.stress}}</b></span>
+      <span>Ранг <b>{{ng.dt.res.rank}}</b></span>
+    </div>
+  </section>
+
+  <section class="ng-block ng-dt-actions">
+    <h3 class="ng-h">Что делаешь</h3>
+    {{#each ng.dt.actions}}
+    <div class="ng-dt-act{{#if open}} open{{/if}}{{#if free}} free{{/if}}" data-kind="{{id}}">
+      <button type="button" class="ng-dt-act-head" data-action="ngDtOpen" data-kind="{{id}}">
+        <span class="ng-dt-act-name">{{label}}</span><span class="ng-dt-act-hint">{{hint}}</span>
+      </button>
+      {{#if open}}
+      <div class="ng-dt-body">
+        {{#with @root.ng.dt.card}}
+        {{#if ask}}
+        <label class="ng-dt-field">{{ask}}
+          <input type="text" data-dt="note" value="{{draft.note}}" {{#unless @root.ngEditable}}disabled{{/unless}}>
+        </label>
+        {{/if}}
+
+        {{#if isSkill}}
+        <div class="ng-dt-two">
+          <label class="ng-dt-field">Подход
+            <select data-dt="approach">{{#each approaches}}<option value="{{id}}" {{#if on}}selected{{/if}}>{{label}} · {{dice}}</option>{{/each}}</select>
+          </label>
+          <label class="ng-dt-field">Навык
+            <select data-dt="skill">{{#each skills}}<option value="{{id}}" {{#if on}}selected{{/if}}>{{label}} · {{dice}}</option>{{/each}}</select>
+          </label>
+        </div>
+        {{/if}}
+
+        {{#if isProject}}
+        <label class="ng-dt-field">Проект
+          <select data-dt="target">{{#each projects}}<option value="{{id}}" {{#if on}}selected{{/if}}>{{name}} · {{value}}/{{size}}</option>{{else}}<option value="">— заведи проект во вкладке «Проекты» —</option>{{/each}}</select>
+        </label>
+        {{/if}}
+
+        {{#if isClock}}
+        <label class="ng-dt-field">Счётчик
+          <select data-dt="target">{{#each clocks}}<option value="{{id}}" {{#if on}}selected{{/if}}>{{name}} · {{value}}/{{size}}</option>{{else}}<option value="">— нет счётчиков, которые ты можешь менять —</option>{{/each}}</select>
+        </label>
+        {{#unless clocks.length}}<p class="ng-hint">Счётчики на столе обычно меняет мастер — брось, а результат передай ему.</p>{{/unless}}
+        {{/if}}
+
+        {{#if isRank}}
+        <div class="ng-dt-flags">
+          <span>Ранг рискаря <b>{{rank}}</b> — со «Статуса»</span>
+          <label><input type="checkbox" data-dt="repeat" {{#if draft.repeat}}checked{{/if}}> повторно (+d6)</label>
+          <label><input type="checkbox" data-dt="contraband" {{#if draft.contraband}}checked{{/if}}> контрабанда / ЛКС (+1 напр.)</label>
+        </div>
+        {{/if}}
+
+        {{#if isDoc}}
+        <div class="ng-dt-two">
+          <label class="ng-dt-field">Ранг дока
+            <input type="number" min="0" max="6" data-dt="doc" value="{{draft.doc}}">
+          </label>
+          <label class="ng-dt-field">Что лечим
+            <select data-dt="target">{{#each harms}}<option value="{{slot}}" {{#if on}}selected{{/if}}>{{name}} · {{heal}}/4</option>{{else}}<option value="">— нет повреждений 2 уровня —</option>{{/each}}</select>
+          </label>
+        </div>
+        {{/if}}
+
+        {{#if isRecord}}
+        <label class="ng-dt-field">Потратить чеков (если за чеки)
+          <input type="number" min="0" data-dt="cheki" value="{{draft.cheki}}">
+        </label>
+        <div class="ng-tool"><span class="ng-grow"></span>
+          <button type="button" class="ng-pri" data-action="ngDtRecord" {{#unless @root.ngEditable}}disabled{{/unless}}>Записать · −1 действие</button>
+        </div>
+        {{/if}}
+
+        {{#if isHeal3}}
+        <p class="ng-dt-harm">{{#if hard}}3 уровень: <b>{{hard}}</b>{{else}}На листе нет повреждения 3 уровня.{{/if}}</p>
+        <div class="ng-dt-clinics">
+          {{#each clinics}}<label><input type="radio" name="ngDt.clinic" data-dt="clinic" value="{{id}}" {{#if on}}checked{{/if}}> <span>{{label}}</span> <small>{{formula}}{{#if note}} {{note}}{{/if}}</small></label>{{/each}}
+        </div>
+        {{#if price}}<p class="ng-dt-price">Цена: <b>{{price}} чеков</b>{{#if priceNote}} {{priceNote}}{{/if}}</p>{{/if}}
+        <div class="ng-tool"><span class="ng-grow"></span>
+          <button type="button" class="ng-ghost" data-action="ngDtPrice" {{#unless hard}}disabled{{/unless}}{{#unless @root.ngEditable}} disabled{{/unless}}>Бросить цену</button>
+          <button type="button" class="ng-pri ng-dt-apply" data-action="ngDtHeal3" {{#unless price}}disabled{{/unless}}>Применить{{#if price}}: −{{price}} чеков, 3 → 2 ур.{{/if}}</button>
+        </div>
+        {{/if}}
+
+        {{#if roll}}
+        <div class="ng-tool">
+          <span class="ng-hint">{{poolText}}</span><span class="ng-grow"></span>
+          <button type="button" class="ng-pri" data-action="ngDtRoll" {{#unless @root.ngEditable}}disabled{{/unless}}>Бросить · −1 действие</button>
+        </div>
+        {{/if}}
+
+        {{#if last}}
+        <div class="ng-dt-result{{#unless last.pending}} done{{/unless}}">
+          <div class="ng-dt-dice">
+            {{#each last.dice}}<span class="ng-dt-die{{#if on}} on{{/if}}">{{d}}</span>{{/each}}
+            <span class="ng-dt-tier">{{last.tierTitle}} · {{last.valueText}}{{#if last.bonus}} (+{{last.bonus}}){{/if}}</span>
+          </div>
+          {{#if last.table}}
+          <div class="ng-dt-table">
+            {{#each last.table}}<div class="{{#if on}}on{{/if}}"><small>{{label}}</small><b>{{value}}</b></div>{{/each}}
+          </div>
+          {{/if}}
+          {{#if last.pending}}
+          <div class="ng-dt-two">
+            {{#if last.canBonus}}<button type="button" class="ng-ghost ng-dt-gold" data-action="ngDtBonus" data-id="{{last.id}}">+1 к результату · 5 чеков</button>{{/if}}
+            {{#if last.canQuality}}<button type="button" class="ng-ghost ng-dt-gold" data-action="ngDtQuality" data-id="{{last.id}}">+1 ранг · {{last.qualityCost}} чеков</button>{{/if}}
+            <button type="button" class="ng-pri ng-dt-apply" data-action="ngDtApply" data-id="{{last.id}}">Применить: {{last.applyText}}</button>
+          </div>
+          {{else}}
+          <p class="ng-hint">{{#if last.applied}}Применено.{{else}}Отказался — не применено.{{/if}}</p>
+          {{/if}}
+        </div>
+        {{/if}}
+        {{/with}}
+      </div>
+      {{/if}}
+    </div>
+    {{/each}}
+  </section>
+
+  <section class="ng-block ng-dt-log">
+    <h3 class="ng-h">Журнал этой передышки <span class="ng-val">{{ng.dt.log.length}}</span></h3>
+    {{#each ng.dt.log}}
+    <div class="ng-dt-row{{#if declined}} declined{{/if}}">
+      <span class="ng-dt-n">{{#if spends}}{{n}}{{else}}·{{/if}}</span>
+      <span class="ng-dt-line">{{line}}</span>
+      {{#if pending}}
+      <span class="ng-dt-btns">
+        <button type="button" class="ng-small ng-dt-apply" data-action="ngDtApply" data-id="{{id}}">Применить</button>
+        <button type="button" class="ng-x" data-action="ngDtDecline" data-id="{{id}}" title="Отказаться от результата">×</button>
+      </span>
+      {{else}}
+      <span class="ng-dt-st {{status}}">{{#if applied}}применено{{else if declined}}отказ{{else}}записано{{/if}}</span>
+      {{/if}}
+    </div>
+    {{else}}
+    <p class="ng-hint">Пока ничего. Каждый бросок уходит карточкой в чат.</p>
+    {{/each}}
+    {{#if ng.dt.archiveCount}}<p class="ng-hint">В архиве прошлых передышек: {{ng.dt.archiveCount}}.</p>{{/if}}
   </section>
 </div>

@@ -12,11 +12,14 @@ const CLOCK_TYPE = `${MODULE_ID}.clock`;
 
 // ---------- снимок актёра ----------
 
+/** Имя раны в ячейке. В template.json системы ячейки 2 уровня — строки "" (лист 1.2 их не показывает), поэтому строка = пусто. */
+const slotName = (x) => (x && typeof x === "object" ? String(x.name ?? "").trim() : "");
+
 function harmOf(actor) {
   const h = actor.system?.HARM ?? {};
   return {
-    light: { first: String(h.light?.first?.name ?? "").trim(), second: String(h.light?.second?.name ?? "").trim() },
-    medium: { first: String(h.medium?.first?.name ?? "").trim(), second: String(h.medium?.second?.name ?? "").trim() },
+    light: { first: slotName(h.light?.first), second: slotName(h.light?.second) },
+    medium: { first: slotName(h.medium?.first), second: slotName(h.medium?.second) },
     hard: String(h.hard?.name ?? "").trim(),
   };
 }

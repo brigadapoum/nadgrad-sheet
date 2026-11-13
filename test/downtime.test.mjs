@@ -95,10 +95,10 @@ test("«Применить» проект, счётчик, лечение 2 ур
   assert.ok(applyPlan(pend("negclock", [6], { target: "чужой" }), STATE).warn);
   const h = applyPlan(pend("heal2", [5], { target: "first" }), STATE);
   assert.deepEqual(h.heal, { first: 0 }, "1 + 3 = 4 — вылечено, часы обнулены");
-  assert.equal(h.actor["system.HARM.medium.first.name"], "");
+  assert.deepEqual(h.actor["system.HARM.medium.first"], { name: "", heal: false });
   const h2 = applyPlan(pend("heal2", [2], { target: "first" }), STATE);
   assert.deepEqual(h2.heal, { first: 2 });
-  assert.equal(h2.actor["system.HARM.medium.first.name"], undefined);
+  assert.equal(h2.actor["system.HARM.medium.first"], undefined);
   assert.equal(applyPlan({ ...pend("tension", [5]), status: "applied" }, STATE), null);
 });
 
@@ -112,7 +112,7 @@ test("ресурс: качество в журнал, контрабанда —
 test("лечение 3 уровня: цена — из чеков, повреждение в свободную ячейку 2 ур.; занято — предупреждение", () => {
   const p = heal3Plan(STATE, 15);
   assert.equal(p.slot, "second");
-  assert.deepEqual(p.actor, { "flags.nadgrad.cheki": -3, "system.HARM.hard.name": "", "system.HARM.medium.second.name": "Пробито лёгкое" });
+  assert.deepEqual(p.actor, { "flags.nadgrad.cheki": -3, "system.HARM.hard.name": "", "system.HARM.medium.second": { name: "Пробито лёгкое", heal: false } });
   assert.ok(p.short);
   assert.ok(heal3Plan({ ...STATE, harm: { medium: { first: "a", second: "b" }, hard: "x" } }, 5).warn);
   assert.ok(heal3Plan({ ...STATE, harm: { medium: {}, hard: "" } }, 5).warn);
@@ -388,8 +388,8 @@ test("лечение 2 уровня: вылеченное повреждение
   const e = { ...newEntry({ id: "h", kind: "heal2", dice: [6, 6], target: "first" }) };
   const st = { harm: { light: { first: "Ушиб", second: "" }, medium: { first: "Перелом", second: "" } }, heal: { first: 1, second: 0 } };
   const p = applyPlan(e, st);
-  assert.equal(p.actor["system.HARM.medium.first.name"], "");
-  assert.equal(p.actor["system.HARM.light.second.name"], "Перелом");
+  assert.deepEqual(p.actor["system.HARM.medium.first"], { name: "", heal: false });
+  assert.deepEqual(p.actor["system.HARM.light.second"], { name: "Перелом", heal: false });
   assert.deepEqual(p.heal, { first: 0 });
   const full = applyPlan(e, { ...st, harm: { ...st.harm, light: { first: "a", second: "b" } } });
   assert.ok(full.lines.some((l) => /впиши вручную/.test(l.to)));

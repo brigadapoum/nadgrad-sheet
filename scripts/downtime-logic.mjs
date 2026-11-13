@@ -173,12 +173,14 @@ export function applyPlan(entry, state, opts = {}) {
     if (v >= HEAL_CLOCK) {
       // Домашнее правило (автор, 2026-11-13): вылеченное повреждение не исчезает, а понижается на уровень —
       // 2 уровень уходит в свободную ячейку 1 уровня. Часы лечения обнуляются.
-      plan.actor[`system.HARM.medium.${slot}.name`] = "";
+      // ячейку пишем целиком: в template.json системы medium.first/second — строки "", и запись «.name»
+      // внутрь строки Foundry может потерять (так терялась рана после клиники, 2026-11-13)
+      plan.actor[`system.HARM.medium.${slot}`] = { name: "", heal: false };
       plan.heal = { [slot]: 0 };
       const light = !state.harm?.light?.first ? "first" : !state.harm?.light?.second ? "second" : null;
       if (light) {
         plan.lines.push({ label: "Повреждение", from: `2 уровень: ${name}`, to: `1 уровень (${light === "first" ? "первая" : "вторая"} ячейка)` });
-        plan.actor[`system.HARM.light.${light}.name`] = state.harm?.medium?.[slot] || name;
+        plan.actor[`system.HARM.light.${light}`] = { name: state.harm?.medium?.[slot] || name, heal: false };
       } else {
         plan.lines.push({ label: "Повреждение", from: `2 уровень: ${name}`, to: "1 уровень — обе ячейки заняты, впиши вручную" });
       }
@@ -210,7 +212,7 @@ export function heal3Plan(state, price) {
     actor: {
       "flags.nadgrad.cheki": to,
       "system.HARM.hard.name": "",
-      [`system.HARM.medium.${slot}.name`]: hard,
+      [`system.HARM.medium.${slot}`]: { name: hard, heal: false },
     },
     heal: { [slot]: 0 },
     slot,

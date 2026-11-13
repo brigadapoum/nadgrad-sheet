@@ -6,7 +6,7 @@ import { MODULE_ID, readState } from "./logic.mjs";
 import { effectiveTheme } from "./dom.mjs";
 import {
   STAGE, JOBS_PAGE, RUNNERS_PAGE, JOB_FOLDER, readJob, jobView, boardJobs, page, ring, turn, syncPlan,
-  CAMPAIGN, campaignStatus, runnerViews, countBy, fitStage, ZASLON, zaslonOf, newsViews,
+  CAMPAIGN, campaignStatus, runnerViews, countBy, fitStage, newsViews,
 } from "./hall-logic.mjs";
 
 const ART = `modules/${MODULE_ID}/art/hall`;
@@ -107,6 +107,49 @@ async function setJobStatus(id, status) {
   await entry.setFlag(MODULE_ID, "job.status", status);
 }
 
+// ---------- музыка (автор, 2026-11-13: кнопки плеера в шапке, плейлист «Стол кампании», старт при загрузке сцены) ----------
+
+export const PLAYLIST_NAME = "Стол кампании";
+const hallPlaylist = () => game.playlists?.getName?.(PLAYLIST_NAME) ?? game.playlists?.find((p) => p.name.trim().toLowerCase() === PLAYLIST_NAME.toLowerCase()) ?? null;
+
+function musicContext() {
+  const pl = hallPlaylist();
+  const sound = pl?.sounds?.find((x) => x.playing);
+  return {
+    name: PLAYLIST_NAME,
+    exists: !!pl,
+    isGM: game.user.isGM,
+    canControl: !!pl && (game.user.isGM || pl.isOwner),
+    playing: !!pl?.playing,
+    track: sound?.name ?? "",
+    count: pl?.sounds?.size ?? 0,
+  };
+}
+
+async function musicAction(kind) {
+  const pl = hallPlaylist();
+  if (!pl || !(game.user.isGM || pl.isOwner)) return;
+  if (kind === "toggle") return pl.playing ? pl.stopAll() : pl.playAll();
+  if (!pl.sounds.size) return;
+  // «Одновременно» — переключать нечего; в остальных режимах — соседний трек по кругу
+  const ordered = pl.playbackOrder?.length ? pl.playbackOrder : pl.sounds.contents.map((x) => x.id);
+  const cur = pl.sounds.find((x) => x.playing)?.id;
+  const i = cur ? ordered.indexOf(cur) : -1;
+  const dir = kind === "next" ? 1 : -1;
+  const nextId = ordered[((i < 0 ? (dir > 0 ? -1 : 0) : i) + dir + ordered.length) % ordered.length];
+  return pl.playSound(pl.sounds.get(nextId));
+}
+
+/** Мастер на загрузке холла: привязать плейлист к сцене и запустить, если тишина. */
+async function musicAutostart() {
+  if (!game.user.isGM || !isHall(canvas?.scene)) return;
+  const pl = hallPlaylist();
+  if (!pl) return;
+  const scene = canvas.scene;
+  if (scene.playlist?.id !== pl.id) await scene.update({ playlist: pl.id });
+  if (!pl.playing && pl.sounds.size) await pl.playAll();
+}
+
 // ---------- рискари ----------
 
 function runnerRows() {
@@ -193,8 +236,8 @@ async function render() {
     layout: fitStage(freeArea(), STAGE),
     isGM: game.user.isGM,
     skins: SKINS.map((x) => ({ ...x, on: x.id === skin })),
-    zaslon: zaslonOf(setting("hallZaslon", "closed")),
     photos: PHOTOS,
+    playerHtml: await tpl("hall-player.hbs", musicContext()),
     boardHtml: await tpl("hall-board.hbs", jobsContext()),
     stripHtml: await tpl("hall-strip.hbs", stripContext()),
     news,
@@ -205,10 +248,16 @@ async function render() {
 }
 
 /** Перерисовать только доску или только ленту — без мигания карты и фото. */
+const PARTS = {
+  board: [".ng-hall-board", "hall-board.hbs", () => jobsContext()],
+  strip: [".ng-hall-strip", "hall-strip.hbs", () => stripContext()],
+  player: [".ng-hall-player", "hall-player.hbs", () => musicContext()],
+};
 async function renderPart(which) {
-  const old = root?.querySelector(which === "board" ? ".ng-hall-board" : ".ng-hall-strip");
+  const [sel, file, ctx] = PARTS[which];
+  const old = root?.querySelector(sel);
   if (!old) return render();
-  const html = which === "board" ? await tpl("hall-board.hbs", jobsContext()) : await tpl("hall-strip.hbs", stripContext());
+  const html = await tpl(file, ctx());
   const box = document.createElement("div");
   box.innerHTML = html.trim();
   old.replaceWith(box.firstElementChild);
@@ -276,6 +325,9 @@ async function onClick(event) {
       return renderPart("strip");
     }
     case "skin": return game.settings.set(MODULE_ID, "theme", btn.dataset.id);
+    case "music-toggle": return musicAction("toggle");
+    case "music-next": return musicAction("next");
+    case "music-prev": return musicAction("prev");
     case "runner": return openActor(id);
     case "gallery": return new (galleryClass())().render(true);
     case "admin": return new (adminClass())().render(true);
@@ -335,7 +387,12 @@ function adminClass() {
         ngCreate: async function () { await createHall(); this.render(); },
         ngView: function () { hallScene()?.view(); },
         ngActivate: async function () { await hallScene()?.activate(); this.render(); },
-        ngZaslon: async function (event, target) { await game.settings.set(MODULE_ID, "hallZaslon", target.dataset.id); this.render(); },
+        ngMusicCreate: async function () {
+          if (!hallPlaylist()) await Playlist.create({ name: PLAYLIST_NAME, mode: CONST.PLAYLIST_MODES.SEQUENTIAL });
+          const s = hallScene();
+          if (s && hallPlaylist()) await s.update({ playlist: hallPlaylist().id });
+          this.render();
+        },
         ngNewsSave: async function () {
           const text = this.element.querySelector("textarea[name=news]")?.value ?? "";
           await game.settings.set(MODULE_ID, "hallNews", text.split("\n").map((s) => s.trim()).filter(Boolean));
@@ -352,11 +409,10 @@ function adminClass() {
     static PARTS = { body: { template: `${TPL}/hall-admin.hbs` } };
     async _prepareContext() {
       const s = hallScene();
-      const z = setting("hallZaslon", "closed");
       const entries = jobEntries().map((j) => ({ id: j.id, name: j.name, job: readJob(j.getFlag(MODULE_ID, "job")) }));
       return {
         scene: s ? { name: s.name, active: s.active } : null,
-        zaslon: ZASLON.map((x) => ({ id: x.id, label: x.id === "none" ? "Не показывать" : x.label.replace("Заслон: ", ""), on: x.id === z })),
+        music: musicContext(),
         newsText: (setting("hallNews", []) ?? []).join("\n"),
         newsDataVersion: data.news?.version ?? "—",
         jobsOpen: entries.filter((e) => e.job.status !== "closed").length,
@@ -388,6 +444,7 @@ export async function createHall() {
       flags: { [MODULE_ID]: { hall: true } },
     });
   }
+  if (hallPlaylist() && scene.playlist?.id !== hallPlaylist().id) await scene.update({ playlist: hallPlaylist().id });
   await syncJobs({ quiet: true });
   if (!(setting("hallNews", []) ?? []).length && data.news?.news) {
     await game.settings.set(MODULE_ID, "hallNews", data.news.news.map((n) => n.text));
@@ -433,7 +490,10 @@ export function registerHall() {
     refresh();
   });
 
-  Hooks.on("canvasReady", refresh);
+  Hooks.on("canvasReady", () => { refresh(); musicAutostart().catch((err) => console.warn(`${MODULE_ID} | музыка холла`, err)); });
+  for (const h of ["createPlaylist", "updatePlaylist", "deletePlaylist", "createPlaylistSound", "updatePlaylistSound", "deletePlaylistSound"]) {
+    Hooks.on(h, () => { if (root) renderPart("player").catch(() => refresh()); });
+  }
   Hooks.on("updateScene", (scene, change) => { if (scene.id === canvas?.scene?.id || foundry.utils.hasProperty(change, `flags.${MODULE_ID}`)) refresh(); });
   for (const h of ["createJournalEntry", "updateJournalEntry", "deleteJournalEntry", "createActor", "updateActor", "deleteActor"]) {
     Hooks.on(h, () => { if (root) refresh(); });

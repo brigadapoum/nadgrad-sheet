@@ -6,12 +6,12 @@
     <span class="ng-hall-gap"></span>
     <span class="ng-hall-brand"><img class="ng-hall-logo" src="{{art}}/logo.webp" alt=""><span class="ng-hall-title">НАДГРАД</span></span>
     <span class="ng-hall-gap"></span>
+    {{{playerHtml}}}
     <span class="ng-hall-head-right">
-      {{#if zaslon.label}}<span class="ng-hall-zaslon tone-{{zaslon.tone}}"><i></i>{{zaslon.label}}</span>{{/if}}
       <span class="ng-hall-skins" role="group" aria-label="Оформление холла">
         {{#each skins}}<button type="button" data-hall="skin" data-id="{{id}}" class="{{#if on}}on{{/if}}" aria-pressed="{{#if on}}true{{else}}false{{/if}}">{{label}}</button>{{/each}}
       </span>
-      {{#if isGM}}<button type="button" class="ng-hall-admin" data-hall="admin" title="Холл: новости, Заслон, доска дел" aria-label="Настройки холла"><i class="fa-solid fa-gear"></i></button>{{/if}}
+      {{#if isGM}}<button type="button" class="ng-hall-admin" data-hall="admin" title="Холл: новости, музыка, доска дел" aria-label="Настройки холла"><i class="fa-solid fa-gear"></i></button>{{/if}}
     </span>
   </header>
 

@@ -133,12 +133,13 @@ test("лента рискарей крутится по кругу по одно
 
 test("шаблон холла: доска, крестики мастера, лента, скины, фото, новости", () => {
   const C = (f) => Handlebars.compile(readFileSync(new URL(`../templates/${f}`, import.meta.url), "utf8"));
-  const [hall, boardT, stripT] = ["hall.hbs", "hall-board.hbs", "hall-strip.hbs"].map(C);
+  const [hall, boardT, stripT, playerT] = ["hall.hbs", "hall-board.hbs", "hall-strip.hbs", "hall-player.hbs"].map(C);
   const jobs = page(DATA.jobs.map((job, i) => ({ id: `j${i}`, job })), 0, JOBS_PAGE);
   const runners = ring(runnerViews(Array.from({ length: 14 }, (_, i) => ({ id: `r${i}`, name: `Р${i}`, status: "active", rank: i % 4, img: i % 2 ? "x.webp" : "" }))), 0, RUNNERS_PAGE);
   const news = newsViews(NEWS.map((n) => n.text));
   const html = (isGM) => hall({
-    art: "a", layout: { scale: 0.5, left: 10, top: 20 }, isGM, zaslon: zaslonOf("closed"),
+    art: "a", layout: { scale: 0.5, left: 10, top: 20 }, isGM,
+    playerHtml: playerT({ name: "Стол кампании", exists: true, isGM, canControl: isGM, playing: true, track: "Неон" }),
     skins: [{ id: "tush", label: "Тушь", on: false }, { id: "smog", label: "Смог", on: true }],
     photos: [{ file: "p.webp", alt: "фото", w: 100, h: 50, frame: 116, right: 1, top: 2, rot: 3, tape: 4 }],
     boardHtml: boardT({ isGM, jobs: { ...jobs, items: jobs.items.map((x) => jobView(x.job, { id: x.id })) } }),
@@ -156,7 +157,13 @@ test("шаблон холла: доска, крестики мастера, ле
   assert.equal((gm.match(/data-hall="skin"/g) || []).length, 2);
   assert.match(gm, /aria-pressed="true">Смог/);
   assert.match(gm, /\? неизвестно/);
-  assert.match(gm, /Заслон: закрыт/);
+  assert.ok(!/Заслон/.test(gm), "статус Заслона убран");
+  assert.match(gm, /data-hall="music-toggle"/);
+  assert.match(gm, /fa-stop/);
+  assert.match(gm, /Неон/);
+  assert.ok(!/music-toggle/.test(pl), "игрок без прав на плейлист видит только трек");
+  assert.match(pl, /Неон/);
+  assert.match(playerT({ name: "Стол кампании", exists: false, isGM: true }), /нет плейлиста/);
   assert.equal((gm.match(/class="ng-hall-photo"/g) || []).length, 1);
   assert.match(gm, /transform: scale\(0\.5\); left: 10px; top: 20px/);
   const few = stripT({ runners: ring([{ id: "a", name: "А", initial: "А", rankText: "1" }], 0, 10) });

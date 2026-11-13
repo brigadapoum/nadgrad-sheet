@@ -16,10 +16,13 @@
   </section>
 
   <section>
-    <h3>Заслон</h3>
-    <div class="ng-hall-admin-row">
-      {{#each zaslon}}<button type="button" data-action="ngZaslon" data-id="{{id}}" class="{{#if on}}on{{/if}}">{{label}}</button>{{/each}}
-    </div>
+    <h3>Музыка</h3>
+    {{#if music.exists}}
+    <p>Плейлист <b>«{{music.name}}»</b>: {{music.count}} треков{{#if music.playing}}, играет «{{music.track}}»{{/if}}. Привязан к сцене-холлу — запускается при её загрузке.</p>
+    {{else}}
+    <p>Плейлиста <b>«{{music.name}}»</b> нет. Создай его во вкладке «Плейлисты» и добавь треки — холл подхватит.</p>
+    <div class="ng-hall-admin-row"><button type="button" data-action="ngMusicCreate"><i class="fa-solid fa-plus"></i> Создать пустой плейлист</button></div>
+    {{/if}}
   </section>
 
   <section>

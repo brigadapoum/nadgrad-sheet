@@ -1,0 +1,12 @@
+<span class="ng-hall-player" role="group" aria-label="Музыка: плейлист «{{name}}»">
+  {{#if exists}}
+  {{#if canControl}}
+  <button type="button" data-hall="music-prev" aria-label="Предыдущий трек"><i class="fa-solid fa-backward-step"></i></button>
+  <button type="button" data-hall="music-toggle" class="main{{#if playing}} on{{/if}}" aria-label="{{#if playing}}Стоп{{else}}Играть{{/if}}"><i class="fa-solid {{#if playing}}fa-stop{{else}}fa-play{{/if}}"></i></button>
+  <button type="button" data-hall="music-next" aria-label="Следующий трек"><i class="fa-solid fa-forward-step"></i></button>
+  {{/if}}
+  <span class="ng-hall-track{{#if playing}} on{{/if}}" title="{{track}}"><i class="fa-solid fa-music"></i> {{#if playing}}{{track}}{{else}}тишина{{/if}}</span>
+  {{else}}
+  {{#if isGM}}<span class="ng-hall-track off" title="Создай плейлист с таким названием — холл подхватит его">нет плейлиста «{{name}}»</span>{{/if}}
+  {{/if}}
+</span>

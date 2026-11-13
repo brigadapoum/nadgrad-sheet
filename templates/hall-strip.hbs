@@ -1,0 +1,13 @@
+<div class="ng-hall-strip">
+  {{#if runners.cyclic}}<button type="button" class="ng-hall-arrow side" data-hall="runners-prev" aria-label="Предыдущий рискарь"><i class="fa-solid fa-chevron-left"></i></button>{{/if}}
+  {{#each runners.items}}
+  <button type="button" class="ng-hall-runner" data-hall="runner" data-id="{{id}}" aria-label="Лист рискаря: {{name}}">
+    <span class="ng-hall-portrait">{{#if img}}<img src="{{img}}" alt="">{{else}}{{initial}}{{/if}}</span>
+    <span class="ng-hall-runner-name">{{name}}</span>
+    <span class="ng-hall-rank">ранг {{rankText}}</span>
+  </button>
+  {{else}}
+  <p class="ng-hall-empty">Действующих рискарей нет — отметь статус в кампании на листе (вкладка «Статус»).</p>
+  {{/each}}
+  {{#if runners.cyclic}}<button type="button" class="ng-hall-arrow side hot" data-hall="runners-next" aria-label="Следующий рискарь"><i class="fa-solid fa-chevron-right"></i></button>{{/if}}
+</div>

@@ -89,6 +89,20 @@ export function page(list, offset = 0, size = 6) {
     paged: total > size,
   };
 }
+/**
+ * Карусель (лента рискарей, автор 2026-11-13): «по кругу по одному». Показывает size штук с offset,
+ * после последнего идёт первый. Если всех меньше или ровно size — крутить нечего.
+ */
+export function ring(list, offset = 0, size = 10) {
+  const total = list.length;
+  if (!total) return { items: [], offset: 0, total: 0, cyclic: false };
+  const off = ((Math.trunc(offset) || 0) % total + total) % total;
+  const cyclic = total > size;
+  const n = Math.min(size, total);
+  const items = Array.from({ length: n }, (_, i) => list[cyclic ? (off + i) % total : i]);
+  return { items, offset: cyclic ? off : 0, total, cyclic };
+}
+
 /** Сдвиг на страницу вперёд/назад. */
 export const turn = (offset, dir, size, total) => Math.min(Math.max(0, offset + dir * size), Math.max(0, total - size));
 

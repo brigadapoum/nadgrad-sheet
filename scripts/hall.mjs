@@ -3,8 +3,9 @@
 // (таблица Notion, присылает автор); рискари — актёры-рискари со статусом в кампании (флаг nadgrad.campaign,
 // иначе — база PC из data/roster.json); новости и Заслон — настройки мира.
 import { MODULE_ID, readState } from "./logic.mjs";
+import { effectiveTheme } from "./dom.mjs";
 import {
-  STAGE, JOBS_PAGE, RUNNERS_PAGE, JOB_FOLDER, readJob, jobView, boardJobs, page, turn, syncPlan,
+  STAGE, JOBS_PAGE, RUNNERS_PAGE, JOB_FOLDER, readJob, jobView, boardJobs, page, ring, turn, syncPlan,
   CAMPAIGN, campaignStatus, runnerViews, countBy, fitStage, ZASLON, zaslonOf, newsViews,
 } from "./hall-logic.mjs";
 
@@ -20,6 +21,15 @@ const PHOTOS = [
   { file: "photo-tower.webp", alt: "Башня-муравейник над рынком", w: 100, h: 240, right: 40, top: 282, rot: -2.5, tape: 5 },
   { file: "photo-station.webp", alt: "Орбитальная станция над пустошью", w: 220, h: 154, right: 80, top: 540, rot: 4, tape: -2 },
 ].map((p) => ({ ...p, frame: p.w + 16 }));
+
+const SKINS = [
+  { id: "tush", label: "Тушь" },
+  { id: "smog", label: "Смог" },
+  { id: "acid", label: "Кислота" },
+  { id: "classic", label: "Классика" },
+];
+/** Скин холла — тот же, что у листа (клиентская настройка nadgrad.theme). */
+const skinOf = () => effectiveTheme(document.body, setting("theme", "auto"));
 
 let data = { jobs: null, news: null, roster: null };
 const view = { jobs: 0, runners: 0 };
@@ -150,6 +160,7 @@ function mount() {
   if (ui?.parentElement) ui.parentElement.insertBefore(root, ui);
   else document.body.appendChild(root);
   root.addEventListener("click", onClick);
+  root.addEventListener("wheel", onWheel, { passive: false });
   return root;
 }
 
@@ -158,29 +169,49 @@ function unmount() {
   root = null;
 }
 
+function jobsContext() {
+  const all = boardJobs(jobEntries().filter(canSee).map((j) => ({ id: j.id, job: j.getFlag(MODULE_ID, "job") })));
+  const jp = page(all, view.jobs, JOBS_PAGE);
+  view.jobs = jp.offset;
+  return { isGM: game.user.isGM, jobs: { ...jp, items: jp.items.map((x) => jobView(x.job, { id: x.id })) } };
+}
+function stripContext() {
+  const r = ring(runnerViews(runnerRows(), "active"), view.runners, RUNNERS_PAGE);
+  view.runners = r.offset;
+  return { runners: r };
+}
+const tpl = (name, ctx) => foundry.applications.handlebars.renderTemplate(`${TPL}/${name}`, ctx);
+
 async function render() {
   if (!isHall(canvas?.scene)) return unmount();
   const el = mount();
-  const jobsAll = boardJobs(jobEntries().filter(canSee).map((j) => ({ id: j.id, job: j.getFlag(MODULE_ID, "job") })));
-  const jp = page(jobsAll, view.jobs, JOBS_PAGE);
-  view.jobs = jp.offset;
-  const rows = runnerViews(runnerRows(), "active");
-  const rp = page(rows, view.runners, RUNNERS_PAGE);
-  view.runners = rp.offset;
+  const skin = skinOf();
+  for (const s of SKINS) el.classList.toggle(`skin-${s.id}`, s.id === skin);
   const news = newsViews(setting("hallNews", []));
   const ctx = {
     art: ART,
     layout: fitStage(freeArea(), STAGE),
     isGM: game.user.isGM,
+    skins: SKINS.map((x) => ({ ...x, on: x.id === skin })),
     zaslon: zaslonOf(setting("hallZaslon", "closed")),
     photos: PHOTOS,
-    jobs: { ...jp, items: jp.items.map((x) => jobView(x.job, { id: x.id })) },
-    runners: rp,
+    boardHtml: await tpl("hall-board.hbs", jobsContext()),
+    stripHtml: await tpl("hall-strip.hbs", stripContext()),
     news,
     newsLoop: [...news, ...news],
     tickerSeconds: Math.max(30, Math.round(news.reduce((n, x) => n + x.text.length, 0) / 7)),
   };
-  el.innerHTML = await foundry.applications.handlebars.renderTemplate(`${TPL}/hall.hbs`, ctx);
+  el.innerHTML = await tpl("hall.hbs", ctx);
+}
+
+/** Перерисовать только доску или только ленту — без мигания карты и фото. */
+async function renderPart(which) {
+  const old = root?.querySelector(which === "board" ? ".ng-hall-board" : ".ng-hall-strip");
+  if (!old) return render();
+  const html = which === "board" ? await tpl("hall-board.hbs", jobsContext()) : await tpl("hall-strip.hbs", stripContext());
+  const box = document.createElement("div");
+  box.innerHTML = html.trim();
+  old.replaceWith(box.firstElementChild);
 }
 
 /** Перерисовка с задержкой: пачка обновлений документов — одна отрисовка. */
@@ -196,6 +227,27 @@ function relayout() {
   stage.style.transform = `scale(${l.scale})`;
   stage.style.left = `${l.left}px`;
   stage.style.top = `${l.top}px`;
+}
+
+// Колесо над доской — листать дела по одному (автор, 2026-11-13). Остальное колесо — холлу не нужно,
+// но и Foundry его не получает: на холле полотно не зумится.
+let wheelAcc = 0;
+let wheelBusy = false;
+async function onWheel(event) {
+  if (!event.target.closest(".ng-hall-stage")) return;
+  event.preventDefault();
+  event.stopPropagation();
+  if (!event.target.closest(".ng-hall-board")) return;
+  wheelAcc += event.deltaY;
+  if (wheelBusy || Math.abs(wheelAcc) < 40) return;
+  const dir = Math.sign(wheelAcc);
+  wheelAcc = 0;
+  const n = jobEntries().filter((j) => canSee(j) && readJob(j.getFlag(MODULE_ID, "job")).status !== "closed").length;
+  const next = Math.min(Math.max(0, view.jobs + dir), Math.max(0, n - JOBS_PAGE));
+  if (next === view.jobs) return;
+  view.jobs = next;
+  wheelBusy = true;
+  try { await renderPart("board"); } finally { wheelBusy = false; }
 }
 
 async function onClick(event) {
@@ -217,13 +269,13 @@ async function onClick(event) {
     case "jobs-prev": case "jobs-next": {
       const n = jobEntries().filter((j) => canSee(j) && readJob(j.getFlag(MODULE_ID, "job")).status !== "closed").length;
       view.jobs = turn(view.jobs, btn.dataset.hall === "jobs-next" ? 1 : -1, JOBS_PAGE, n);
-      return render();
+      return renderPart("board");
     }
     case "runners-prev": case "runners-next": {
-      const n = runnerViews(runnerRows(), "active").length;
-      view.runners = turn(view.runners, btn.dataset.hall === "runners-next" ? 1 : -1, RUNNERS_PAGE, n);
-      return render();
+      view.runners += btn.dataset.hall === "runners-next" ? 1 : -1;
+      return renderPart("strip");
     }
+    case "skin": return game.settings.set(MODULE_ID, "theme", btn.dataset.id);
     case "runner": return openActor(id);
     case "gallery": return new (galleryClass())().render(true);
     case "admin": return new (adminClass())().render(true);

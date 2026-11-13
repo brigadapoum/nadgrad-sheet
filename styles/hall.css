@@ -1,45 +1,108 @@
 /* =========================================================
-   Холл кампании — макет «Д · Гибрид 2» (цвета Смога)
+   Холл кампании — макет «Д · Гибрид 2»
    Сцена 1920×1080 масштабируется в свободную середину экрана (scripts/hall.mjs).
+   Оформление — тот же скин, что у листа (Тушь / Смог / Кислота / Классика): класс skin-<id> на #ng-hall.
    ========================================================= */
 #ng-hall {
-  --h-bg: #14120F; --h-fg: #D0D4C9; --h-muted: #8A9086; --h-line: #545A4D;
-  --h-or: #E0763A; --h-teal: #5CCFC0; --h-red: #E2402F; --h-sand: #B08E59; --h-ink: #100C0A;
-  --h-card: #1E1D18; --h-play: #26241D; --h-por: #2E2C24; --h-panel: rgba(16,12,10,.92);
+  /* Смог — основа (автор: «по цветам возьми за основу Д») */
+  --h-bg: #14120F; --h-fg: #D0D4C9; --h-muted: #8A9086; --h-line: #545A4D; --h-acc: #E0763A;
+  --h-low: #5CCFC0; --h-mid: #E0763A; --h-high: #E2402F; --h-chip-ink: #100C0A; --h-mid-ink: #100C0A; --h-ink: #100C0A;
+  --h-card: #1E1D18; --h-card-alt: #1E1D18; --h-hover: #2A2822; --h-play: #26241D; --h-por: #2E2C24;
+  --h-panel: rgba(16,12,10,.92); --h-panel-border: 1px solid #545A4D; --h-panel-img: none;
+  --h-head-bg: rgba(16,12,10,.92); --h-head-fg: #D0D4C9; --h-head-border: 2px solid #E0763A;
+  --h-h2-bg: transparent; --h-h2-fg: #D0D4C9; --h-h2-pad: 0; --h-h2-clip: none; --h-h2-font: "Oswald", sans-serif; --h-h2-weight: 600;
+  --h-reward-bg: transparent; --h-reward-fg: #B08E59; --h-reward-pad: 0;
+  --h-rank-bg: transparent; --h-rank-fg: #B08E59;
+  --h-tape: rgba(176,142,89,.72);
+  --h-news-bg: rgba(16,12,10,.95); --h-news-fg: #D0D4C9; --h-news-border: 2px solid #B08E59; --h-news-label-bg: #B08E59; --h-news-label-fg: #100C0A; --h-news-sep: #B08E59;
+  --h-font: "IBM Plex Mono", monospace; --h-font-head: "Oswald", sans-serif; --h-title-font: "Oswald", sans-serif; --h-title-weight: 600;
+  --h-logo-border: 1px solid #E0763A; --h-frame: none; --h-band-border: 2px solid #E0763A;
   position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
 }
+#ng-hall.skin-tush {
+  --h-bg: #1C1814; --h-fg: #1C1814; --h-muted: #6B655A; --h-line: #1C1814; --h-acc: #A64F2B;
+  --h-low: #356F63; --h-mid: #C9A25E; --h-high: #A63C2C; --h-chip-ink: #F4EFE3; --h-mid-ink: #1C1814; --h-ink: #F4EFE3;
+  --h-card: #F6F2E8; --h-card-alt: #F6F2E8; --h-hover: #FFFFFF; --h-play: #E2DCCC; --h-por: #D6CFBE;
+  --h-panel: #ECE7DA; --h-panel-border: 1px solid #1C1814; --h-panel-img: radial-gradient(rgb(28 24 20 / .07) 1px, transparent 1.2px);
+  --h-head-bg: #ECE7DA; --h-head-fg: #1C1814; --h-head-border: 2px solid #A64F2B;
+  --h-h2-fg: #1C1814;
+  --h-reward-fg: #A64F2B; --h-rank-fg: #A64F2B;
+  --h-tape: rgba(201,162,94,.78);
+  --h-news-bg: rgba(28,24,20,.94); --h-news-fg: #ECE7DA; --h-news-border: 2px solid #C9A25E; --h-news-label-bg: #C9A25E; --h-news-label-fg: #1C1814; --h-news-sep: #C9A25E;
+  --h-logo-border: 1px solid #1C1814; --h-band-border: 2px solid #A64F2B;
+}
+#ng-hall.skin-acid {
+  --h-bg: #1C1C1A; --h-fg: #E3E34B; --h-muted: #A6A63A; --h-line: #E3E34B; --h-acc: #FF551C;
+  --h-low: #3DDC97; --h-mid: #E3E34B; --h-high: #FF2D55; --h-chip-ink: #1C1C1A; --h-mid-ink: #1C1C1A; --h-ink: #1C1C1A;
+  --h-card: #262624; --h-card-alt: #262624; --h-hover: #30302B; --h-play: #33331F; --h-por: #2E2E2A;
+  --h-panel: rgba(28,28,26,.95); --h-panel-border: 1px solid #E3E34B;
+  --h-head-bg: #FF551C; --h-head-fg: #1C1C1A; --h-head-border: 0;
+  --h-h2-bg: #FF551C; --h-h2-fg: #1C1C1A; --h-h2-pad: 4px 30px 4px 12px;
+  --h-reward-fg: #FF551C; --h-rank-fg: #FF551C;
+  --h-tape: rgba(227,227,75,.75);
+  --h-news-bg: rgba(28,28,26,.97); --h-news-fg: #E3E34B; --h-news-border: 2px solid #FF551C; --h-news-label-bg: #E3E34B; --h-news-label-fg: #1C1C1A; --h-news-sep: #FF551C;
+  --h-logo-border: 2px solid #1C1C1A; --h-frame: 4px solid #FF551C; --h-band-border: 1px solid #E3E34B;
+}
+#ng-hall.skin-classic {
+  --h-bg: #000000; --h-fg: #000000; --h-muted: #4A4A4A; --h-line: #000000; --h-acc: #00A7D8;
+  --h-low: #00A7D8; --h-mid: #FFE700; --h-high: #ED1158; --h-chip-ink: #000000; --h-mid-ink: #000000; --h-ink: #000000;
+  --h-card: #FFFFFF; --h-card-alt: #F0F0F0; --h-hover: #E8F7FC; --h-play: #FFF7A8; --h-por: #E3E3E3;
+  --h-panel: #FFFFFF; --h-panel-border: 0;
+  --h-head-bg: #00A7D8; --h-head-fg: #000000; --h-head-border: 0;
+  --h-h2-bg: #000000; --h-h2-fg: #FFFFFF; --h-h2-pad: 4px 34px 4px 12px; --h-h2-clip: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%);
+  --h-h2-font: "NG Tiny5", "Tiny5", sans-serif; --h-h2-weight: 400;
+  --h-reward-bg: #FFE700; --h-reward-fg: #000000; --h-reward-pad: 1px 7px;
+  --h-rank-bg: #FFE700; --h-rank-fg: #000000;
+  --h-tape: rgba(255,231,0,.8);
+  --h-news-bg: rgba(0,0,0,.82); --h-news-fg: #FFFFFF; --h-news-border: 0; --h-news-label-bg: #FFE700; --h-news-label-fg: #000000; --h-news-sep: #00A7D8;
+  --h-font: "NG Play", "Play", sans-serif; --h-font-head: "NG Play", "Play", sans-serif; --h-title-font: "NG Tiny5", "Tiny5", sans-serif; --h-title-weight: 400;
+  --h-logo-border: 2px solid #000000; --h-band-border: 0;
+}
+
 #ng-hall .ng-hall-stage {
   position: absolute; width: 1920px; height: 1080px; transform-origin: 0 0; overflow: hidden;
-  background: var(--h-bg); color: var(--h-fg); font-family: "IBM Plex Mono", monospace; font-size: 14px;
+  background: var(--h-bg); color: var(--h-fg); font-family: var(--h-font); font-size: 14px; line-height: 1.3;
   pointer-events: auto; box-shadow: 0 0 0 1px var(--h-line), 0 20px 60px rgba(0,0,0,.6);
 }
+#ng-hall .ng-hall-stage::after { content: ""; position: absolute; inset: 0; border: var(--h-frame); pointer-events: none; z-index: 5; }
 #ng-hall .ng-hall-stage * { box-sizing: border-box; }
-#ng-hall button { font-family: inherit; cursor: pointer; margin: 0; line-height: normal; box-shadow: none; }
-#ng-hall button:focus-visible { outline: 2px solid var(--h-or); outline-offset: 2px; }
+/* кнопки Foundry ставят свою высоту, отступы и межстрочный — здесь всё своё */
+#ng-hall button { font-family: inherit; cursor: pointer; margin: 0; line-height: 1.2; min-height: 0; box-shadow: none; text-shadow: none; }
+#ng-hall button:focus-visible { outline: 2px solid var(--h-acc); outline-offset: 2px; }
 #ng-hall .ng-hall-gap { flex: 1; }
-#ng-hall .ng-hall-muted { font-size: 13px; color: var(--h-muted); }
 #ng-hall .ng-hall-empty { margin: 8px 0; color: var(--h-muted); font-size: 14px; }
 
 #ng-hall .ng-hall-map { position: absolute; left: 0; top: -262px; width: 1920px; height: 1440px; display: block; max-width: none; border: 0; }
 #ng-hall .ng-hall-dim { position: absolute; inset: 0; background: rgba(12,10,8,.12); }
 
-/* шапка */
+/* шапка: лого и название по центру — левый верхний угол занят меню Foundry */
 #ng-hall .ng-hall-head {
   position: absolute; left: 0; top: 0; right: 0; height: 76px; padding: 0 40px;
-  display: flex; align-items: center; gap: 28px; background: rgba(16,12,10,.92); border-bottom: 2px solid var(--h-or);
+  display: flex; align-items: center; gap: 20px; background: var(--h-head-bg); color: var(--h-head-fg); border-bottom: var(--h-head-border);
 }
-#ng-hall .ng-hall-logo { width: 56px; height: 56px; object-fit: cover; object-position: 62% 35%; border: 1px solid var(--h-or); display: block; }
-#ng-hall .ng-hall-title { font: 600 40px "Oswald", sans-serif; letter-spacing: .16em; margin-left: -14px; }
+#ng-hall .ng-hall-brand { position: absolute; left: 50%; top: 10px; transform: translateX(-50%); display: flex; align-items: center; gap: 14px; }
+#ng-hall .ng-hall-logo { width: 56px; height: 56px; object-fit: cover; object-position: 62% 35%; border: var(--h-logo-border); display: block; }
+#ng-hall .ng-hall-title { font: var(--h-title-weight) 40px var(--h-title-font); letter-spacing: .16em; }
+#ng-hall .ng-hall-head-right { display: flex; align-items: center; gap: 14px; }
 #ng-hall .ng-hall-zaslon {
-  display: flex; align-items: center; gap: 10px; border: 1px solid var(--h-red); padding: 6px 12px;
-  font: 600 15px "Oswald", sans-serif; letter-spacing: .1em; text-transform: uppercase;
+  display: flex; align-items: center; gap: 10px; border: 1px solid var(--h-high); padding: 6px 12px; background: rgba(0,0,0,.35); color: #F0EDE4;
+  font: 600 15px var(--h-font-head); letter-spacing: .1em; text-transform: uppercase; white-space: nowrap;
 }
-#ng-hall .ng-hall-zaslon i { width: 10px; height: 10px; border-radius: 50%; background: var(--h-red); box-shadow: 0 0 8px var(--h-red); }
-#ng-hall .ng-hall-zaslon.tone-mid { border-color: var(--h-or); }
-#ng-hall .ng-hall-zaslon.tone-mid i { background: var(--h-or); box-shadow: 0 0 8px var(--h-or); }
-#ng-hall .ng-hall-zaslon.tone-low { border-color: var(--h-teal); }
-#ng-hall .ng-hall-zaslon.tone-low i { background: var(--h-teal); box-shadow: 0 0 8px var(--h-teal); }
-#ng-hall .ng-hall-admin { width: 44px; height: 44px; background: transparent; border: 1px solid var(--h-line); color: var(--h-fg); font-size: 18px; }
+#ng-hall .ng-hall-zaslon i { width: 10px; height: 10px; border-radius: 50%; background: var(--h-high); box-shadow: 0 0 8px var(--h-high); }
+#ng-hall .ng-hall-zaslon.tone-mid { border-color: var(--h-mid); }
+#ng-hall .ng-hall-zaslon.tone-mid i { background: var(--h-mid); box-shadow: 0 0 8px var(--h-mid); }
+#ng-hall .ng-hall-zaslon.tone-low { border-color: var(--h-low); }
+#ng-hall .ng-hall-zaslon.tone-low i { background: var(--h-low); box-shadow: 0 0 8px var(--h-low); }
+#ng-hall .ng-hall-skins { display: flex; gap: 2px; }
+#ng-hall .ng-hall-skins button {
+  width: auto; height: 30px; padding: 0 10px; border-radius: 0; background: transparent; color: var(--h-head-fg);
+  border: 1px solid currentColor; opacity: .7; font: 500 12px var(--h-font-head); letter-spacing: .06em; text-transform: uppercase;
+}
+#ng-hall .ng-hall-skins button.on { opacity: 1; background: var(--h-head-fg); color: var(--h-head-bg); border-color: var(--h-head-fg); }
+#ng-hall.skin-tush .ng-hall-skins button.on,
+#ng-hall.skin-smog .ng-hall-skins button.on,
+#ng-hall:not([class*="skin-"]) .ng-hall-skins button.on { background: var(--h-acc); border-color: var(--h-acc); color: #100C0A; }
+#ng-hall .ng-hall-admin { width: 40px; height: 40px; padding: 0; background: transparent; border: 1px solid currentColor; border-radius: 0; color: var(--h-head-fg); font-size: 17px; flex: none; }
 
 /* фото, приклеенные скотчем */
 #ng-hall .ng-hall-photo {
@@ -47,51 +110,56 @@
   box-shadow: 0 16px 32px rgba(0,0,0,.65), 0 2px 4px rgba(0,0,0,.4);
 }
 #ng-hall .ng-hall-photo img { display: block; object-fit: cover; border: 0; max-width: none; }
-#ng-hall .ng-hall-tape { position: absolute; left: 50%; top: -11px; width: 80px; height: 22px; margin-left: -40px; background: rgba(176,142,89,.72); }
+#ng-hall .ng-hall-tape { position: absolute; left: 50%; top: -11px; width: 80px; height: 22px; margin-left: -40px; background: var(--h-tape); }
 
 /* доска дел */
 #ng-hall .ng-hall-board {
-  position: absolute; left: 215px; top: 193px; width: 520px; background: var(--h-panel); border: 1px solid var(--h-line);
-  padding: 16px 18px; display: flex; flex-direction: column; gap: 6px;
+  position: absolute; left: 215px; top: 193px; width: 520px; background-color: var(--h-panel); background-image: var(--h-panel-img); background-size: 4px 4px;
+  border: var(--h-panel-border); padding: 16px 18px; display: flex; flex-direction: column; gap: 6px;
 }
-#ng-hall .ng-hall-board-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 2px; }
-#ng-hall .ng-hall-board-head h2,
-#ng-hall .ng-hall-band-head h2 {
-  margin: 0; border: 0; font: 600 28px "Oswald", sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--h-fg);
+#ng-hall .ng-hall-board-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 2px; }
+#ng-hall .ng-hall-board-head h2 {
+  margin: 0; border: 0; font: var(--h-h2-weight) 28px var(--h-h2-font); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--h-h2-fg); background: var(--h-h2-bg); padding: var(--h-h2-pad); clip-path: var(--h-h2-clip);
 }
 #ng-hall .ng-hall-board-head span { font-size: 12.5px; color: var(--h-muted); text-align: right; }
 #ng-hall .ng-hall-job { display: flex; gap: 4px; }
+#ng-hall .ng-hall-job:nth-of-type(even) .ng-hall-job-card,
+#ng-hall .ng-hall-job:nth-of-type(even) .ng-hall-job-close { background: var(--h-card-alt); }
 #ng-hall .ng-hall-job-card {
   flex: 1; min-width: 0; border: 0; border-top: 2px solid var(--h-muted); border-radius: 0; background: var(--h-card); color: var(--h-fg);
-  padding: 6px 12px 7px; display: flex; flex-direction: column; gap: 3px; text-align: left; height: auto;
+  padding: 6px 12px 7px; display: flex; flex-direction: column; align-items: stretch; gap: 3px; text-align: left; height: auto;
 }
+#ng-hall.skin-classic .ng-hall-job-card { border-top: 0; }
 #ng-hall .ng-hall-job.playing .ng-hall-job-card { background: var(--h-play); }
-#ng-hall .ng-hall-job-card:hover { background: #2A2822; }
-#ng-hall .ng-hall-job-card.tone-low { border-top-color: var(--h-teal); }
-#ng-hall .ng-hall-job-card.tone-mid { border-top-color: var(--h-or); }
-#ng-hall .ng-hall-job-card.tone-high { border-top-color: var(--h-red); }
+#ng-hall .ng-hall-job-card:hover { background: var(--h-hover); }
+#ng-hall .ng-hall-job-card.tone-low { border-top-color: var(--h-low); }
+#ng-hall .ng-hall-job-card.tone-mid { border-top-color: var(--h-mid); }
+#ng-hall .ng-hall-job-card.tone-high { border-top-color: var(--h-high); }
 #ng-hall .ng-hall-job-row { display: flex; align-items: center; gap: 8px; align-self: stretch; }
-#ng-hall .ng-hall-job-name { font: 500 17px/1.2 "Oswald", sans-serif; letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#ng-hall .ng-hall-playing { background: var(--h-fg); color: var(--h-ink); font: 600 11px "Oswald", sans-serif; letter-spacing: .1em; padding: 1px 6px; text-transform: uppercase; white-space: nowrap; }
-#ng-hall .ng-hall-reward { font: 600 15px "Oswald", sans-serif; letter-spacing: .04em; color: var(--h-sand); white-space: nowrap; }
+#ng-hall .ng-hall-job-name { font: 500 17px/1.2 var(--h-font-head); letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#ng-hall.skin-classic .ng-hall-job-name { font-weight: 700; }
+#ng-hall .ng-hall-playing { background: var(--h-fg); color: var(--h-card); font: 600 11px var(--h-font-head); letter-spacing: .1em; padding: 1px 6px; text-transform: uppercase; white-space: nowrap; }
+#ng-hall .ng-hall-reward { font: 600 15px var(--h-font-head); letter-spacing: .04em; color: var(--h-reward-fg); background: var(--h-reward-bg); padding: var(--h-reward-pad); white-space: nowrap; }
 #ng-hall .ng-hall-job-meta { font-size: 12.5px; color: var(--h-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #ng-hall .ng-hall-chips { display: flex; gap: 4px; flex: none; }
-#ng-hall .ng-hall-chip { color: var(--h-ink); font: 600 13px "Oswald", sans-serif; letter-spacing: .04em; padding: 1px 7px; min-width: 12px; text-align: center; background: var(--h-muted); }
-#ng-hall .ng-hall-chip.tone-low { background: var(--h-teal); }
-#ng-hall .ng-hall-chip.tone-mid { background: var(--h-or); }
-#ng-hall .ng-hall-chip.tone-high { background: var(--h-red); }
+#ng-hall .ng-hall-chip { color: var(--h-chip-ink); font: 600 13px var(--h-font-head); letter-spacing: .04em; padding: 1px 7px; min-width: 12px; text-align: center; background: var(--h-muted); }
+#ng-hall .ng-hall-chip.tone-low { background: var(--h-low); }
+#ng-hall .ng-hall-chip.tone-mid { background: var(--h-mid); color: var(--h-mid-ink); }
+#ng-hall .ng-hall-chip.tone-high { background: var(--h-high); }
 #ng-hall .ng-hall-chip.unknown { background: transparent; border: 1px dashed var(--h-muted); color: var(--h-fg); text-transform: uppercase; letter-spacing: .06em; }
 #ng-hall .ng-hall-job-close {
   width: 34px; flex: none; padding: 0; background: var(--h-card); border: 0; border-radius: 0; color: var(--h-muted);
-  display: flex; align-items: center; justify-content: center; font-size: 14px;
+  display: flex; align-items: center; justify-content: center; font-size: 14px; height: auto;
 }
-#ng-hall .ng-hall-job-close:hover { color: var(--h-red); }
+#ng-hall .ng-hall-job-close:hover { color: var(--h-high); }
 #ng-hall .ng-hall-pager { display: flex; align-items: center; gap: 8px; margin-top: 4px; font-size: 13px; color: var(--h-muted); }
 #ng-hall .ng-hall-arrow {
-  width: 44px; height: 36px; padding: 0; background: var(--h-or); border: 1px solid var(--h-or); border-radius: 0; color: var(--h-ink);
-  display: flex; align-items: center; justify-content: center; font-size: 15px;
+  width: 44px; height: 36px; padding: 0; background: transparent; border: 1px solid var(--h-line); border-radius: 0; color: var(--h-fg);
+  display: flex; align-items: center; justify-content: center; font-size: 15px; flex: none;
 }
-#ng-hall .ng-hall-arrow:not(.hot) { background: transparent; border-color: var(--h-line); color: var(--h-fg); }
+#ng-hall .ng-hall-arrow.hot { background: var(--h-acc); border-color: var(--h-acc); color: var(--h-ink); }
+#ng-hall.skin-classic .ng-hall-arrow.hot { background: #FFE700; border-color: #FFE700; color: #000; }
 #ng-hall .ng-hall-arrow:disabled { opacity: .4; cursor: default; background: transparent; border-color: var(--h-line); color: var(--h-muted); }
 #ng-hall .ng-hall-arrow.side { height: auto; align-self: stretch; }
 
@@ -105,48 +173,44 @@
   filter: drop-shadow(10px 8px 10px rgba(0,0,0,.75)); pointer-events: none; border: 0; max-width: none;
 }
 
-/* лента рискарей */
+/* лента рискарей: без шапки — всё место портретам (автор, 2026-11-13); крутится по кругу по одному */
 #ng-hall .ng-hall-band {
-  position: absolute; left: 327px; width: 1266px; bottom: 72px; height: 170px; background: var(--h-panel);
-  border-top: 2px solid var(--h-or); padding: 10px 20px 12px; display: flex; flex-direction: column; gap: 8px;
+  position: absolute; left: 327px; width: 1266px; bottom: 66px; height: 172px; background-color: var(--h-panel); background-image: var(--h-panel-img); background-size: 4px 4px;
+  border-top: var(--h-band-border); padding: 10px 20px; display: flex; flex-direction: column;
 }
-#ng-hall .ng-hall-band-head { display: flex; align-items: baseline; gap: 16px; }
-#ng-hall .ng-hall-band-head h2 { font-size: 22px; }
-#ng-hall .ng-hall-gallery-btn {
-  height: 32px; padding: 0 14px; background: transparent; border: 1px solid var(--h-line); border-radius: 0; color: var(--h-fg);
-  font: 500 14px "Oswald", sans-serif; letter-spacing: .08em; text-transform: uppercase; width: auto; flex: none;
-}
-#ng-hall .ng-hall-strip { display: flex; gap: 8px; align-items: stretch; }
+#ng-hall .ng-hall-strip { display: flex; gap: 8px; align-items: stretch; height: 152px; overflow: hidden; }
 #ng-hall .ng-hall-runner {
-  width: 105px; flex: none; padding: 0; background: var(--h-card); border: 1px solid var(--h-por); border-radius: 0; color: var(--h-fg);
-  display: flex; flex-direction: column; text-align: left; height: auto;
+  width: 105px; height: 152px; flex: none; padding: 0; background: var(--h-card-alt); border: 1px solid var(--h-por); border-radius: 0; color: var(--h-fg);
+  display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 0; text-align: left; overflow: hidden;
 }
-#ng-hall .ng-hall-runner:hover { border-color: var(--h-or); }
+#ng-hall .ng-hall-runner:hover { border-color: var(--h-acc); }
 #ng-hall .ng-hall-portrait {
-  height: 72px; align-self: stretch; background: var(--h-por); display: flex; align-items: center; justify-content: center;
-  font: 600 32px "Oswald", sans-serif; color: var(--h-muted); overflow: hidden;
+  height: 106px; flex: none; background: var(--h-por); display: flex; align-items: center; justify-content: center;
+  font: 600 38px var(--h-font-head); color: var(--h-muted); overflow: hidden;
 }
-#ng-hall .ng-hall-portrait img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; border: 0; display: block; }
-#ng-hall .ng-hall-runner-name { padding: 7px 8px 0; font: 600 16px/1.1 "Oswald", sans-serif; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; align-self: stretch; }
-#ng-hall .ng-hall-rank { padding: 3px 8px 8px; font-size: 12px; color: var(--h-sand); }
+#ng-hall .ng-hall-portrait img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; border: 0; display: block; max-width: none; }
+#ng-hall .ng-hall-runner-name { flex: none; height: 22px; padding: 5px 8px 0; font: 600 15px/17px var(--h-font-head); letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#ng-hall.skin-classic .ng-hall-runner-name { font-weight: 700; }
+#ng-hall .ng-hall-rank { flex: none; height: 18px; margin: 2px 8px 0; align-self: flex-start; padding: 0 4px; font-size: 12px; line-height: 16px; color: var(--h-rank-fg); background: var(--h-rank-bg); }
+#ng-hall:not(.skin-classic) .ng-hall-rank { padding: 0; }
 
-/* новости */
+/* новости — ниже ленты, не наезжают на ранги */
 #ng-hall .ng-hall-news {
-  position: absolute; left: 0; right: 0; bottom: 0; height: 64px; display: flex; align-items: stretch;
-  background: rgba(16,12,10,.95); border-top: 2px solid var(--h-sand);
+  position: absolute; left: 0; right: 0; bottom: 0; height: 56px; display: flex; align-items: stretch;
+  background: var(--h-news-bg); border-top: var(--h-news-border); color: var(--h-news-fg);
 }
 #ng-hall .ng-hall-news-label {
-  flex: none; display: flex; align-items: center; padding: 0 24px; background: var(--h-sand); color: var(--h-ink);
-  font: 600 20px "Oswald", sans-serif; letter-spacing: .14em; text-transform: uppercase;
+  flex: none; display: flex; align-items: center; padding: 0 24px; background: var(--h-news-label-bg); color: var(--h-news-label-fg);
+  font: 600 19px var(--h-title-font); letter-spacing: .14em; text-transform: uppercase;
 }
 #ng-hall .ng-hall-news-window { flex: 1; overflow: hidden; display: flex; align-items: center; }
-#ng-hall .ng-hall-ticker { display: flex; gap: 56px; white-space: nowrap; font-size: 18px; padding-left: 32px; animation: ng-hall-tick 60s linear infinite; }
-#ng-hall .ng-hall-ticker b { color: var(--h-sand); font-weight: 500; }
-#ng-hall .ng-hall-sep { color: var(--h-sand); }
+#ng-hall .ng-hall-ticker { display: flex; gap: 56px; white-space: nowrap; font-size: 17px; padding-left: 32px; animation: ng-hall-tick 60s linear infinite; }
+#ng-hall .ng-hall-ticker b { color: var(--h-news-sep); font-weight: 600; }
+#ng-hall .ng-hall-sep { color: var(--h-news-sep); }
 @keyframes ng-hall-tick { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @media (prefers-reduced-motion: reduce) { #ng-hall .ng-hall-ticker { animation: none; } }
 
-/* ---------- окно галереи ---------- */
+/* ---------- окна холла (галерея, мастер) — Смог ---------- */
 .ng-hall-win { --h-fg: #D0D4C9; --h-muted: #8A9086; --h-line: #545A4D; --h-or: #E0763A; --h-teal: #5CCFC0; --h-red: #E2402F; --h-sand: #B08E59; --h-ink: #100C0A; --h-card: #1E1D18; --h-por: #2E2C24; }
 .ng-hall-win .window-content { background: #14120F; color: var(--h-fg); font-family: "IBM Plex Mono", monospace; }
 .ng-hall-win .ng-hall-gallery-filters { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
@@ -156,9 +220,9 @@
 }
 .ng-hall-win .ng-hall-gallery-filters button.on { background: var(--h-fg); border-color: var(--h-fg); color: var(--h-ink); }
 .ng-hall-win .ng-hall-gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
-.ng-hall-win .ng-hall-gcard { padding: 0; background: var(--h-card); border: 1px solid var(--h-line); border-radius: 0; color: var(--h-fg); display: flex; flex-direction: column; text-align: left; height: auto; }
+.ng-hall-win .ng-hall-gcard { padding: 0; background: var(--h-card); border: 1px solid var(--h-line); border-radius: 0; color: var(--h-fg); display: flex; flex-direction: column; align-items: stretch; text-align: left; height: auto; line-height: 1.2; }
 .ng-hall-win .ng-hall-gcard:hover { border-color: var(--h-or); }
-.ng-hall-win .ng-hall-gportrait { position: relative; align-self: stretch; height: 190px; background: var(--h-por); display: flex; align-items: center; justify-content: center; font: 600 72px "Oswald", sans-serif; color: var(--h-muted); overflow: hidden; }
+.ng-hall-win .ng-hall-gportrait { position: relative; height: 190px; background: var(--h-por); display: flex; align-items: center; justify-content: center; font: 600 72px "Oswald", sans-serif; color: var(--h-muted); overflow: hidden; }
 .ng-hall-win .ng-hall-gportrait img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; border: 0; }
 .ng-hall-win .ng-hall-gstatus { position: absolute; left: 8px; top: 8px; font: 600 12px "Oswald", sans-serif; letter-spacing: .08em; padding: 2px 7px; text-transform: uppercase; color: var(--h-ink); background: var(--h-teal); }
 .ng-hall-win .ng-hall-gstatus.st-waiting { background: var(--h-sand); }
@@ -166,8 +230,6 @@
 .ng-hall-win .ng-hall-gname { padding: 10px 12px 0; font: 600 20px/1.1 "Oswald", sans-serif; letter-spacing: .05em; text-transform: uppercase; }
 .ng-hall-win .ng-hall-grank { padding: 6px 12px 12px; font: 600 14px "Oswald", sans-serif; letter-spacing: .08em; color: var(--h-sand); text-transform: uppercase; }
 .ng-hall-win .ng-hall-empty { color: var(--h-muted); }
-
-/* ---------- окно мастера ---------- */
 .ng-hall-win .ng-hall-admin-body section { margin-bottom: 14px; }
 .ng-hall-win .ng-hall-admin-body h3 { font: 600 18px "Oswald", sans-serif; letter-spacing: .08em; text-transform: uppercase; border-bottom: 1px solid var(--h-line); margin: 0 0 8px; padding-bottom: 4px; color: var(--h-fg); }
 .ng-hall-win .ng-hall-admin-body p { margin: 4px 0 8px; }

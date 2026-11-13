@@ -14,7 +14,7 @@ import { registerClocks } from "./clock.mjs";
 import { forcesAppClass } from "./forces.mjs";
 import { registerTokens } from "./tokens.mjs";
 import { registerGear } from "./gear.mjs";
-import { registerHall } from "./hall.mjs";
+import { registerHall, refresh as refreshHall } from "./hall.mjs";
 
 registerArchive();
 registerGear();
@@ -26,7 +26,7 @@ registerHall();
 Hooks.once("init", () => {
   game.settings.register(MODULE_ID, "theme", {
     name: "Тема Надграда",
-    hint: "Лист рискаря, карточки бросков в чате и пауза. Тушь — светлая, Смог — тёмная, Кислота — тёмная с оранжевой рамкой, Классика — дневной лист 1.05. «Как в Foundry» — Тушь или Смог по теме интерфейса. Переключается и прямо на листе, над портретом.",
+    hint: "Лист рискаря, холл кампании, карточки бросков в чате и пауза. Тушь — светлая, Смог — тёмная, Кислота — тёмная с оранжевой рамкой, Классика — дневной лист 1.05. «Как в Foundry» — Тушь или Смог по теме интерфейса. Переключается и прямо на листе, над портретом.",
     scope: "client",
     config: true,
     type: String,
@@ -35,6 +35,7 @@ Hooks.once("init", () => {
     onChange: () => {
       syncUiTheme();
       rerenderSheets();
+      refreshHall();
     },
   });
 

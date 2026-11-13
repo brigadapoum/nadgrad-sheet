@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { readFileSync } from "node:fs";
 import Handlebars from "handlebars";
 import {
-  rankLevel, rankTone, formatReward, readJob, jobView, boardJobs, page, turn, syncPlan,
+  rankLevel, rankTone, formatReward, readJob, jobView, boardJobs, page, ring, turn, syncPlan,
   normName, campaignStatus, runnerViews, countBy, fitStage, zaslonOf, newsViews, JOBS_PAGE, RUNNERS_PAGE,
 } from "../scripts/hall-logic.mjs";
 
@@ -114,15 +114,30 @@ test("Заслон и новости", () => {
   assert.equal(NEWS.length, 7);
 });
 
-test("шаблон холла: доска, крестики мастера, лента, фото, новости", () => {
-  const tpl = Handlebars.compile(readFileSync(new URL("../templates/hall.hbs", import.meta.url), "utf8"));
+test("лента рискарей крутится по кругу по одному", () => {
+  const L = Array.from({ length: 14 }, (_, i) => i);
+  assert.deepEqual(ring(L, 0, 10).items, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+  assert.deepEqual(ring(L, 1, 10).items.slice(0, 2), [1, 2]);
+  assert.deepEqual(ring(L, 13, 10).items.slice(0, 3), [13, 0, 1], "после последнего — первый");
+  assert.equal(ring(L, -1, 10).offset, 13, "назад с начала — в конец");
+  assert.ok(ring(L, 0, 10).cyclic);
+  const few = ring([1, 2, 3], 2, 10);
+  assert.deepEqual([few.items, few.cyclic, few.offset], [[1, 2, 3], false, 0], "мало — не крутится");
+  assert.deepEqual(ring([], 5, 10).items, []);
+});
+
+test("шаблон холла: доска, крестики мастера, лента, скины, фото, новости", () => {
+  const C = (f) => Handlebars.compile(readFileSync(new URL(`../templates/${f}`, import.meta.url), "utf8"));
+  const [hall, boardT, stripT] = ["hall.hbs", "hall-board.hbs", "hall-strip.hbs"].map(C);
   const jobs = page(DATA.jobs.map((job, i) => ({ id: `j${i}`, job })), 0, JOBS_PAGE);
-  const runners = page(runnerViews(Array.from({ length: 14 }, (_, i) => ({ id: `r${i}`, name: `Р${i}`, status: "active", rank: i % 4, img: i % 2 ? "x.webp" : "" }))), 0, RUNNERS_PAGE);
+  const runners = ring(runnerViews(Array.from({ length: 14 }, (_, i) => ({ id: `r${i}`, name: `Р${i}`, status: "active", rank: i % 4, img: i % 2 ? "x.webp" : "" }))), 0, RUNNERS_PAGE);
   const news = newsViews(NEWS.map((n) => n.text));
-  const html = (isGM) => tpl({
+  const html = (isGM) => hall({
     art: "a", layout: { scale: 0.5, left: 10, top: 20 }, isGM, zaslon: zaslonOf("closed"),
+    skins: [{ id: "tush", label: "Тушь", on: false }, { id: "smog", label: "Смог", on: true }],
     photos: [{ file: "p.webp", alt: "фото", w: 100, h: 50, frame: 116, right: 1, top: 2, rot: 3, tape: 4 }],
-    jobs: { ...jobs, items: jobs.items.map((x) => jobView(x.job, { id: x.id })) }, runners, news, newsLoop: [...news, ...news], tickerSeconds: 60,
+    boardHtml: boardT({ isGM, jobs: { ...jobs, items: jobs.items.map((x) => jobView(x.job, { id: x.id })) } }),
+    stripHtml: stripT({ runners }), news, newsLoop: [...news, ...news], tickerSeconds: 60,
   });
   const gm = html(true), pl = html(false);
   assert.equal((gm.match(/data-hall="job"/g) || []).length, 6);
@@ -131,11 +146,16 @@ test("шаблон холла: доска, крестики мастера, ле
   assert.ok(!/data-hall="admin"/.test(pl));
   assert.equal((gm.match(/data-hall="runner"/g) || []).length, 10);
   assert.match(gm, /1–6 из 11/);
-  assert.match(gm, /1–10 из 14/);
+  assert.match(gm, /data-hall="runners-next"/);
+  assert.ok(!/Вся галерея|клик — лист/.test(gm), "у ленты нет шапки");
+  assert.equal((gm.match(/data-hall="skin"/g) || []).length, 2);
+  assert.match(gm, /aria-pressed="true">Смог/);
   assert.match(gm, /\? неизвестно/);
   assert.match(gm, /Заслон: закрыт/);
   assert.equal((gm.match(/class="ng-hall-photo"/g) || []).length, 1);
   assert.match(gm, /transform: scale\(0\.5\); left: 10px; top: 20px/);
+  const few = stripT({ runners: ring([{ id: "a", name: "А", initial: "А", rankText: "1" }], 0, 10) });
+  assert.ok(!/runners-next/.test(few), "один рискарь — без стрелок");
 });
 
 test("шаблоны галереи и окна мастера компилируются", () => {

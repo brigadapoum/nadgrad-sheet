@@ -1,0 +1,33 @@
+<section class="ng-hall-board" aria-label="Доска дел — колесо мыши листает">
+    <div class="ng-hall-board-head">
+      <h2>Доска дел</h2>
+      <span>ч — чеки · р — репа<br>I–VI+ — ранги препятствий</span>
+    </div>
+    {{#each jobs.items}}
+    <div class="ng-hall-job{{#if playing}} playing{{/if}}">
+      <button type="button" class="ng-hall-job-card tone-{{tone}}" data-hall="job" data-id="{{id}}" aria-label="Журнал дела: {{name}}">
+        <span class="ng-hall-job-row">
+          <span class="ng-hall-job-name">{{name}}</span>{{#if playing}}<span class="ng-hall-playing">в игре</span>{{/if}}
+          <span class="ng-hall-gap"></span>
+          <span class="ng-hall-reward">{{reward}}</span>
+        </span>
+        <span class="ng-hall-job-row">
+          <span class="ng-hall-job-meta">{{meta}}</span>
+          <span class="ng-hall-gap"></span>
+          <span class="ng-hall-chips">{{#if unknown}}<span class="ng-hall-chip unknown">? неизвестно</span>{{else}}{{#each chips}}<span class="ng-hall-chip tone-{{tone}}">{{label}}</span>{{/each}}{{/if}}</span>
+        </span>
+      </button>
+      {{#if ../isGM}}<button type="button" class="ng-hall-job-close" data-hall="close" data-id="{{id}}" title="Закрыть дело — убрать из доступных" aria-label="Закрыть дело «{{name}}»"><i class="fa-solid fa-xmark"></i></button>{{/if}}
+    </div>
+    {{else}}
+    <p class="ng-hall-empty">Дел на доске нет.{{#if isGM}} Обнови доску в настройках холла.{{/if}}</p>
+    {{/each}}
+    {{#if jobs.paged}}
+    <div class="ng-hall-pager">
+      <span>{{jobs.from}}–{{jobs.to}} из {{jobs.total}}</span>
+      <span class="ng-hall-gap"></span>
+      <button type="button" class="ng-hall-arrow" data-hall="jobs-prev" aria-label="Предыдущие дела" {{#unless jobs.canPrev}}disabled{{/unless}}><i class="fa-solid fa-chevron-up"></i></button>
+      <button type="button" class="ng-hall-arrow hot" data-hall="jobs-next" aria-label="Следующие дела" {{#unless jobs.canNext}}disabled{{/unless}}><i class="fa-solid fa-chevron-down"></i></button>
+    </div>
+    {{/if}}
+  </section>

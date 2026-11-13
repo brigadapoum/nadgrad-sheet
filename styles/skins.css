@@ -273,6 +273,22 @@
 .application.runner-actor.ng-classic .ng-wrf { color: rgb(0 120 160); }
 .application.runner-actor.ng-classic .ng-life-text strong { color: rgb(0 120 160); }
 
+/* Жёлтый текст на белом не читается (автор, 2026-11-13). Система красит <strong> в --action (жёлтый 1.05),
+   <em> — в --breath (голубой): на белом листе это 1.2:1 и 2.8:1. Жёлтый остаётся заливкой и маркером,
+   текст — чёрный и тёмно-голубой. Тёмные плашки (подходы, шапка с портретом) не трогаем. */
+.application.runner-actor.ng-classic .window-content strong {
+  color: #000; background: linear-gradient(transparent 58%, rgb(255 231 0 / .9) 58%);
+}
+.application.runner-actor.ng-classic .window-content em { color: rgb(0 110 145); }
+.application.runner-actor.ng-classic :is(.approach, section.header) :is(strong, em) { background: none; color: inherit; }
+.application.runner-actor.ng-classic .ng-notes-text,
+.application.runner-actor.ng-classic .ng-notes-text :is(p, span, li, div, font, a) { color: #000 !important; }
+.application.runner-actor.ng-classic .ng-status button.ng-dt-gold,
+.application.runner-actor.ng-classic .ng-status button.ng-dt-flash { color: #000; background: rgb(255 231 0 / .55); border-color: #000; }
+.application.runner-actor.ng-classic .gear button:has(.fa-solid),
+.application.runner-actor.ng-classic button.stack,
+.application.runner-actor.ng-classic button:not(:has(.fa-light)) + button.stack { color: #000; }
+
 /* =========================================================
    Чат и пауза в новых скинах
    ========================================================= */

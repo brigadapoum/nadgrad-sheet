@@ -118,7 +118,7 @@
         <div class="ng-dt-result{{#unless last.pending}} done{{/unless}}">
           <div class="ng-dt-dice">
             {{#each last.dice}}<span class="ng-dt-die{{#if on}} on{{/if}}">{{d}}</span>{{/each}}
-            <span class="ng-dt-tier">{{last.tierTitle}} · {{last.valueText}}{{#if last.bonus}} (+{{last.bonus}}){{/if}}</span>
+            <span class="ng-dt-tier">{{last.tierTitle}} · {{last.valueText}}{{#if last.bonus}} · +{{last.bonus}} за чеки{{/if}}</span>
           </div>
           {{#if last.table}}
           <div class="ng-dt-table">

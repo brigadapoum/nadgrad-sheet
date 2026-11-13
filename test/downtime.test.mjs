@@ -131,10 +131,10 @@ test("покупки: 5 чеков / +2 напряжения / флешбек �
 
 test("журнал и карточка последнего броска", () => {
   const e = { ...newEntry({ id: "e1", kind: "project", dice: [2, 5, 3], target: "p1" }), bonus: 1 };
-  assert.equal(entryLine(e, { p1: "Планер" }), "Долгосрочный проект · Планер · 6 (+1) → часы +3");
+  assert.equal(entryLine(e, { p1: "Планер" }), "Долгосрочный проект · Планер · 5 → часы +3 (+1 за чеки)");
   const l = lastContext(e);
   assert.deepEqual(l.dice.map((d) => d.on), [false, true, false]);
-  assert.equal(l.table.findIndex((r) => r.on), 2);
+  assert.equal(l.table.findIndex((r) => r.on), 1, "куб не меняется — подсвечен ряд 4–5");
   assert.equal(l.applyText, "часы +3");
   assert.ok(l.canBonus);
   const ctx = downtimeContext(readDowntime({ downtime: { log: [e] } }), { open: "project" });
@@ -369,4 +369,28 @@ test("сценарий: новая передышка — снова 2 бесп�
   assert.deepEqual([dt.bought, dt.log.length, dt.archive.length], [0, 0, 1]);
   await S.DEFAULT_OPTIONS.form.handler.call(sh, { preventDefault() {} }, sh.element, { object: { "ngDt.clinic": "c2", "flags.nadgrad.why": "x" } });
   assert.ok(!a.updates.some((u) => Object.keys(u).some((k) => k.startsWith("ngDt"))));
+});
+
+test("+1 к результату за чеки — +1 к итогу действия в пользу рискаря (автор, 2026-11-13)", () => {
+  const t = (kind, dice, bonus) => outcome({ kind, dice, bonus });
+  assert.equal(t("project", [5], 1).amount, 3, "частичный +2 и +1 за чеки = +3");
+  assert.equal(t("project", [5], 1).value, 5, "куб не меняется");
+  assert.equal(t("heal2", [2], 2).amount, 3);
+  assert.equal(t("tension", [5], 1).amount, -3);
+  assert.equal(t("negclock", [2], 1).amount, 0, "провал +1, с чеками 0");
+  assert.equal(t("passion", [4], 1).amount, 5);
+  assert.equal(t("resource", [5], 3).quality, t("resource", [5], 0).quality, "у ресурса бонус не действует — там покупается качество");
+  assert.ok(!lastContext({ ...newEntry({ id: "r", kind: "resource", dice: [5] }) }).canBonus);
+  assert.ok(lastContext({ ...newEntry({ id: "p", kind: "project", dice: [6, 6], target: "x" }) }).canBonus, "и после 6×6 можно докупить");
+});
+
+test("лечение 2 уровня: вылеченное повреждение уходит на 1 уровень (домашнее правило)", () => {
+  const e = { ...newEntry({ id: "h", kind: "heal2", dice: [6, 6], target: "first" }) };
+  const st = { harm: { light: { first: "Ушиб", second: "" }, medium: { first: "Перелом", second: "" } }, heal: { first: 1, second: 0 } };
+  const p = applyPlan(e, st);
+  assert.equal(p.actor["system.HARM.medium.first.name"], "");
+  assert.equal(p.actor["system.HARM.light.second.name"], "Перелом");
+  assert.deepEqual(p.heal, { first: 0 });
+  const full = applyPlan(e, { ...st, harm: { ...st.harm, light: { first: "a", second: "b" } } });
+  assert.ok(full.lines.some((l) => /впиши вручную/.test(l.to)));
 });

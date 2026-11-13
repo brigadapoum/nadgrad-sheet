@@ -7,6 +7,8 @@ import {
   readWhy, WHY_MAX,
 } from "./logic.mjs";
 import { readForces, openForces } from "./forces.mjs";
+import { CAMPAIGN, campaignStatus } from "./hall-logic.mjs";
+import { refresh as refreshHall, rosterList } from "./hall.mjs";
 import { DT_ACTIONS, breatherContext, wireBreather } from "./downtime.mjs";
 import { CLOCK_TYPE, CLOCK_FOLDER } from "./clock-logic.mjs";
 import { fixGearDupes, gearJanitor, startSeeding } from "./gear.mjs";
@@ -45,6 +47,7 @@ export function makeSheetClass(Runner) {
         ngTensionZero: NadgradRunner.#onTensionZero,
         ngTensionAdd: NadgradRunner.#onTensionAdd,
         ngLife: NadgradRunner.#onLife,
+        ngCampaign: NadgradRunner.#onCampaign,
         ngNotes: NadgradRunner.#onNotes,
         ngTheme: NadgradRunner.#onTheme,
         ngLoad: { handler: NadgradRunner.#onLoad, buttons: [0, 2] },
@@ -92,6 +95,11 @@ export function makeSheetClass(Runner) {
       context.ng.rel = relContext(readRelations(flags), readForces());
       context.ng.proj = projContext(readProjects(flags), theme, this._ngProjDraft);
       context.ng.isGM = !!game.user?.isGM;
+      {
+        const flag = flags?.campaign;
+        const cur = campaignStatus(this.actor.name, flag, rosterList());
+        context.ng.campaign = { set: !!flag, options: CAMPAIGN.map((c) => ({ ...c, on: c.id === cur })) };
+      }
       context.ng.dt = breatherContext(this);
       context.ngTabs = TABS.map((t) => ({ ...t, active: t.id === this._ngTab }));
       context.ngEditable = this.isEditable;
@@ -483,6 +491,15 @@ export function makeSheetClass(Runner) {
       const r = tensionAdd(s.tension, delta);
       if (r.overflow) ui.notifications.warn(`Напряжение упёрлось в максимум (4 уровень, 8): лишних очков — ${r.overflow}.`);
       return this.#set("tension", { level: r.level, points: r.points });
+    }
+
+    /** Статус в кампании (лента холла): действует / ждёт / погиб / не на доске. Ставит только мастер. */
+    static async #onCampaign(event, target) {
+      if (!game.user.isGM) return ui.notifications.warn("Статус в кампании ставит мастер.");
+      const v = target.dataset.campaign;
+      const cur = this.actor.flags?.[MODULE_ID]?.campaign;
+      await this.#set("campaign", cur === v ? null : v);
+      refreshHall();
     }
 
     static #onLife(event, target) {

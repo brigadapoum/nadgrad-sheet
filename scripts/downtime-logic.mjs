@@ -92,20 +92,31 @@ export function newDowntime(dt, at) {
   return { bought: 0, log: [], heal: dt.heal, archive };
 }
 
+/**
+ * «+1 к результату» за чеки (автор, 2026-11-13): +1 к итогу действия в пользу рискаря, а не шаг куба.
+ * Проект и лечение — +1 к часам, напряжение и негативный счётчик — ещё −1, страсть — −1 стресс.
+ * У ресурса и изготовления вместо этого покупается качество.
+ */
+export const BONUS_KINDS = ["project", "heal2", "tension", "negclock", "passion"];
+const bonusOf = (entry) => (BONUS_KINDS.includes(entry.kind) ? Math.max(0, Math.trunc(entry.bonus) || 0) : 0);
+
 /** Исход записи по таблице: { tier, value, amount, text }. */
 export function outcome(entry) {
   const a = actionById(entry.kind);
-  const value = rollValue(entry.dice, { lowest: entry.lowest, bonus: entry.bonus });
+  const value = rollValue(entry.dice, { lowest: entry.lowest });
   const tier = tierIndex(value);
   if (!a) return { value, tier, amount: 0, text: "" };
+  const bonus = bonusOf(entry);
   if (a.id === "passion") {
-    const amount = Math.min(6, value);
-    return { value, tier, amount, text: `−${amount} стресса` };
+    const amount = Math.min(6, value) + bonus;
+    return { value, tier, amount, bonus, text: `−${amount} стресса` };
   }
-  const amount = a.table ? a.table[tier] : 0;
-  if (a.id === "tension") return { value, tier, amount, text: amount ? `${fmt(amount)} напряжения` : "напряжение не снижается" };
-  if (a.id === "project" || a.id === "heal2") return { value, tier, amount, text: `часы ${fmt(amount)}` };
-  if (a.id === "negclock") return { value, tier, amount, text: `счётчик ${fmt(amount)}` };
+  let amount = a.table ? a.table[tier] : 0;
+  if (a.id === "project" || a.id === "heal2") amount += bonus;
+  if (a.id === "tension" || a.id === "negclock") amount -= bonus;
+  if (a.id === "tension") return { value, tier, amount, bonus, text: amount ? `${fmt(amount)} напряжения` : "напряжение не снижается" };
+  if (a.id === "project" || a.id === "heal2") return { value, tier, amount, bonus, text: `часы ${fmt(amount)}` };
+  if (a.id === "negclock") return { value, tier, amount, bonus, text: `счётчик ${fmt(amount)}` };
   if (a.id === "resource" || a.id === "craft") {
     const q = Math.max(0, clampInt(entry.rank ?? 0, 0, 6) + amount + clampInt(entry.qualityBought ?? 0, 0, 99));
     return { value, tier, amount, quality: q, text: `ранг качества ${q}` };
@@ -160,10 +171,17 @@ export function applyPlan(entry, state, opts = {}) {
     plan.lines.push({ label: `Лечение «${name}»`, from: `${cur} / ${HEAL_CLOCK}`, to: `${v} / ${HEAL_CLOCK}` });
     plan.heal = { [slot]: v };
     if (v >= HEAL_CLOCK) {
-      // вылечено: стереть повреждение с листа и обнулить часы
-      plan.lines.push({ label: "Повреждение 2 уровня", from: name, to: "вылечено" });
+      // Домашнее правило (автор, 2026-11-13): вылеченное повреждение не исчезает, а понижается на уровень —
+      // 2 уровень уходит в свободную ячейку 1 уровня. Часы лечения обнуляются.
       plan.actor[`system.HARM.medium.${slot}.name`] = "";
       plan.heal = { [slot]: 0 };
+      const light = !state.harm?.light?.first ? "first" : !state.harm?.light?.second ? "second" : null;
+      if (light) {
+        plan.lines.push({ label: "Повреждение", from: `2 уровень: ${name}`, to: `1 уровень (${light === "first" ? "первая" : "вторая"} ячейка)` });
+        plan.actor[`system.HARM.light.${light}.name`] = state.harm?.medium?.[slot] || name;
+      } else {
+        plan.lines.push({ label: "Повреждение", from: `2 уровень: ${name}`, to: "1 уровень — обе ячейки заняты, впиши вручную" });
+      }
     }
   } else if (a.id === "resource" || a.id === "craft") {
     plan.lines.push({ label: a.id === "resource" ? "Ресурс" : "Изделие", from: entry.note || "—", to: `ранг качества ${o.quality}` });
@@ -248,7 +266,7 @@ export function entryLine(entry, names = {}) {
   if (!a?.roll) return `${label}${entry.note ? ` · ${entry.note}` : ""}`;
   const o = outcome(entry);
   const tgt = entry.target && names[entry.target] ? ` · ${names[entry.target]}` : "";
-  return `${label}${tgt} · ${valueText(o.value)}${entry.bonus ? ` (+${entry.bonus})` : ""} → ${o.text}`;
+  return `${label}${tgt} · ${valueText(o.value)} → ${o.text}${o.bonus ? ` (+${o.bonus} за чеки)` : ""}`;
 }
 
 /** Контекст экрана: бюджет, карточки действий, журнал. */
@@ -288,8 +306,8 @@ export function lastContext(entry) {
     }),
     valueText: valueText(o.value),
     tierTitle: TIERS[o.tier].title,
-    bonus: entry.bonus,
-    canBonus: entry.status === "pending" && o.value < 7,
+    bonus: o.bonus ?? 0,
+    canBonus: entry.status === "pending" && BONUS_KINDS.includes(entry.kind),
     table: a.table
       ? TIERS.map((t, i) => ({ label: t.label, value: a.id === "resource" || a.id === "craft" ? `ранг ${a.table[i] >= 0 ? "+" : "−"}${Math.abs(a.table[i])}` : fmt(a.table[i]), on: i === o.tier }))
       : null,

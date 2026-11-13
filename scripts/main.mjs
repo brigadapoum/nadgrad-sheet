@@ -5,6 +5,8 @@
 // 4) Разовый архив старых заметок 1.05 (Why you running for / DETAILS) в журнал.
 // 5) Счётчики (часы): актёр «Счётчик», токен на сцене, заполнение мышкой (scripts/clock.mjs).
 // 6) Токены рискарей: кадр в круге и рамка Надграда, только мастер (scripts/tokens.mjs).
+// 7) Холл кампании: стартовая сцена с картой, доской дел, рискарями и новостями (scripts/hall.mjs).
+// 8) Язык листа: перевод Надграда для строк системы CBR+PNK (lang/cbrpnk-ru.json).
 import { MODULE_ID } from "./logic.mjs";
 import { registerArchive } from "./archive.mjs";
 import { applyUiTheme } from "./dom.mjs";
@@ -12,11 +14,13 @@ import { registerClocks } from "./clock.mjs";
 import { forcesAppClass } from "./forces.mjs";
 import { registerTokens } from "./tokens.mjs";
 import { registerGear } from "./gear.mjs";
+import { registerHall } from "./hall.mjs";
 
 registerArchive();
 registerGear();
 registerClocks();
 registerTokens();
+registerHall();
 
 // Тема листа — для каждого браузера своя. «Как в Foundry» — по светлой/тёмной теме интерфейса.
 Hooks.once("init", () => {
@@ -32,6 +36,19 @@ Hooks.once("init", () => {
       syncUiTheme();
       rerenderSheets();
     },
+  });
+
+  // Язык листа и карточек системы: свой перевод Надграда поверх словаря CBR+PNK.
+  // Меняет только строки системы (подходы, навыки, раны, исходы бросков…), не язык всего Foundry.
+  game.settings.register(MODULE_ID, "sheetLang", {
+    name: "Язык листа",
+    hint: "Русский — перевод Надграда (рискарь, подходы, навыки, раны, исходы бросков). English — оригинал CBR+PNK. «Как в Foundry» — по языку интерфейса. Нужна перезагрузка.",
+    scope: "client",
+    config: true,
+    type: String,
+    choices: { auto: "Как в Foundry", ru: "Русский (Надград)", en: "English" },
+    default: "ru",
+    requiresReload: true,
   });
 
   // Силы мира — общий список для вкладки «Отношения» (ведёт мастер).
@@ -51,6 +68,21 @@ Hooks.once("init", () => {
     type: forcesAppClass(),
     restricted: true,
   });
+});
+
+// Словарь подменяется после загрузки переводов Foundry, до первой отрисовки листов.
+Hooks.once("i18nInit", async () => {
+  if (game.system?.id !== "CBRPNK") return;
+  let lang = "ru";
+  try { lang = game.settings.get(MODULE_ID, "sheetLang"); } catch { /* настройка ещё не зарегистрирована */ }
+  const path = lang === "ru" ? `modules/${MODULE_ID}/lang/cbrpnk-ru.json` : lang === "en" ? "systems/CBRPNK/lang/en.json" : null;
+  if (!path) return;
+  try {
+    const dict = await foundry.utils.fetchJsonWithTimeout(foundry.utils.getRoute(path));
+    foundry.utils.mergeObject(game.i18n.translations, dict, { inplace: true, overwrite: true });
+  } catch (err) {
+    console.warn(`${MODULE_ID} | словарь листа не загрузился (${path})`, err);
+  }
 });
 
 function rerenderSheets() {

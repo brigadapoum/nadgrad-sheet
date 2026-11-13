@@ -3,7 +3,7 @@
 import { MODULE_ID, readState, readProjects, clampInt, newId } from "./logic.mjs";
 import {
   ACTIONS, actionById, CLINICS, DOC_RANK_DEFAULT, HEAL_CLOCK, poolOf, readDowntime, budget, newDowntime,
-  outcome, applyPlan, heal3Plan, buyPlan, buyEntry, newEntry, entryLine, downtimeContext, lastContext, TIERS, valueText,
+  outcome, applyPlan, heal3Plan, buyPlan, buyEntry, newEntry, entryLine, downtimeContext, lastContext, TIERS, valueText, BONUS_KINDS,
 } from "./downtime-logic.mjs";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -15,6 +15,7 @@ const CLOCK_TYPE = `${MODULE_ID}.clock`;
 function harmOf(actor) {
   const h = actor.system?.HARM ?? {};
   return {
+    light: { first: String(h.light?.first?.name ?? "").trim(), second: String(h.light?.second?.name ?? "").trim() },
     medium: { first: String(h.medium?.first?.name ?? "").trim(), second: String(h.medium?.second?.name ?? "").trim() },
     hard: String(h.hard?.name ?? "").trim(),
   };
@@ -254,7 +255,7 @@ async function applyEntry(sheet, id) {
   const a = actionById(entry.kind);
   const o = outcome(entry);
   const res = await confirmChange(`Применить: ${a.label.toLowerCase()}`, {
-    intro: `Бросок: <b>${valueText(o.value)}</b>${entry.bonus ? ` (+${entry.bonus} за чеки)` : ""} · ${TIERS[o.tier].title.toLowerCase()} → <b>${esc(o.text)}</b>.`,
+    intro: `Бросок: <b>${valueText(o.value)}</b> · ${TIERS[o.tier].title.toLowerCase()} → <b>${esc(o.text)}</b>${o.bonus ? ` (с +${o.bonus} за чеки)` : ""}.`,
     lines: plan.lines, extra: plan.extra, note: "В чат уйдёт строка «Применено».",
   });
   if (!res.ok) return false;
@@ -379,12 +380,12 @@ export const DT_ACTIONS = {
     const dt = dtOf(this);
     const e = dt.log.find((x) => x.id === target.dataset.id);
     if (!e || e.status !== "pending") return;
+    if (!BONUS_KINDS.includes(e.kind)) return;
     const before = outcome(e);
-    if (before.value >= 7) return;
     const plan = buyPlan("bonus", snapshot(this.actor));
-    const after = outcome({ ...e, bonus: e.bonus + 1 });
+    const after = outcome({ ...e, bonus: (e.bonus || 0) + 1 });
     const res = await confirmChange("+1 к результату", {
-      intro: `Результат ${valueText(before.value)} → ${valueText(after.value)}: «${esc(before.text)}» → «${esc(after.text)}».`,
+      intro: `Итог: «${esc(before.text)}» → «${esc(after.text)}».`,
       lines: plan.lines, ok: "Купить",
       note: plan.short ? "<b>Чеков не хватает</b> — уйдёшь в минус." : "",
     });
@@ -392,9 +393,9 @@ export const DT_ACTIONS = {
     const fresh = dtOf(this);
     const f = fresh.log.find((x) => x.id === e.id);
     if (!f || f.status !== "pending") return;
-    f.bonus += 1;
+    f.bonus = (f.bonus || 0) + 1;
     await saveDt(this, fresh, plan.actor);
-    await chat(this.actor, chatLine("buy", "Покупка", `${esc(this.actor.name)}: +1 к результату (${valueText(before.value)} → ${valueText(after.value)}) · 5 чеков`));
+    await chat(this.actor, chatLine("buy", "Покупка", `${esc(this.actor.name)}: +1 к результату («${esc(before.text)}» → «${esc(after.text)}») · 5 чеков`));
   },
 
   async ngDtQuality(event, target) {

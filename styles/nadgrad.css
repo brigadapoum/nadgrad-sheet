@@ -332,6 +332,7 @@ body.theme-dark .application.runner-actor:not(.theme-light):not(.ng-tush):not(.n
 
 /* уровень жизни */
 .application.runner-actor .ng-seg { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; }
+.application.runner-actor .ng-seg.ng-seg-4 { grid-template-columns: repeat(4, 1fr); }
 .application.runner-actor .ng-seg button {
   height: 30px; padding: 0 2px; font-family: "Oswald", sans-serif !important; text-transform: uppercase;
   font-size: 11px; letter-spacing: .02em;

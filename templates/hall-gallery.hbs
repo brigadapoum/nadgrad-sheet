@@ -1,0 +1,18 @@
+<div class="ng-hall-gallery">
+  <div class="ng-hall-gallery-filters">
+    {{#each filters}}
+    <button type="button" data-action="ngFilter" data-filter="{{id}}" class="{{#if on}}on{{/if}}">{{label}} · {{count}}</button>
+    {{/each}}
+  </div>
+  <div class="ng-hall-gallery-grid">
+    {{#each runners}}
+    <button type="button" class="ng-hall-gcard" data-action="ngOpen" data-id="{{id}}" aria-label="Лист рискаря: {{name}}">
+      <span class="ng-hall-gportrait">{{#if img}}<img src="{{img}}" alt="">{{else}}{{initial}}{{/if}}<span class="ng-hall-gstatus st-{{status}}">{{statusLabel}}</span></span>
+      <span class="ng-hall-gname">{{name}}</span>
+      <span class="ng-hall-grank">Ранг {{rankText}}</span>
+    </button>
+    {{else}}
+    <p class="ng-hall-empty">Никого.</p>
+    {{/each}}
+  </div>
+</div>

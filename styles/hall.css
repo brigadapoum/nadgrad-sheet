@@ -1,0 +1,179 @@
+/* =========================================================
+   Холл кампании — макет «Д · Гибрид 2» (цвета Смога)
+   Сцена 1920×1080 масштабируется в свободную середину экрана (scripts/hall.mjs).
+   ========================================================= */
+#ng-hall {
+  --h-bg: #14120F; --h-fg: #D0D4C9; --h-muted: #8A9086; --h-line: #545A4D;
+  --h-or: #E0763A; --h-teal: #5CCFC0; --h-red: #E2402F; --h-sand: #B08E59; --h-ink: #100C0A;
+  --h-card: #1E1D18; --h-play: #26241D; --h-por: #2E2C24; --h-panel: rgba(16,12,10,.92);
+  position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+}
+#ng-hall .ng-hall-stage {
+  position: absolute; width: 1920px; height: 1080px; transform-origin: 0 0; overflow: hidden;
+  background: var(--h-bg); color: var(--h-fg); font-family: "IBM Plex Mono", monospace; font-size: 14px;
+  pointer-events: auto; box-shadow: 0 0 0 1px var(--h-line), 0 20px 60px rgba(0,0,0,.6);
+}
+#ng-hall .ng-hall-stage * { box-sizing: border-box; }
+#ng-hall button { font-family: inherit; cursor: pointer; margin: 0; line-height: normal; box-shadow: none; }
+#ng-hall button:focus-visible { outline: 2px solid var(--h-or); outline-offset: 2px; }
+#ng-hall .ng-hall-gap { flex: 1; }
+#ng-hall .ng-hall-muted { font-size: 13px; color: var(--h-muted); }
+#ng-hall .ng-hall-empty { margin: 8px 0; color: var(--h-muted); font-size: 14px; }
+
+#ng-hall .ng-hall-map { position: absolute; left: 0; top: -262px; width: 1920px; height: 1440px; display: block; max-width: none; border: 0; }
+#ng-hall .ng-hall-dim { position: absolute; inset: 0; background: rgba(12,10,8,.12); }
+
+/* шапка */
+#ng-hall .ng-hall-head {
+  position: absolute; left: 0; top: 0; right: 0; height: 76px; padding: 0 40px;
+  display: flex; align-items: center; gap: 28px; background: rgba(16,12,10,.92); border-bottom: 2px solid var(--h-or);
+}
+#ng-hall .ng-hall-logo { width: 56px; height: 56px; object-fit: cover; object-position: 62% 35%; border: 1px solid var(--h-or); display: block; }
+#ng-hall .ng-hall-title { font: 600 40px "Oswald", sans-serif; letter-spacing: .16em; margin-left: -14px; }
+#ng-hall .ng-hall-zaslon {
+  display: flex; align-items: center; gap: 10px; border: 1px solid var(--h-red); padding: 6px 12px;
+  font: 600 15px "Oswald", sans-serif; letter-spacing: .1em; text-transform: uppercase;
+}
+#ng-hall .ng-hall-zaslon i { width: 10px; height: 10px; border-radius: 50%; background: var(--h-red); box-shadow: 0 0 8px var(--h-red); }
+#ng-hall .ng-hall-zaslon.tone-mid { border-color: var(--h-or); }
+#ng-hall .ng-hall-zaslon.tone-mid i { background: var(--h-or); box-shadow: 0 0 8px var(--h-or); }
+#ng-hall .ng-hall-zaslon.tone-low { border-color: var(--h-teal); }
+#ng-hall .ng-hall-zaslon.tone-low i { background: var(--h-teal); box-shadow: 0 0 8px var(--h-teal); }
+#ng-hall .ng-hall-admin { width: 44px; height: 44px; background: transparent; border: 1px solid var(--h-line); color: var(--h-fg); font-size: 18px; }
+
+/* фото, приклеенные скотчем */
+#ng-hall .ng-hall-photo {
+  position: absolute; margin: 0; padding: 8px 8px 22px; background: #ECE9E0;
+  box-shadow: 0 16px 32px rgba(0,0,0,.65), 0 2px 4px rgba(0,0,0,.4);
+}
+#ng-hall .ng-hall-photo img { display: block; object-fit: cover; border: 0; max-width: none; }
+#ng-hall .ng-hall-tape { position: absolute; left: 50%; top: -11px; width: 80px; height: 22px; margin-left: -40px; background: rgba(176,142,89,.72); }
+
+/* доска дел */
+#ng-hall .ng-hall-board {
+  position: absolute; left: 215px; top: 193px; width: 520px; background: var(--h-panel); border: 1px solid var(--h-line);
+  padding: 16px 18px; display: flex; flex-direction: column; gap: 6px;
+}
+#ng-hall .ng-hall-board-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 2px; }
+#ng-hall .ng-hall-board-head h2,
+#ng-hall .ng-hall-band-head h2 {
+  margin: 0; border: 0; font: 600 28px "Oswald", sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--h-fg);
+}
+#ng-hall .ng-hall-board-head span { font-size: 12.5px; color: var(--h-muted); text-align: right; }
+#ng-hall .ng-hall-job { display: flex; gap: 4px; }
+#ng-hall .ng-hall-job-card {
+  flex: 1; min-width: 0; border: 0; border-top: 2px solid var(--h-muted); border-radius: 0; background: var(--h-card); color: var(--h-fg);
+  padding: 6px 12px 7px; display: flex; flex-direction: column; gap: 3px; text-align: left; height: auto;
+}
+#ng-hall .ng-hall-job.playing .ng-hall-job-card { background: var(--h-play); }
+#ng-hall .ng-hall-job-card:hover { background: #2A2822; }
+#ng-hall .ng-hall-job-card.tone-low { border-top-color: var(--h-teal); }
+#ng-hall .ng-hall-job-card.tone-mid { border-top-color: var(--h-or); }
+#ng-hall .ng-hall-job-card.tone-high { border-top-color: var(--h-red); }
+#ng-hall .ng-hall-job-row { display: flex; align-items: center; gap: 8px; align-self: stretch; }
+#ng-hall .ng-hall-job-name { font: 500 17px/1.2 "Oswald", sans-serif; letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#ng-hall .ng-hall-playing { background: var(--h-fg); color: var(--h-ink); font: 600 11px "Oswald", sans-serif; letter-spacing: .1em; padding: 1px 6px; text-transform: uppercase; white-space: nowrap; }
+#ng-hall .ng-hall-reward { font: 600 15px "Oswald", sans-serif; letter-spacing: .04em; color: var(--h-sand); white-space: nowrap; }
+#ng-hall .ng-hall-job-meta { font-size: 12.5px; color: var(--h-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#ng-hall .ng-hall-chips { display: flex; gap: 4px; flex: none; }
+#ng-hall .ng-hall-chip { color: var(--h-ink); font: 600 13px "Oswald", sans-serif; letter-spacing: .04em; padding: 1px 7px; min-width: 12px; text-align: center; background: var(--h-muted); }
+#ng-hall .ng-hall-chip.tone-low { background: var(--h-teal); }
+#ng-hall .ng-hall-chip.tone-mid { background: var(--h-or); }
+#ng-hall .ng-hall-chip.tone-high { background: var(--h-red); }
+#ng-hall .ng-hall-chip.unknown { background: transparent; border: 1px dashed var(--h-muted); color: var(--h-fg); text-transform: uppercase; letter-spacing: .06em; }
+#ng-hall .ng-hall-job-close {
+  width: 34px; flex: none; padding: 0; background: var(--h-card); border: 0; border-radius: 0; color: var(--h-muted);
+  display: flex; align-items: center; justify-content: center; font-size: 14px;
+}
+#ng-hall .ng-hall-job-close:hover { color: var(--h-red); }
+#ng-hall .ng-hall-pager { display: flex; align-items: center; gap: 8px; margin-top: 4px; font-size: 13px; color: var(--h-muted); }
+#ng-hall .ng-hall-arrow {
+  width: 44px; height: 36px; padding: 0; background: var(--h-or); border: 1px solid var(--h-or); border-radius: 0; color: var(--h-ink);
+  display: flex; align-items: center; justify-content: center; font-size: 15px;
+}
+#ng-hall .ng-hall-arrow:not(.hot) { background: transparent; border-color: var(--h-line); color: var(--h-fg); }
+#ng-hall .ng-hall-arrow:disabled { opacity: .4; cursor: default; background: transparent; border-color: var(--h-line); color: var(--h-muted); }
+#ng-hall .ng-hall-arrow.side { height: auto; align-self: stretch; }
+
+/* коммуникатор у доски, ствол над лентой */
+#ng-hall .ng-hall-device {
+  position: absolute; left: 4px; top: 198px; width: 227px; height: 480px; transform: rotate(-2.5deg);
+  filter: drop-shadow(10px 14px 12px rgba(0,0,0,.75)); pointer-events: none; border: 0; max-width: none;
+}
+#ng-hall .ng-hall-smg {
+  position: absolute; left: 896px; top: -147px; width: 185px; height: 196px; transform: rotate(86deg);
+  filter: drop-shadow(10px 8px 10px rgba(0,0,0,.75)); pointer-events: none; border: 0; max-width: none;
+}
+
+/* лента рискарей */
+#ng-hall .ng-hall-band {
+  position: absolute; left: 327px; width: 1266px; bottom: 72px; height: 170px; background: var(--h-panel);
+  border-top: 2px solid var(--h-or); padding: 10px 20px 12px; display: flex; flex-direction: column; gap: 8px;
+}
+#ng-hall .ng-hall-band-head { display: flex; align-items: baseline; gap: 16px; }
+#ng-hall .ng-hall-band-head h2 { font-size: 22px; }
+#ng-hall .ng-hall-gallery-btn {
+  height: 32px; padding: 0 14px; background: transparent; border: 1px solid var(--h-line); border-radius: 0; color: var(--h-fg);
+  font: 500 14px "Oswald", sans-serif; letter-spacing: .08em; text-transform: uppercase; width: auto; flex: none;
+}
+#ng-hall .ng-hall-strip { display: flex; gap: 8px; align-items: stretch; }
+#ng-hall .ng-hall-runner {
+  width: 105px; flex: none; padding: 0; background: var(--h-card); border: 1px solid var(--h-por); border-radius: 0; color: var(--h-fg);
+  display: flex; flex-direction: column; text-align: left; height: auto;
+}
+#ng-hall .ng-hall-runner:hover { border-color: var(--h-or); }
+#ng-hall .ng-hall-portrait {
+  height: 72px; align-self: stretch; background: var(--h-por); display: flex; align-items: center; justify-content: center;
+  font: 600 32px "Oswald", sans-serif; color: var(--h-muted); overflow: hidden;
+}
+#ng-hall .ng-hall-portrait img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; border: 0; display: block; }
+#ng-hall .ng-hall-runner-name { padding: 7px 8px 0; font: 600 16px/1.1 "Oswald", sans-serif; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; align-self: stretch; }
+#ng-hall .ng-hall-rank { padding: 3px 8px 8px; font-size: 12px; color: var(--h-sand); }
+
+/* новости */
+#ng-hall .ng-hall-news {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 64px; display: flex; align-items: stretch;
+  background: rgba(16,12,10,.95); border-top: 2px solid var(--h-sand);
+}
+#ng-hall .ng-hall-news-label {
+  flex: none; display: flex; align-items: center; padding: 0 24px; background: var(--h-sand); color: var(--h-ink);
+  font: 600 20px "Oswald", sans-serif; letter-spacing: .14em; text-transform: uppercase;
+}
+#ng-hall .ng-hall-news-window { flex: 1; overflow: hidden; display: flex; align-items: center; }
+#ng-hall .ng-hall-ticker { display: flex; gap: 56px; white-space: nowrap; font-size: 18px; padding-left: 32px; animation: ng-hall-tick 60s linear infinite; }
+#ng-hall .ng-hall-ticker b { color: var(--h-sand); font-weight: 500; }
+#ng-hall .ng-hall-sep { color: var(--h-sand); }
+@keyframes ng-hall-tick { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { #ng-hall .ng-hall-ticker { animation: none; } }
+
+/* ---------- окно галереи ---------- */
+.ng-hall-win { --h-fg: #D0D4C9; --h-muted: #8A9086; --h-line: #545A4D; --h-or: #E0763A; --h-teal: #5CCFC0; --h-red: #E2402F; --h-sand: #B08E59; --h-ink: #100C0A; --h-card: #1E1D18; --h-por: #2E2C24; }
+.ng-hall-win .window-content { background: #14120F; color: var(--h-fg); font-family: "IBM Plex Mono", monospace; }
+.ng-hall-win .ng-hall-gallery-filters { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.ng-hall-win .ng-hall-gallery-filters button {
+  width: auto; height: 40px; padding: 0 16px; background: transparent; border: 1px solid var(--h-line); border-radius: 0; color: var(--h-fg);
+  font: 500 15px "Oswald", sans-serif; letter-spacing: .08em; text-transform: uppercase;
+}
+.ng-hall-win .ng-hall-gallery-filters button.on { background: var(--h-fg); border-color: var(--h-fg); color: var(--h-ink); }
+.ng-hall-win .ng-hall-gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+.ng-hall-win .ng-hall-gcard { padding: 0; background: var(--h-card); border: 1px solid var(--h-line); border-radius: 0; color: var(--h-fg); display: flex; flex-direction: column; text-align: left; height: auto; }
+.ng-hall-win .ng-hall-gcard:hover { border-color: var(--h-or); }
+.ng-hall-win .ng-hall-gportrait { position: relative; align-self: stretch; height: 190px; background: var(--h-por); display: flex; align-items: center; justify-content: center; font: 600 72px "Oswald", sans-serif; color: var(--h-muted); overflow: hidden; }
+.ng-hall-win .ng-hall-gportrait img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; border: 0; }
+.ng-hall-win .ng-hall-gstatus { position: absolute; left: 8px; top: 8px; font: 600 12px "Oswald", sans-serif; letter-spacing: .08em; padding: 2px 7px; text-transform: uppercase; color: var(--h-ink); background: var(--h-teal); }
+.ng-hall-win .ng-hall-gstatus.st-waiting { background: var(--h-sand); }
+.ng-hall-win .ng-hall-gstatus.st-dead { background: var(--h-red); }
+.ng-hall-win .ng-hall-gname { padding: 10px 12px 0; font: 600 20px/1.1 "Oswald", sans-serif; letter-spacing: .05em; text-transform: uppercase; }
+.ng-hall-win .ng-hall-grank { padding: 6px 12px 12px; font: 600 14px "Oswald", sans-serif; letter-spacing: .08em; color: var(--h-sand); text-transform: uppercase; }
+.ng-hall-win .ng-hall-empty { color: var(--h-muted); }
+
+/* ---------- окно мастера ---------- */
+.ng-hall-win .ng-hall-admin-body section { margin-bottom: 14px; }
+.ng-hall-win .ng-hall-admin-body h3 { font: 600 18px "Oswald", sans-serif; letter-spacing: .08em; text-transform: uppercase; border-bottom: 1px solid var(--h-line); margin: 0 0 8px; padding-bottom: 4px; color: var(--h-fg); }
+.ng-hall-win .ng-hall-admin-body p { margin: 4px 0 8px; }
+.ng-hall-win .ng-hall-admin-body .hint { color: var(--h-muted); font-size: 12px; }
+.ng-hall-win .ng-hall-admin-row,
+.ng-hall-win .ng-hall-admin-closed { display: flex; gap: 6px; flex-wrap: wrap; }
+.ng-hall-win .ng-hall-admin-body button { width: auto; flex: none; padding: 4px 12px; border-radius: 0; background: transparent; border: 1px solid var(--h-line); color: var(--h-fg); }
+.ng-hall-win .ng-hall-admin-body button.on { background: var(--h-or); border-color: var(--h-or); color: var(--h-ink); }
+.ng-hall-win .ng-hall-admin-body textarea { width: 100%; min-height: 150px; font: 13px "IBM Plex Mono", monospace; background: #1E1D18; color: var(--h-fg); border: 1px solid var(--h-line); }

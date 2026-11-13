@@ -1,0 +1,89 @@
+<div class="ng-hall-stage" style="transform: scale({{layout.scale}}); left: {{layout.left}}px; top: {{layout.top}}px">
+  <img class="ng-hall-map" src="{{art}}/map.webp" alt="Карта Надграда">
+  <div class="ng-hall-dim"></div>
+
+  <header class="ng-hall-head">
+    <img class="ng-hall-logo" src="{{art}}/logo.webp" alt="">
+    <span class="ng-hall-title">НАДГРАД</span>
+    {{#if zaslon.label}}<span class="ng-hall-zaslon tone-{{zaslon.tone}}"><i></i>{{zaslon.label}}</span>{{/if}}
+    <span class="ng-hall-gap"></span>
+    {{#if isGM}}<button type="button" class="ng-hall-admin" data-hall="admin" title="Холл: новости, Заслон, доска дел" aria-label="Настройки холла"><i class="fa-solid fa-gear"></i></button>{{/if}}
+  </header>
+
+  {{#each photos}}
+  <figure class="ng-hall-photo" style="right: {{right}}px; top: {{top}}px; width: {{frame}}px; transform: rotate({{rot}}deg)">
+    <img src="{{../art}}/{{file}}" alt="{{alt}}" style="width: {{w}}px; height: {{h}}px">
+    <span class="ng-hall-tape" style="transform: rotate({{tape}}deg)"></span>
+  </figure>
+  {{/each}}
+
+  <section class="ng-hall-board">
+    <div class="ng-hall-board-head">
+      <h2>Доска дел</h2>
+      <span>ч — чеки · р — репа<br>I–VI+ — ранги препятствий</span>
+    </div>
+    {{#each jobs.items}}
+    <div class="ng-hall-job{{#if playing}} playing{{/if}}">
+      <button type="button" class="ng-hall-job-card tone-{{tone}}" data-hall="job" data-id="{{id}}" aria-label="Журнал дела: {{name}}">
+        <span class="ng-hall-job-row">
+          <span class="ng-hall-job-name">{{name}}</span>{{#if playing}}<span class="ng-hall-playing">в игре</span>{{/if}}
+          <span class="ng-hall-gap"></span>
+          <span class="ng-hall-reward">{{reward}}</span>
+        </span>
+        <span class="ng-hall-job-row">
+          <span class="ng-hall-job-meta">{{meta}}</span>
+          <span class="ng-hall-gap"></span>
+          <span class="ng-hall-chips">{{#if unknown}}<span class="ng-hall-chip unknown">? неизвестно</span>{{else}}{{#each chips}}<span class="ng-hall-chip tone-{{tone}}">{{label}}</span>{{/each}}{{/if}}</span>
+        </span>
+      </button>
+      {{#if ../isGM}}<button type="button" class="ng-hall-job-close" data-hall="close" data-id="{{id}}" title="Закрыть дело — убрать из доступных" aria-label="Закрыть дело «{{name}}»"><i class="fa-solid fa-xmark"></i></button>{{/if}}
+    </div>
+    {{else}}
+    <p class="ng-hall-empty">Дел на доске нет.{{#if isGM}} Обнови доску в настройках холла.{{/if}}</p>
+    {{/each}}
+    {{#if jobs.paged}}
+    <div class="ng-hall-pager">
+      <span>{{jobs.from}}–{{jobs.to}} из {{jobs.total}}</span>
+      <span class="ng-hall-gap"></span>
+      <button type="button" class="ng-hall-arrow" data-hall="jobs-prev" aria-label="Предыдущие дела" {{#unless jobs.canPrev}}disabled{{/unless}}><i class="fa-solid fa-chevron-up"></i></button>
+      <button type="button" class="ng-hall-arrow hot" data-hall="jobs-next" aria-label="Следующие дела" {{#unless jobs.canNext}}disabled{{/unless}}><i class="fa-solid fa-chevron-down"></i></button>
+    </div>
+    {{/if}}
+  </section>
+
+  <img class="ng-hall-device" src="{{art}}/device.webp" alt="Защищённый коммуникатор">
+
+  <section class="ng-hall-band">
+    <div class="ng-hall-band-head">
+      <h2>Рискари</h2>
+      <span class="ng-hall-muted">{{#if runners.paged}}{{runners.from}}–{{runners.to}} из {{runners.total}}{{else}}действующих {{runners.total}}{{/if}} · клик — лист</span>
+      <span class="ng-hall-gap"></span>
+      <button type="button" class="ng-hall-gallery-btn" data-hall="gallery">Вся галерея</button>
+    </div>
+    <div class="ng-hall-strip">
+      <button type="button" class="ng-hall-arrow side" data-hall="runners-prev" aria-label="Предыдущие рискари" {{#unless runners.canPrev}}disabled{{/unless}}><i class="fa-solid fa-chevron-left"></i></button>
+      {{#each runners.items}}
+      <button type="button" class="ng-hall-runner" data-hall="runner" data-id="{{id}}" aria-label="Лист рискаря: {{name}}">
+        <span class="ng-hall-portrait">{{#if img}}<img src="{{img}}" alt="">{{else}}{{initial}}{{/if}}</span>
+        <span class="ng-hall-runner-name">{{name}}</span>
+        <span class="ng-hall-rank">ранг {{rankText}}</span>
+      </button>
+      {{else}}
+      <p class="ng-hall-empty">Действующих рискарей нет — отметь статус в кампании на листе (вкладка «Статус»).</p>
+      {{/each}}
+      <button type="button" class="ng-hall-arrow side hot" data-hall="runners-next" aria-label="Следующие рискари" {{#unless runners.canNext}}disabled{{/unless}}><i class="fa-solid fa-chevron-right"></i></button>
+    </div>
+    <img class="ng-hall-smg" src="{{art}}/smg.webp" alt="Пистолет-пулемёт с граффити">
+  </section>
+
+  <footer class="ng-hall-news">
+    <span class="ng-hall-news-label">Новости</span>
+    <div class="ng-hall-news-window">
+      {{#if news.length}}
+      <div class="ng-hall-ticker" style="animation-duration: {{tickerSeconds}}s">
+        {{#each newsLoop}}<span>{{#if tag}}<b>{{tag}}:</b> {{/if}}{{text}}</span><span class="ng-hall-sep">◆</span>{{/each}}
+      </div>
+      {{/if}}
+    </div>
+  </footer>
+</div>

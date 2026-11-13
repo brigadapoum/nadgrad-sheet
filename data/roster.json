@@ -1,0 +1,120 @@
+{
+  "version": "2026-11-13",
+  "roster": [
+    {
+      "name": "Вита",
+      "status": "active",
+      "rank": 3
+    },
+    {
+      "name": "Чужбина",
+      "status": "active",
+      "rank": 3
+    },
+    {
+      "name": "Ржавый",
+      "status": "active",
+      "rank": 3
+    },
+    {
+      "name": "Гонг",
+      "status": "active",
+      "rank": 2
+    },
+    {
+      "name": "Рика Кан",
+      "status": "active",
+      "rank": 2
+    },
+    {
+      "name": "Сима «Эхо Банши»",
+      "status": "active",
+      "rank": 2
+    },
+    {
+      "name": "Дубль",
+      "status": "active",
+      "rank": 1
+    },
+    {
+      "name": "Желтая",
+      "status": "active",
+      "rank": 1
+    },
+    {
+      "name": "Приянка",
+      "status": "active",
+      "rank": 1
+    },
+    {
+      "name": "Ваю",
+      "status": "active",
+      "rank": 1
+    },
+    {
+      "name": "Бланк",
+      "status": "active",
+      "rank": 0
+    },
+    {
+      "name": "Ноль",
+      "status": "active",
+      "rank": 0
+    },
+    {
+      "name": "Али Кан",
+      "status": "active",
+      "rank": 0
+    },
+    {
+      "name": "Яблоко",
+      "status": "active",
+      "rank": 0
+    },
+    {
+      "name": "Коль",
+      "status": "active",
+      "rank": null
+    },
+    {
+      "name": "Никто",
+      "status": "active",
+      "rank": null
+    },
+    {
+      "name": "Мальвина",
+      "status": "waiting",
+      "rank": 1
+    },
+    {
+      "name": "Зулейка",
+      "status": "waiting",
+      "rank": 0
+    },
+    {
+      "name": "Юджи",
+      "status": "waiting",
+      "rank": 0
+    },
+    {
+      "name": "Ири",
+      "status": "dead",
+      "rank": 1
+    },
+    {
+      "name": "Фло",
+      "status": "dead",
+      "rank": 1
+    },
+    {
+      "name": "Лара",
+      "status": "dead",
+      "rank": 0
+    },
+    {
+      "name": "Рентген",
+      "status": "dead",
+      "rank": 0
+    }
+  ]
+}

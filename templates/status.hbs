@@ -69,6 +69,16 @@
     </div>
   </section>
 
+  <section class="ng-block ng-campaign">
+    <h3 class="ng-h" title="Кто виден в ленте рискарей на холле. Ставит мастер.">В кампании</h3>
+    <div class="ng-seg ng-seg-4">
+      {{#each ng.campaign.options}}
+      <button type="button" data-action="ngCampaign" data-campaign="{{id}}" class="{{#if on}}on{{/if}}" {{#unless @root.ng.isGM}}disabled{{/unless}}>{{label}}</button>
+      {{/each}}
+    </div>
+    {{#unless ng.campaign.set}}<p class="ng-hint">{{#if ng.isGM}}Не отмечено — холл берёт статус из базы рискарей Notion.{{else}}Отмечает мастер.{{/if}}</p>{{/unless}}
+  </section>
+
   <section class="ng-block ng-life">
     <h3 class="ng-h">Уровень жизни</h3>
     <div class="ng-seg">

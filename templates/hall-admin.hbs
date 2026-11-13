@@ -1,0 +1,48 @@
+<div class="ng-hall-admin-body">
+  <section>
+    <h3>Сцена</h3>
+    {{#if scene}}
+    <p>Холл: <b>{{scene.name}}</b>{{#if scene.active}} — стартовая (активная) сцена{{/if}}.</p>
+    <div class="ng-hall-admin-row">
+      <button type="button" data-action="ngView"><i class="fa-solid fa-eye"></i> Открыть</button>
+      {{#unless scene.active}}<button type="button" data-action="ngActivate"><i class="fa-solid fa-bullseye"></i> Сделать стартовой</button>{{/unless}}
+    </div>
+    {{else}}
+    <p>Сцены-холла в мире нет.</p>
+    <div class="ng-hall-admin-row">
+      <button type="button" data-action="ngCreate"><i class="fa-solid fa-plus"></i> Создать холл и сделать стартовым</button>
+    </div>
+    {{/if}}
+  </section>
+
+  <section>
+    <h3>Заслон</h3>
+    <div class="ng-hall-admin-row">
+      {{#each zaslon}}<button type="button" data-action="ngZaslon" data-id="{{id}}" class="{{#if on}}on{{/if}}">{{label}}</button>{{/each}}
+    </div>
+  </section>
+
+  <section>
+    <h3>Новости</h3>
+    <p class="hint">Одна строка — одна новость. «Слух:» в начале — непроверенное.</p>
+    <textarea name="news" rows="8">{{newsText}}</textarea>
+    <div class="ng-hall-admin-row">
+      <button type="button" data-action="ngNewsSave"><i class="fa-solid fa-floppy-disk"></i> Сохранить новости</button>
+      <button type="button" data-action="ngNewsReset" title="Вернуть новости из Notion, присланные с модулем">Из Notion ({{newsDataVersion}})</button>
+    </div>
+  </section>
+
+  <section>
+    <h3>Доска дел</h3>
+    <p>На доске: <b>{{jobsOpen}}</b>, закрыто: <b>{{jobsClosed}}</b>. Таблица из Notion в модуле — от <b>{{jobsDataVersion}}</b>{{#if jobsSynced}}, мир обновлён{{else}}, <b>мир ещё не обновлён</b>{{/if}}.</p>
+    <div class="ng-hall-admin-row">
+      <button type="button" data-action="ngSync"><i class="fa-solid fa-rotate"></i> Обновить доску из модуля</button>
+    </div>
+    {{#if closed.length}}
+    <p class="hint">Закрытые дела — вернуть на доску:</p>
+    <div class="ng-hall-admin-closed">
+      {{#each closed}}<button type="button" data-action="ngReopen" data-id="{{id}}">{{name}}</button>{{/each}}
+    </div>
+    {{/if}}
+  </section>
+</div>

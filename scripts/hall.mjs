@@ -116,9 +116,9 @@ function runnerRows() {
     .map((a) => {
       const flags = a.flags?.[MODULE_ID];
       const status = campaignStatus(a.name, flags?.campaign, roster);
-      let rank = null;
-      try { rank = readState(flags).rep.rank; } catch { rank = null; }
-      return { id: a.id, name: a.name, status, rank, img: a.img && !DEFAULT_IMG.test(a.img) ? a.img : "" };
+      let rank = null, dela = 0;
+      try { const st = readState(flags); rank = st.rep.rank; dela = Number(st.dela) || 0; } catch { rank = null; }
+      return { id: a.id, name: a.name, status, rank, dela, img: a.img && !DEFAULT_IMG.test(a.img) ? a.img : "" };
     });
 }
 

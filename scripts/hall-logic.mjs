@@ -173,11 +173,12 @@ export function campaignStatus(name, flag, roster = []) {
   return null;
 }
 
-/** Лента и галерея: рискари с портретом, именем, рангом; сортировка по имени. */
+/** Лента и галерея: слева — самый высокий ранг, при равном — больше дел, потом по имени (автор, 2026-11-13). */
+export const byStanding = (a, b) => (b.rank ?? -1) - (a.rank ?? -1) || (b.dela ?? 0) - (a.dela ?? 0) || a.name.localeCompare(b.name, "ru");
 export function runnerViews(list, filter = "active") {
   return list
     .filter((r) => (filter === "all" ? r.status && r.status !== "off" : r.status === filter))
-    .sort((a, b) => a.name.localeCompare(b.name, "ru"))
+    .sort(byStanding)
     .map((r) => ({ ...r, initial: (r.name.trim()[0] ?? "?").toUpperCase(), rankText: r.rank == null ? "?" : String(r.rank) }));
 }
 export const countBy = (list) => ({

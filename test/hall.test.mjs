@@ -89,8 +89,13 @@ test("статус в кампании: флаг мастера → база Not
     { id: "3", name: "Юджи", status: "waiting", rank: 0 },
     { id: "4", name: "Скрытый", status: "off", rank: 1 },
   ];
-  assert.deepEqual(runnerViews(rows).map((r) => r.name), ["Али Кан", "Яблоко"]);
-  assert.equal(runnerViews(rows)[0].rankText, "?");
+  assert.deepEqual(runnerViews(rows).map((r) => r.name), ["Яблоко", "Али Кан"], "ранг 0 выше, чем «ранг ?»");
+  assert.equal(runnerViews(rows)[1].rankText, "?");
+  const st = [
+    { name: "Б", status: "active", rank: 2, dela: 3 }, { name: "А", status: "active", rank: 2, dela: 3 },
+    { name: "В", status: "active", rank: 3, dela: 1 }, { name: "Г", status: "active", rank: 2, dela: 8 },
+  ];
+  assert.deepEqual(runnerViews(st).map((r) => r.name), ["В", "Г", "А", "Б"], "ранг, потом дела, потом имя");
   assert.deepEqual(countBy(rows), { active: 2, waiting: 1, dead: 0, all: 3 });
   assert.equal(RUNNERS_PAGE, 10);
 });

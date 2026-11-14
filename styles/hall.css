@@ -3,7 +3,7 @@
    Сцена 1920×1080 масштабируется в свободную середину экрана (scripts/hall.mjs).
    Оформление — тот же скин, что у листа (Тушь / Смог / Кислота / Классика): класс skin-<id> на #ng-hall.
    ========================================================= */
-#ng-hall {
+#ng-hall, #ng-job {
   /* Смог — основа (автор: «по цветам возьми за основу Д») */
   --h-bg: #14120F; --h-fg: #D0D4C9; --h-muted: #8A9086; --h-line: #545A4D; --h-acc: #E0763A;
   --h-low: #5CCFC0; --h-mid: #E0763A; --h-high: #E2402F; --h-chip-ink: #100C0A; --h-mid-ink: #100C0A; --h-ink: #100C0A;
@@ -19,7 +19,7 @@
   --h-logo-border: 1px solid #E0763A; --h-frame: none; --h-band-border: 2px solid #E0763A;
   position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
 }
-#ng-hall.skin-tush {
+#ng-hall.skin-tush, #ng-job.skin-tush {
   --h-bg: #1C1814; --h-fg: #1C1814; --h-muted: #6B655A; --h-line: #1C1814; --h-acc: #A64F2B;
   --h-low: #356F63; --h-mid: #C9A25E; --h-high: #A63C2C; --h-chip-ink: #F4EFE3; --h-mid-ink: #1C1814; --h-ink: #F4EFE3;
   --h-card: #F6F2E8; --h-card-alt: #F6F2E8; --h-hover: #FFFFFF; --h-play: #E2DCCC; --h-por: #D6CFBE;
@@ -31,7 +31,7 @@
   --h-news-bg: rgba(28,24,20,.94); --h-news-fg: #ECE7DA; --h-news-border: 2px solid #C9A25E; --h-news-label-bg: #C9A25E; --h-news-label-fg: #1C1814; --h-news-sep: #C9A25E;
   --h-logo-border: 1px solid #1C1814; --h-band-border: 2px solid #A64F2B;
 }
-#ng-hall.skin-acid {
+#ng-hall.skin-acid, #ng-job.skin-acid {
   --h-bg: #1C1C1A; --h-fg: #E3E34B; --h-muted: #A6A63A; --h-line: #E3E34B; --h-acc: #FF551C;
   --h-low: #3DDC97; --h-mid: #E3E34B; --h-high: #FF2D55; --h-chip-ink: #1C1C1A; --h-mid-ink: #1C1C1A; --h-ink: #1C1C1A;
   --h-card: #262624; --h-card-alt: #262624; --h-hover: #30302B; --h-play: #33331F; --h-por: #2E2E2A;
@@ -43,7 +43,7 @@
   --h-news-bg: rgba(28,28,26,.97); --h-news-fg: #E3E34B; --h-news-border: 2px solid #FF551C; --h-news-label-bg: #E3E34B; --h-news-label-fg: #1C1C1A; --h-news-sep: #FF551C;
   --h-logo-border: 2px solid #1C1C1A; --h-frame: 4px solid #FF551C; --h-band-border: 1px solid #E3E34B;
 }
-#ng-hall.skin-classic {
+#ng-hall.skin-classic, #ng-job.skin-classic {
   --h-bg: #000000; --h-fg: #000000; --h-muted: #4A4A4A; --h-line: #000000; --h-acc: #00A7D8;
   --h-low: #00A7D8; --h-mid: #FFE700; --h-high: #ED1158; --h-chip-ink: #000000; --h-mid-ink: #000000; --h-ink: #000000;
   --h-card: #FFFFFF; --h-card-alt: #F0F0F0; --h-hover: #E8F7FC; --h-play: #FFF7A8; --h-por: #E3E3E3;
@@ -169,6 +169,12 @@
   display: flex; align-items: center; justify-content: center; font-size: 14px; height: auto;
 }
 #ng-hall .ng-hall-job-close:hover { color: var(--h-high); }
+#ng-hall .ng-hall-job-go {
+  width: 34px; flex: none; padding: 0; background: var(--h-card); border: 0; border-radius: 0; color: var(--h-acc);
+  display: flex; align-items: center; justify-content: center; font-size: 13px; height: auto;
+}
+#ng-hall .ng-hall-job:nth-of-type(even) .ng-hall-job-go { background: var(--h-card-alt); }
+#ng-hall .ng-hall-job-go:hover { background: var(--h-acc); color: var(--h-ink); }
 #ng-hall .ng-hall-pager { display: flex; align-items: center; gap: 8px; margin-top: 4px; font-size: 13px; color: var(--h-muted); }
 #ng-hall .ng-hall-arrow {
   width: 44px; height: 36px; padding: 0; background: transparent; border: 1px solid var(--h-line); border-radius: 0; color: var(--h-fg);

@@ -1,0 +1,70 @@
+<div class="ng-hall-admin-body ng-job-admin-body">
+  {{#if none}}
+  <p>Это окно — для сцены дела. Открой стол дела (в холле у мастера ▶ на карточке дела) и нажми шестерёнку в шапке.</p>
+  {{else}}
+  <section>
+    <h3>Дело</h3>
+    <p>Сцена: <b>{{sceneName}}</b>.</p>
+    <select name="job" aria-label="Дело этой сцены">
+      <option value="" {{#if noJob}}selected{{/if}}>— не привязано —</option>
+      {{#each jobs}}<option value="{{id}}" {{#if on}}selected{{/if}}>{{name}}</option>{{/each}}
+    </select>
+    <p class="hint">Шапка стола — из записи дела на доске холла: название, заказчик, место, награда, препятствия.</p>
+  </section>
+
+  <section>
+    <h3>Раскладка фото</h3>
+    <div class="ng-hall-admin-row">
+      {{#each layouts}}<button type="button" data-action="ngLayout" data-id="{{id}}" class="{{#if on}}on{{/if}}" title="{{hint}}">{{label}} · {{count}}</button>{{/each}}
+    </div>
+    <p class="hint">Заполнено фото: {{filled}}.{{#if hiddenFilled}} Ещё {{hiddenFilled}} — в слотах, которых нет в этой раскладке: вернутся, если переключить обратно.{{/if}}</p>
+  </section>
+
+  <section>
+    <h3>Задник</h3>
+    <div class="ng-job-admin-backdrops">
+      {{#each backdrops}}<button type="button" data-action="ngBackdrop" data-src="{{src}}" class="{{#if on}}on{{/if}}" title="{{label}}" aria-label="Задник: {{label}}"><img src="{{src}}" alt=""></button>{{/each}}
+    </div>
+    <div class="ng-hall-admin-row">
+      <button type="button" data-action="ngPickBg"><i class="fa-solid fa-folder-open"></i> Выбрать файл…</button>
+    </div>
+    {{#if bgCustom}}<p class="hint">Сейчас: {{bgCustom}}</p>{{/if}}
+  </section>
+
+  <section>
+    <h3>Фигура у названия</h3>
+    <div class="ng-job-admin-art">
+      <img src="{{logo}}" alt="">
+      <div class="ng-hall-admin-row">
+        <button type="button" data-action="ngPick" data-key="logo"><i class="fa-solid fa-folder-open"></i> Выбрать файл…</button>
+        {{#if logoCustom}}<button type="button" data-action="ngReset" data-key="logo">Мотоциклистка</button>{{/if}}
+      </div>
+    </div>
+    <p class="hint">Лучше всего — вырезанная фигура на прозрачном фоне (PNG / WebP).</p>
+  </section>
+
+  <section>
+    <h3>Арт слева</h3>
+    <div class="ng-job-admin-art">
+      {{#if side}}<img src="{{side}}" alt="">{{else}}<span class="hint">выключен</span>{{/if}}
+      <div class="ng-hall-admin-row">
+        <button type="button" data-action="ngPick" data-key="side"><i class="fa-solid fa-folder-open"></i> Выбрать файл…</button>
+        {{#if sideCustom}}<button type="button" data-action="ngReset" data-key="side">Розовый ПП</button>{{/if}}
+        {{#if sideOff}}<button type="button" data-action="ngReset" data-key="side">Вернуть</button>{{else}}<button type="button" data-action="ngNoSide">Убрать</button>{{/if}}
+      </div>
+    </div>
+    <p class="hint">Во всю высоту по левому краю, полупрозрачно. Тёмный фон картинки пропадает.</p>
+  </section>
+
+  <section>
+    <h3>Сцены дела</h3>
+    <div class="ng-hall-admin-row">
+      {{#each scenes}}<button type="button" data-action="ngGo" data-id="{{id}}" class="{{#if current}}on{{/if}}" title="Сделать активной — перевести всех">{{n}} · {{name}}</button>{{/each}}
+    </div>
+    <div class="ng-hall-admin-row">
+      <button type="button" data-action="ngNewScene"><i class="fa-solid fa-plus"></i> Ещё сцена этого дела</button>
+    </div>
+    <p class="hint">Новая сцена — со своим задником, фото и составом. «▶ На дело» в холле ведёт на ту, где были последней.</p>
+  </section>
+  {{/if}}
+</div>

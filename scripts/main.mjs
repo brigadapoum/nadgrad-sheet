@@ -6,7 +6,8 @@
 // 5) Счётчики (часы): актёр «Счётчик», токен на сцене, заполнение мышкой (scripts/clock.mjs).
 // 6) Токены рискарей: кадр в круге и рамка Надграда, только мастер (scripts/tokens.mjs).
 // 7) Холл кампании: стартовая сцена с картой, доской дел, рискарями и новостями (scripts/hall.mjs).
-// 8) Язык листа: перевод Надграда для строк системы CBR+PNK (lang/cbrpnk-ru.json).
+// 8) Стол дела: сцена дела с доской фото, рискарями в деле и часами; переход из холла (scripts/job.mjs).
+// 9) Язык листа: перевод Надграда для строк системы CBR+PNK (lang/cbrpnk-ru.json).
 import { MODULE_ID } from "./logic.mjs";
 import { registerArchive } from "./archive.mjs";
 import { applyUiTheme } from "./dom.mjs";
@@ -15,18 +16,20 @@ import { forcesAppClass } from "./forces.mjs";
 import { registerTokens } from "./tokens.mjs";
 import { registerGear } from "./gear.mjs";
 import { registerHall, refresh as refreshHall } from "./hall.mjs";
+import { registerJobTable, refresh as refreshJob } from "./job.mjs";
 
 registerArchive();
 registerGear();
 registerClocks();
 registerTokens();
 registerHall();
+registerJobTable();
 
 // Тема листа — для каждого браузера своя. «Как в Foundry» — по светлой/тёмной теме интерфейса.
 Hooks.once("init", () => {
   game.settings.register(MODULE_ID, "theme", {
     name: "Тема Надграда",
-    hint: "Лист рискаря, холл кампании, карточки бросков в чате и пауза. Тушь — светлая, Смог — тёмная, Кислота — тёмная с оранжевой рамкой, Классика — дневной лист 1.05. «Как в Foundry» — Тушь или Смог по теме интерфейса. Переключается и прямо на листе, над портретом.",
+    hint: "Лист рискаря, холл кампании, стол дела, карточки бросков в чате и пауза. Тушь — светлая, Смог — тёмная, Кислота — тёмная с оранжевой рамкой, Классика — дневной лист 1.05. «Как в Foundry» — Тушь или Смог по теме интерфейса. Переключается и прямо на листе, над портретом.",
     scope: "client",
     config: true,
     type: String,
@@ -36,6 +39,7 @@ Hooks.once("init", () => {
       syncUiTheme();
       rerenderSheets();
       refreshHall();
+      refreshJob();
     },
   });
 

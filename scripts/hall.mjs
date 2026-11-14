@@ -29,7 +29,7 @@ const SKINS = [
   { id: "classic", label: "Классика" },
 ];
 /** Скин холла — тот же, что у листа (клиентская настройка nadgrad.theme). */
-const skinOf = () => effectiveTheme(document.body, setting("theme", "auto"));
+export const skinOf = () => effectiveTheme(document.body, setting("theme", "auto"));
 
 let data = { jobs: null, news: null, roster: null };
 const view = { jobs: 0, runners: 0 };
@@ -39,7 +39,7 @@ let timer = null;
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const setting = (k, fb) => { try { return game.settings.get(MODULE_ID, k); } catch { return fb; } };
 const isHall = (scene) => !!scene?.getFlag?.(MODULE_ID, "hall");
-const hallScene = () => game.scenes?.find((s) => isHall(s)) ?? null;
+export const hallScene = () => game.scenes?.find((s) => isHall(s)) ?? null;
 
 async function loadData() {
   const get = async (f) => {
@@ -152,7 +152,7 @@ async function musicAutostart() {
 
 // ---------- рискари ----------
 
-function runnerRows() {
+export function runnerRows() {
   const roster = rosterList();
   return (game.actors?.contents ?? [])
     .filter((a) => a.type === RUNNER_TYPE)
@@ -165,7 +165,7 @@ function runnerRows() {
     });
 }
 
-function openActor(id) {
+export function openActor(id) {
   const a = game.actors.get(id);
   if (!a) return;
   if (!a.testUserPermission(game.user, "LIMITED")) return ui.notifications.warn(`Лист рискаря «${a.name}» тебе не открыт.`);
@@ -174,7 +174,7 @@ function openActor(id) {
 
 // ---------- слой ----------
 
-function freeArea() {
+export function freeArea() {
   const W = window.innerWidth, H = window.innerHeight;
   const area = { left: 0, top: 0, right: W, bottom: H };
   const r = (sel) => { const el = document.querySelector(sel); if (!el || el.offsetParent === null && getComputedStyle(el).position !== "fixed") return null; const b = el.getBoundingClientRect(); return b.width && b.height ? b : null; };
@@ -306,6 +306,7 @@ async function onClick(event) {
   const id = btn.dataset.id;
   switch (btn.dataset.hall) {
     case "job": return game.journal.get(id)?.sheet.render(true);
+    case "go": return import("./job.mjs").then((m) => m.goToJob(id));
     case "close": {
       const name = game.journal.get(id)?.name ?? "";
       const ok = await foundry.applications.api.DialogV2.confirm({

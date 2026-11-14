@@ -17,6 +17,7 @@
           <span class="ng-hall-chips">{{#if unknown}}<span class="ng-hall-chip unknown">? неизвестно</span>{{else}}{{#each chips}}<span class="ng-hall-chip tone-{{tone}}">{{label}}</span>{{/each}}{{/if}}</span>
         </span>
       </button>
+      {{#if ../isGM}}<button type="button" class="ng-hall-job-go" data-hall="go" data-id="{{id}}" title="На дело — перевести всех на стол дела" aria-label="На дело «{{name}}»"><i class="fa-solid fa-play"></i></button>{{/if}}
       {{#if ../isGM}}<button type="button" class="ng-hall-job-close" data-hall="close" data-id="{{id}}" title="Закрыть дело — убрать из доступных" aria-label="Закрыть дело «{{name}}»"><i class="fa-solid fa-xmark"></i></button>{{/if}}
     </div>
     {{else}}

@@ -140,7 +140,7 @@ test("шаблон холла: доска, крестики мастера, ле
   const html = (isGM) => hall({
     art: "a", layout: { scale: 0.5, left: 10, top: 20 }, isGM,
     playerHtml: playerT({ name: "Стол кампании", exists: true, isGM, canControl: isGM, playing: true, track: "Неон" }),
-    skins: [{ id: "tush", label: "Тушь", on: false }, { id: "smog", label: "Смог", on: true }],
+    skin: { id: "smog", label: "Смог" },
     photos: [{ file: "p.webp", alt: "фото", w: 100, h: 50, frame: 116, right: 1, top: 2, rot: 3, tape: 4 }],
     boardHtml: boardT({ isGM, jobs: { ...jobs, items: jobs.items.map((x) => jobView(x.job, { id: x.id })) } }),
     stripHtml: stripT({ runners }), news, newsLoop: [...news, ...news], tickerSeconds: 60,
@@ -154,8 +154,9 @@ test("шаблон холла: доска, крестики мастера, ле
   assert.match(gm, /1–6 из 11/);
   assert.match(gm, /data-hall="runners-next"/);
   assert.ok(!/Вся галерея|клик — лист/.test(gm), "у ленты нет шапки");
-  assert.equal((gm.match(/data-hall="skin"/g) || []).length, 2);
-  assert.match(gm, /aria-pressed="true">Смог/);
+  assert.equal((gm.match(/data-hall="skin-next"/g) || []).length, 1, "оформление — одна кнопка");
+  assert.match(gm, /fa-palette"><\/i> Смог/);
+  assert.match(pl, /data-hall="skin-next"/, "игрок тоже меняет оформление у себя");
   assert.match(gm, /\? неизвестно/);
   assert.ok(!/Заслон/.test(gm), "статус Заслона убран");
   assert.match(gm, /data-hall="music-toggle"/);

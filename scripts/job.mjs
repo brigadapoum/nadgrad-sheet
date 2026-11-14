@@ -9,7 +9,7 @@ import { STAGE, fitStage, readJob, jobView } from "./hall-logic.mjs";
 import { freeArea, skinOf, hallScene, runnerRows, openActor } from "./hall.mjs";
 import {
   LAYOUTS, layoutOf, readTable, boardView, stressView, tableRunners, addableRunners, jobScenes, lastScene, sceneName,
-  JOB_SCENE_FOLDER,
+  JOB_SCENE_FOLDER, BG_DEFAULT, BG_ZOOM, readBgView, bgCss, bgPan, bgZoom, skinLabel, nextSkin,
 } from "./job-logic.mjs";
 import { CLOCK_TYPE, clockSrc, normClock } from "./clock-logic.mjs";
 import { stepClock, createClockDialog } from "./clock.mjs";
@@ -52,6 +52,12 @@ async function setSlot(scene, n, patch) {
   const t = tableOf(scene);
   const slots = t.slots.map((s, i) => (i === n - 1 ? { ...s, ...patch } : s));
   return setTable(scene, { slots });
+}
+
+/** Новый задник: картинка во флаг и в фон сцены, кадр — по умолчанию. */
+function setBackdrop(scene, src) {
+  if (!game.user.isGM || !scene) return;
+  return scene.update({ [`flags.${MODULE_ID}.${FLAG}.bg`]: src, [`flags.${MODULE_ID}.${FLAG}.bgView`]: { ...BG_DEFAULT }, "background.src": src });
 }
 
 /** Выбор картинки встроенным файловым браузером Foundry: загруженное или загрузка с компьютера. */
@@ -153,10 +159,13 @@ function mount() {
   else document.body.appendChild(root);
   root.addEventListener("click", onClick);
   root.addEventListener("contextmenu", onContext);
+  root.addEventListener("pointerover", onArtOver);
+  root.addEventListener("pointerout", onArtOut);
   root.addEventListener("wheel", (e) => { if (e.target.closest(".ng-job-stage")) { e.preventDefault(); e.stopPropagation(); } }, { passive: false });
   return root;
 }
 function unmount() {
+  hideArt();
   root?.remove();
   root = null;
   state.picker = null;
@@ -215,6 +224,8 @@ async function render() {
     layout: fitStage(freeArea(), STAGE),
     isGM,
     bg: t.bg || DEFAULTS.bg,
+    bgv: bgCss(t.bgView),
+    skinLabel: skinLabel(skin),
     logo: t.logo || DEFAULTS.logo,
     side: t.side === "none" ? "" : (t.side || DEFAULTS.side),
     job: headerContext(t),
@@ -224,6 +235,7 @@ async function render() {
     scenes: scenes.length > 1 ? scenes : [],
     hasHall: !!hallScene(),
   };
+  hideArt();
   el.innerHTML = await tpl("job.hbs", ctx);
 }
 
@@ -278,9 +290,11 @@ async function onClick(event) {
     case "bg": {
       if (!gm) return;
       const path = await pickImage(t.bg);
-      if (path) await scene.update({ [`flags.${MODULE_ID}.${FLAG}.bg`]: path, "background.src": path });
+      if (path) await setBackdrop(scene, path);
       return;
     }
+    case "bg-frame": return gm && new (frameClass())().render(true);
+    case "skin-next": return game.settings.set(MODULE_ID, "theme", nextSkin(skinOf()));
     case "job": return game.journal.get(t.job)?.sheet.render(true);
     case "hall": {
       const h = hallScene();
@@ -307,6 +321,134 @@ async function onClick(event) {
   }
 }
 
+// ---------- крупный арт рискаря при наведении (автор, 2026-11-14: «как модуль, что выводит арт при наведении на токен») ----------
+// Окно вне сцены — не масштабируется вместе со столом; слева от карточки, по высоте — 78% экрана.
+let hoverEl = null;
+let hoverFor = null;
+function hoverBox() {
+  if (hoverEl?.isConnected) return hoverEl;
+  hoverEl = document.createElement("div");
+  hoverEl.id = "ng-job-hover";
+  hoverEl.setAttribute("aria-hidden", "true");
+  hoverEl.innerHTML = "<img alt=\"\"><span></span>";
+  document.body.appendChild(hoverEl);
+  return hoverEl;
+}
+function showArt(card) {
+  const src = card.dataset.art;
+  if (!src) return;
+  const box = hoverBox();
+  const H = Math.round(Math.min(window.innerHeight * 0.78, 820));
+  const r = card.getBoundingClientRect();
+  box.querySelector("img").src = src;
+  box.querySelector("span").textContent = card.dataset.artName ?? "";
+  box.style.height = `${H}px`;
+  box.style.right = `${Math.max(8, Math.round(window.innerWidth - r.left + 16))}px`;
+  box.style.top = `${Math.round(Math.min(Math.max(8, r.top + r.height / 2 - H / 2), window.innerHeight - H - 8))}px`;
+  box.classList.add("on");
+  hoverFor = card;
+}
+function hideArt() {
+  hoverFor = null;
+  hoverEl?.classList.remove("on");
+}
+function onArtOver(event) {
+  const card = event.target.closest?.("[data-art]");
+  if (card && card !== hoverFor) showArt(card);
+}
+function onArtOut(event) {
+  if (!hoverFor) return;
+  if (event.relatedTarget && hoverFor.contains(event.relatedTarget)) return;
+  if (event.target.closest?.("[data-art]") === hoverFor) hideArt();
+}
+
+// ---------- окно «Кадр задника» (мастер) — как вырез аватарки под кольцо: тянуть мышкой, колесо — ближе ----------
+
+let Frame = null;
+function frameClass() {
+  if (Frame) return Frame;
+  const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api;
+  const PREVIEW = { w: 960, h: 540 };
+  Frame = class NadgradJobFrame extends HandlebarsApplicationMixin(ApplicationV2) {
+    static DEFAULT_OPTIONS = {
+      id: "ng-job-frame",
+      classes: ["ng-hall-win"],
+      window: { title: "Кадр задника", icon: "fa-solid fa-crop-simple" },
+      position: { width: 1000, height: "auto" },
+      actions: {
+        ngBgCenter: function () { this.view = { ...BG_DEFAULT, y: 0.5 }; this.paint(); },
+        ngBgReset: function () { this.view = { ...BG_DEFAULT }; this.paint(); },
+        ngBgCancel: function () { this.close(); },
+        ngBgSave: async function () {
+          const s = canvas?.scene;
+          if (isJobScene(s)) await setTable(s, { bgView: readBgView(this.view) });
+          this.close();
+        },
+      },
+    };
+    static PARTS = { body: { template: `${TPL}/job-frame.hbs` } };
+    view = null;
+    async _prepareContext() {
+      const s = canvas?.scene;
+      if (!isJobScene(s)) return { none: true };
+      const t = tableOf(s);
+      this.view ??= readBgView(t.bgView);
+      const half = (n) => Math.round(n / 2);
+      return {
+        src: t.bg || DEFAULTS.bg,
+        css: bgCss(this.view),
+        zoomPct: Math.round(this.view.z * 100),
+        zoomMin: BG_ZOOM.min * 100,
+        zoomMax: BG_ZOOM.max * 100,
+        ghosts: boardView(t, { isGM: true }).slots.map((x) => ({ x: half(x.x), y: half(x.y), w: half(x.frame), h: half(x.h + 56), rot: x.rot })),
+      };
+    }
+    paint() {
+      const img = this.element?.querySelector(".ng-job-bgcrop-view img");
+      if (!img) return;
+      const c = bgCss(this.view);
+      Object.assign(img.style, { width: `${c.w}%`, height: `${c.h}%`, left: `${c.left}%`, top: `${c.top}%`, objectPosition: c.pos });
+      const z = this.element.querySelector(".ng-job-bgcrop-zoom");
+      if (z) z.value = String(Math.round(this.view.z * 100));
+    }
+    _onRender() {
+      const box = this.element.querySelector(".ng-job-bgcrop-view");
+      const img = box?.querySelector("img");
+      if (!box || !img) return;
+      let start = null;
+      const size = () => {
+        const r = box.getBoundingClientRect();
+        return { W: r.width || PREVIEW.w, H: r.height || PREVIEW.h };
+      };
+      box.addEventListener("pointerdown", (e) => {
+        if (e.button !== 0) return;
+        start = { x: e.clientX, y: e.clientY, view: { ...this.view } };
+        box.setPointerCapture(e.pointerId);
+        box.classList.add("drag");
+      });
+      box.addEventListener("pointermove", (e) => {
+        if (!start || !img.naturalWidth) return;
+        const { W, H } = size();
+        this.view = bgPan(start.view, e.clientX - start.x, e.clientY - start.y, img.naturalWidth, img.naturalHeight, W, H);
+        this.paint();
+      });
+      const end = () => { start = null; box.classList.remove("drag"); };
+      box.addEventListener("pointerup", end);
+      box.addEventListener("pointercancel", end);
+      box.addEventListener("wheel", (e) => {
+        e.preventDefault();
+        this.view = bgZoom(this.view, this.view.z * (e.deltaY < 0 ? 1.1 : 1 / 1.1));
+        this.paint();
+      }, { passive: false });
+      this.element.querySelector(".ng-job-bgcrop-zoom")?.addEventListener("input", (e) => {
+        this.view = bgZoom(this.view, Number(e.target.value) / 100);
+        this.paint();
+      });
+    }
+  };
+  return Frame;
+}
+
 // ---------- окно стола (мастер) ----------
 
 let Admin = null;
@@ -324,13 +466,12 @@ function adminClass() {
       actions: {
         ngLayout: function (event, target) { return set(this, { layout: target.dataset.id }); },
         ngBackdrop: async function (event, target) {
-          const src = target.dataset.src;
-          await scene()?.update({ [`flags.${MODULE_ID}.${FLAG}.bg`]: src, "background.src": src });
+          await setBackdrop(scene(), target.dataset.src);
           this.render();
         },
         ngPickBg: async function () {
           const path = await pickImage(tableOf(scene()).bg);
-          if (path) await scene()?.update({ [`flags.${MODULE_ID}.${FLAG}.bg`]: path, "background.src": path });
+          if (path) await setBackdrop(scene(), path);
           this.render();
         },
         ngPick: async function (event, target) {
@@ -350,6 +491,7 @@ function adminClass() {
           this.render();
         },
         ngGo: function (event, target) { return game.scenes.get(target.dataset.id)?.activate(); },
+        ngFrame: function () { new (frameClass())().render(true); },
       },
     };
     static PARTS = { body: { template: `${TPL}/job-admin.hbs` } };

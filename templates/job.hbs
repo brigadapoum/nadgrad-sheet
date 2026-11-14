@@ -1,5 +1,5 @@
 <div class="ng-job-stage" style="transform: scale({{layout.scale}}); left: {{layout.left}}px; top: {{layout.top}}px">
-  <img class="ng-job-bg" src="{{bg}}" alt="">
+  <img class="ng-job-bg" src="{{bg}}" alt="" style="width: {{bgv.w}}%; height: {{bgv.h}}%; left: {{bgv.left}}%; top: {{bgv.top}}%; object-position: {{bgv.pos}}">
   <div class="ng-job-dim"></div>
   {{#if side}}<img class="ng-job-side" src="{{side}}" alt="" aria-hidden="true">{{/if}}
 
@@ -18,9 +18,11 @@
       {{#each scenes}}<button type="button" data-job="scene" data-id="{{id}}" class="{{#if current}}on{{/if}}" title="{{name}}" {{#unless ../isGM}}disabled{{/unless}}>{{n}}</button>{{/each}}
     </span>
     {{/if}}
+    <button type="button" class="ng-job-skin" data-job="skin-next" title="Оформление — нажми, чтобы сменить (только у тебя)" aria-label="Оформление: {{skinLabel}}. Сменить"><i class="fa-solid fa-palette"></i> {{skinLabel}}</button>
     {{#if isGM}}
     <span class="ng-job-gm">
       <button type="button" data-job="bg" title="Сменить задник этой сцены"><i class="fa-solid fa-image"></i> Задник</button>
+      <button type="button" data-job="bg-frame" title="Кадр задника: сдвинуть и приблизить"><i class="fa-solid fa-crop-simple"></i> Кадр</button>
       {{#if hasHall}}<button type="button" data-job="hall" title="Перевести всех в холл"><i class="fa-solid fa-arrow-left"></i> Холл</button>{{/if}}
       <button type="button" class="ng-job-icon" data-job="settings" title="Стол: дело, раскладка, задник, фигура, сцены" aria-label="Настройки стола"><i class="fa-solid fa-gear"></i></button>
     </span>
@@ -51,29 +53,29 @@
     {{else}}
     {{#if caption}}<figcaption class="ng-job-caption">{{caption}}</figcaption>{{else}}<span class="ng-job-caption-gap"></span>{{/if}}
     {{/if}}
+    <span class="ng-job-tape" style="transform: rotate({{tape}}deg)" aria-hidden="true"></span>
   </figure>
   {{/each}}
 
-  {{#each board.pins}}<span class="ng-job-pin" style="left: {{x}}px; top: {{y}}px"></span>{{/each}}
-
   <div class="ng-job-side-col">
     <section class="ng-job-panel" aria-label="Рискари в деле">
-      <div class="ng-job-panel-head"><h2>Рискари в деле</h2><span>клик — лист</span></div>
-      {{#each runners.list}}
-      <div class="ng-job-runner">
-        <button type="button" class="ng-job-runner-card" data-job="runner" data-id="{{id}}" aria-label="Лист рискаря: {{name}}">
-          <span class="ng-job-portrait">{{#if img}}<img src="{{img}}" alt="">{{else}}{{initial}}{{/if}}</span>
-          <span class="ng-job-runner-text">
-            <span class="ng-job-runner-name">{{name}}</span>
-            <span class="ng-job-stress"><span class="ng-job-stress-label">стресс</span>{{#each stress.pips}}<i class="{{#if on}}on{{/if}}"></i>{{else}}<b>{{stress.text}}</b>{{/each}}</span>
-          </span>
-          <span class="ng-job-rank">ранг {{rankText}}</span>
-        </button>
-        {{#if ../isGM}}<button type="button" class="ng-job-x" data-job="runner-remove" data-id="{{id}}" aria-label="Убрать из дела: {{name}}"><i class="fa-solid fa-xmark"></i></button>{{/if}}
+      <div class="ng-job-panel-head"><h2>Рискари в деле</h2><span>наведи — арт</span></div>
+      {{#if runners.list.length}}
+      <div class="ng-job-runners">
+        {{#each runners.list}}
+        <div class="ng-job-runner">
+          <button type="button" class="ng-job-runner-card" data-job="runner" data-id="{{id}}"{{#if img}} data-art="{{img}}" data-art-name="{{name}}"{{/if}} aria-label="Лист рискаря: {{name}}">
+            <span class="ng-job-portrait">{{#if img}}<img src="{{img}}" alt="">{{else}}{{initial}}{{/if}}</span>
+            <span class="ng-job-runner-row"><span class="ng-job-runner-name">{{name}}</span><span class="ng-job-rank">ранг {{rankText}}</span></span>
+            <span class="ng-job-stress" title="стресс {{stress.text}}">{{#each stress.pips}}<i class="{{#if on}}on{{/if}}"></i>{{else}}<span class="ng-job-stress-label">стресс</span><b>{{stress.text}}</b>{{/each}}</span>
+          </button>
+          {{#if ../isGM}}<button type="button" class="ng-job-x corner" data-job="runner-remove" data-id="{{id}}" aria-label="Убрать из дела: {{name}}"><i class="fa-solid fa-xmark"></i></button>{{/if}}
+        </div>
+        {{/each}}
       </div>
       {{else}}
       <p class="ng-job-empty">В деле пока никого.</p>
-      {{/each}}
+      {{/if}}
       {{#if isGM}}
       <button type="button" class="ng-job-addrow{{#if runners.open}} on{{/if}}" data-job="runners-pick" aria-expanded="{{#if runners.open}}true{{else}}false{{/if}}"><i class="fa-solid fa-plus"></i> Добавить рискаря</button>
       {{#if runners.open}}

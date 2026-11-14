@@ -1,0 +1,24 @@
+<div class="ng-hall-admin-body ng-job-bgcrop">
+  {{#if none}}
+  <p>Это окно — для сцены дела.</p>
+  {{else}}
+  <div class="ng-job-bgcrop-view" aria-label="Кадр задника: тяни мышкой, колесо — ближе или дальше">
+    <img src="{{src}}" alt="" draggable="false" style="width: {{css.w}}%; height: {{css.h}}%; left: {{css.left}}%; top: {{css.top}}%; object-position: {{css.pos}}">
+    <div class="ng-job-bgcrop-dim"></div>
+    <span class="ng-job-bgcrop-ghost" style="left: 36px; top: 8px; width: 888px; height: 44px"></span>
+    <span class="ng-job-bgcrop-ghost" style="left: 710px; top: 62px; width: 214px; height: 420px"></span>
+    {{#each ghosts}}<span class="ng-job-bgcrop-ghost" style="left: {{x}}px; top: {{y}}px; width: {{w}}px; height: {{h}}px; transform: rotate({{rot}}deg)"></span>{{/each}}
+  </div>
+  <div class="ng-hall-admin-row ng-job-bgcrop-tools">
+    <label>Приближение <input type="range" class="ng-job-bgcrop-zoom" min="{{zoomMin}}" max="{{zoomMax}}" step="1" value="{{zoomPct}}"></label>
+    <button type="button" data-action="ngBgCenter">По центру</button>
+    <button type="button" data-action="ngBgReset">Как по умолчанию</button>
+  </div>
+  <p class="hint">Тяни картинку мышкой, колесо — ближе / дальше. Пунктир — где лежат шапка, фото и панели стола. Видно всем, у кого открыт стол.</p>
+  <div class="ng-hall-admin-row">
+    <span class="ng-job-gap"></span>
+    <button type="button" data-action="ngBgCancel">Отмена</button>
+    <button type="button" class="on" data-action="ngBgSave"><i class="fa-solid fa-check"></i> Сохранить</button>
+  </div>
+  {{/if}}
+</div>

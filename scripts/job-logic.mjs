@@ -79,11 +79,64 @@ export function readTable(raw = {}) {
     slots,
     runners: ids(r.runners),
     clocks: ids(r.clocks),
+    bgView: readBgView(r.bgView),
     at: Number.isFinite(r.at) ? r.at : 0,
   };
 }
 
-/** Булавка — середина верхнего края рамки. */
+// ---------- кадр задника (автор, 2026-11-14: «как обрезаем в кружок аватарку — но на задник») ----------
+// x, y — куда сдвинут кадр (0…1, как object-position), z — приближение поверх «заполнить экран» (1…4).
+export const BG_ZOOM = { min: 1, max: 4 };
+export const BG_DEFAULT = { x: 0.5, y: 0.4, z: 1 };
+const clamp = (v, lo, hi, fb) => (Number.isFinite(Number(v)) ? Math.min(hi, Math.max(lo, Number(v))) : fb);
+export function readBgView(v = {}) {
+  const o = v && typeof v === "object" ? v : {};
+  return {
+    x: clamp(o.x, 0, 1, BG_DEFAULT.x),
+    y: clamp(o.y, 0, 1, BG_DEFAULT.y),
+    z: clamp(o.z, BG_ZOOM.min, BG_ZOOM.max, BG_DEFAULT.z),
+  };
+}
+/**
+ * CSS картинки задника в рамке любого размера: коробка z×100% сдвинута на (1−z)·x, внутри — cover с object-position x y.
+ * Итог — картинка «заполнить» × z, левый край = (W − ширина)·x. Натуральный размер картинки не нужен.
+ */
+export function bgCss(view) {
+  const v = readBgView(view);
+  const r = (n) => Math.round(n * 1000) / 1000;
+  return { w: r(v.z * 100), h: r(v.z * 100), left: r((1 - v.z) * v.x * 100), top: r((1 - v.z) * v.y * 100), pos: `${r(v.x * 100)}% ${r(v.y * 100)}%` };
+}
+/** Размер картинки в рамке W×H при «заполнить» и приближении z. */
+export function coverSize(nw, nh, W, H, z = 1) {
+  const s = Math.max(W / (nw || 1), H / (nh || 1)) * z;
+  return { w: (nw || 1) * s, h: (nh || 1) * s };
+}
+/** Тянем мышкой на dx, dy пикселей рамки W×H: картинка едет за мышкой; по оси без запаса — стоит. */
+export function bgPan(view, dx, dy, nw, nh, W, H) {
+  const v = readBgView(view);
+  const c = coverSize(nw, nh, W, H, v.z);
+  const ox = c.w - W, oy = c.h - H;
+  return readBgView({ ...v, x: ox > 0.5 ? v.x - dx / ox : v.x, y: oy > 0.5 ? v.y - dy / oy : v.y });
+}
+export const bgZoom = (view, z) => readBgView({ ...readBgView(view), z });
+
+// ---------- оформление: одна кнопка по кругу (автор, 2026-11-14) ----------
+export const SKIN_CYCLE = [
+  { id: "tush", label: "Тушь" },
+  { id: "smog", label: "Смог" },
+  { id: "acid", label: "Кислота" },
+  { id: "classic", label: "Классика" },
+];
+export const skinLabel = (id) => (SKIN_CYCLE.find((s) => s.id === id) ?? SKIN_CYCLE[1]).label;
+export function nextSkin(id) {
+  const i = SKIN_CYCLE.findIndex((s) => s.id === id);
+  return SKIN_CYCLE[(i + 1) % SKIN_CYCLE.length].id;
+}
+
+/** Наклон полоски скотча по номеру слота — фото крепятся скотчем, как в холле (автор, 2026-11-14). */
+const TAPE = [3, -4, 5, -2, 4, -3, 2, -5, 3];
+
+/** Точка крепления (под скотчем) — середина верхнего края рамки; от неё идут нити. */
 export const pinOf = (s) => ({ x: s.x + s.w / 2 + 8, y: s.y });
 
 /** Нить от булавки к булавке: начало, длина, угол (для div с transform-origin: 0 50%). */
@@ -118,6 +171,7 @@ export function boardView(table, { isGM = false } = {}) {
       visible: has || isGM,
       showCaption: !!data.caption || isGM,
       pin: pinOf(pos),
+      tape: TAPE[i % TAPE.length],
     };
   });
   const threads = lay.links

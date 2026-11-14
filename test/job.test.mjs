@@ -4,7 +4,7 @@ import { readFileSync, existsSync } from "node:fs";
 import Handlebars from "handlebars";
 import {
   LAYOUTS, MAX_SLOTS, layoutOf, readTable, pinOf, thread, boardView, stressView, tableRunners, addableRunners,
-  jobScenes, lastScene, sceneName,
+  jobScenes, lastScene, sceneName, readBgView, bgCss, bgPan, bgZoom, coverSize, BG_DEFAULT, nextSkin, skinLabel,
 } from "../scripts/job-logic.mjs";
 
 const STAGE = { w: 1920, h: 1080 };
@@ -107,22 +107,31 @@ test("шаблон стола: кнопки мастера, игрок без к
   const base = {
     layout: { scale: 1, left: 0, top: 0 }, bg: "bg.webp", logo: "fig.webp", side: "side.webp",
     job: { linked: true, name: "МОЙКА", meta: "Серьга · [место]", reward: "20 ч · 1 р", chips: [{ label: "0", tone: "low" }] },
-    runners: { list: [{ id: "b", name: "Бланк", initial: "Б", rankText: "1", stress: stressView(2, 9) }], addable: [], open: false },
+    runners: { list: [{ id: "b", name: "Бланк", initial: "Б", rankText: "1", img: "blank.webp", stress: stressView(2, 9) }, { id: "n", name: "Никто", initial: "Н", rankText: "0", stress: stressView(1, 0) }], addable: [], open: false },
     clocks: { list: [{ id: "c", name: "Облава", src: "c.webp", value: 2, size: 6, canStep: true }], choices: [], open: false },
-    scenes: [], hasHall: true,
+    scenes: [], hasHall: true, skinLabel: "Смог", bgv: bgCss(BG_DEFAULT),
   };
   const gm = tpl({ ...base, isGM: true, board: boardView(raw, { isGM: true }) });
   assert.equal((gm.match(/data-job="photo-pick"/g) ?? []).length, 6, "2 «Заменить» + 4 «Добавить фото»");
   assert.equal((gm.match(/Добавить фото/g) ?? []).length, 4);
   assert.equal((gm.match(/data-job="caption"/g) ?? []).length, 6);
-  assert.ok(/data-job="bg"/.test(gm) && /data-job="hall"/.test(gm) && /data-job="settings"/.test(gm));
+  assert.ok(/data-job="bg"/.test(gm) && /data-job="bg-frame"/.test(gm) && /data-job="hall"/.test(gm) && /data-job="settings"/.test(gm));
+  assert.equal((gm.match(/data-job="skin-next"/g) ?? []).length, 1, "оформление — одна кнопка");
+  assert.match(gm, /fa-palette"><\/i> Смог/);
+  assert.match(gm, /class="ng-job-bg"[^>]*width: 100%; height: 100%; left: 0%; top: 0%; object-position: 50% 40%/);
   assert.ok(/data-job="runners-pick"/.test(gm) && /data-job="clocks-pick"/.test(gm) && /data-job="runner-remove"/.test(gm));
   assert.ok(/МОЙКА/.test(gm) && /20 ч · 1 р/.test(gm));
   const pl = tpl({ ...base, isGM: false, board: boardView(raw, { isGM: false }) });
-  assert.ok(!/photo-pick|photo-clear|data-job="bg"|data-job="settings"|runners-pick|clocks-pick|runner-remove|clock-remove|data-job="caption"/.test(pl), "у игрока нет кнопок мастера");
+  assert.ok(!/photo-pick|photo-clear|data-job="bg"|bg-frame|data-job="settings"|runners-pick|clocks-pick|runner-remove|clock-remove|data-job="caption"/.test(pl), "у игрока нет кнопок мастера");
+  assert.match(pl, /data-job="skin-next"/, "оформление игрок меняет у себя");
   assert.equal((pl.match(/data-job="photo"/g) ?? []).length, 2);
   assert.ok(/<figcaption class="ng-job-caption">Серьга<\/figcaption>/.test(pl));
   assert.equal((pl.match(/ng-job-thread/g) ?? []).length, 1, "нить 1–2");
+  assert.equal((pl.match(/class="ng-job-tape"/g) ?? []).length, 2, "фото на скотче, как в холле");
+  assert.ok(!/ng-job-pin/.test(gm), "булавок нет");
+  assert.match(pl, /data-art="blank.webp" data-art-name="Бланк"/, "наведение — крупный арт");
+  assert.equal((pl.match(/data-art=/g) ?? []).length, 1, "без портрета — без арта");
+  assert.match(pl, /<b>1<\/b>/, "стресс без максимума — числом");
   const open = tpl({ ...base, isGM: true, board: boardView(raw, { isGM: true }), runners: { ...base.runners, open: true, addable: [{ id: "r", name: "Реймонд", initial: "Р", rankText: "2" }] } });
   assert.ok(/data-job="runner-add" data-id="r"/.test(open));
   const none = tpl({ ...base, isGM: true, board: boardView(raw, { isGM: true }), runners: { list: [], addable: [], open: true } });
@@ -142,6 +151,41 @@ test("окно стола и кнопка «На дело» в холле", () =
   const items = { jobs: { items: [job] } };
   assert.ok(/data-hall="go" data-id="j1"/.test(board({ ...items, isGM: true })));
   assert.ok(!/data-hall="go"/.test(board({ ...items, isGM: false })));
+});
+
+test("кадр задника: CSS без размера картинки, тянуть мышкой, приближение", () => {
+  assert.deepEqual(readBgView({ x: 2, y: -1, z: 9 }), { x: 1, y: 0, z: 4 });
+  assert.deepEqual(readBgView(null), BG_DEFAULT);
+  assert.deepEqual(bgCss({ x: 0.5, y: 0.4, z: 1 }), { w: 100, h: 100, left: 0, top: 0, pos: "50% 40%" });
+  const c = bgCss({ x: 0.25, y: 1, z: 2 });
+  assert.deepEqual([c.w, c.left, c.top, c.pos], [200, -25, -100, "25% 100%"]);
+  // левый край картинки = (W − ширина)·x — и при приближении
+  const W = 960, H = 540, nw = 2000, nh = 1000;
+  const v = { x: 0.3, y: 0.5, z: 1.5 };
+  const size = coverSize(nw, nh, W, H, v.z);
+  const css = bgCss(v);
+  const box = { w: W * css.w / 100, left: W * css.left / 100 };
+  const inner = coverSize(nw, nh, box.w, H * css.h / 100, 1);
+  assert.ok(Math.abs(box.left + (box.w - inner.w) * v.x - (W - size.w) * v.x) < 0.01);
+  // высокая картинка в широкой рамке: по x запаса нет — стоит, по y едет за мышкой
+  const tall = bgPan({ x: 0.5, y: 0.5, z: 1 }, 100, 100, 928, 1232, W, H);
+  assert.equal(tall.x, 0.5);
+  assert.ok(tall.y < 0.5, "тянем вниз — картинка едет вниз, кадр уходит вверх");
+  assert.equal(bgPan({ x: 0, y: 0, z: 1 }, 500, 500, 928, 1232, W, H).y, 0, "упирается в край");
+  assert.equal(bgZoom({ x: 0.5, y: 0.5, z: 1 }, 0.2).z, 1);
+});
+
+test("оформление по кругу: Тушь → Смог → Кислота → Классика → Тушь", () => {
+  assert.deepEqual(["tush", "smog", "acid", "classic", "auto"].map(nextSkin), ["smog", "acid", "classic", "tush", "tush"]);
+  assert.equal(skinLabel("acid"), "Кислота");
+});
+
+test("окно кадра задника компилируется", () => {
+  const C = (f) => Handlebars.compile(readFileSync(new URL(`../templates/${f}`, import.meta.url), "utf8"));
+  const html = C("job-frame.hbs")({ src: "bg.webp", css: bgCss(BG_DEFAULT), zoomPct: 100, zoomMin: 100, zoomMax: 400, ghosts: [{ x: 1, y: 2, w: 3, h: 4, rot: 5 }] });
+  assert.match(html, /data-action="ngBgSave"/);
+  assert.match(html, /class="ng-job-bgcrop-zoom" min="100" max="400"/);
+  assert.match(C("job-admin.hbs")({ layouts: [], backdrops: [], scenes: [] }), /data-action="ngFrame"/);
 });
 
 test("арты стола на месте", () => {

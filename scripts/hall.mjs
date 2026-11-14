@@ -4,6 +4,7 @@
 // иначе — база PC из data/roster.json); новости и Заслон — настройки мира.
 import { MODULE_ID, readState } from "./logic.mjs";
 import { effectiveTheme } from "./dom.mjs";
+import { skinLabel, nextSkin } from "./job-logic.mjs";
 import {
   STAGE, JOBS_PAGE, RUNNERS_PAGE, JOB_FOLDER, readJob, jobView, boardJobs, page, ring, turn, syncPlan,
   CAMPAIGN, campaignStatus, runnerViews, countBy, fitStage, newsViews,
@@ -235,7 +236,7 @@ async function render() {
     art: ART,
     layout: fitStage(freeArea(), STAGE),
     isGM: game.user.isGM,
-    skins: SKINS.map((x) => ({ ...x, on: x.id === skin })),
+    skin: { id: skin, label: skinLabel(skin) },
     photos: PHOTOS,
     playerHtml: await tpl("hall-player.hbs", musicContext()),
     boardHtml: await tpl("hall-board.hbs", jobsContext()),
@@ -326,6 +327,7 @@ async function onClick(event) {
       return renderPart("strip");
     }
     case "skin": return game.settings.set(MODULE_ID, "theme", btn.dataset.id);
+    case "skin-next": return game.settings.set(MODULE_ID, "theme", nextSkin(skinOf()));
     case "music-toggle": return musicAction("toggle");
     case "music-next": return musicAction("next");
     case "music-prev": return musicAction("prev");

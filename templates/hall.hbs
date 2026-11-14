@@ -8,9 +8,7 @@
     <span class="ng-hall-gap"></span>
     {{{playerHtml}}}
     <span class="ng-hall-head-right">
-      <span class="ng-hall-skins" role="group" aria-label="Оформление холла">
-        {{#each skins}}<button type="button" data-hall="skin" data-id="{{id}}" class="{{#if on}}on{{/if}}" aria-pressed="{{#if on}}true{{else}}false{{/if}}">{{label}}</button>{{/each}}
-      </span>
+      <button type="button" class="ng-hall-skin" data-hall="skin-next" title="Оформление — нажми, чтобы сменить (только у тебя)" aria-label="Оформление: {{skin.label}}. Сменить"><i class="fa-solid fa-palette"></i> {{skin.label}}</button>
       {{#if isGM}}<button type="button" class="ng-hall-admin" data-hall="admin" title="Холл: новости, музыка, доска дел" aria-label="Настройки холла"><i class="fa-solid fa-gear"></i></button>{{/if}}
     </span>
   </header>

@@ -118,6 +118,12 @@
 #ng-hall.skin-tush .ng-hall-skins button.on,
 #ng-hall.skin-smog .ng-hall-skins button.on,
 #ng-hall:not([class*="skin-"]) .ng-hall-skins button.on { background: var(--h-acc); border-color: var(--h-acc); color: #100C0A; }
+/* оформление — одна кнопка по кругу (автор, 2026-11-14): Тушь → Смог → Кислота → Классика */
+#ng-hall .ng-hall-skin {
+  width: auto; height: 40px; padding: 0 14px; background: transparent; border: 1px solid currentColor; border-radius: 0; color: var(--h-head-fg);
+  font: 500 14px var(--h-font-head); letter-spacing: .08em; text-transform: uppercase; display: flex; align-items: center; gap: 8px; white-space: nowrap; flex: none;
+}
+#ng-hall .ng-hall-skin:hover { background: var(--h-head-fg); color: var(--h-head-bg); }
 #ng-hall .ng-hall-admin { width: 40px; height: 40px; padding: 0; background: transparent; border: 1px solid currentColor; border-radius: 0; color: var(--h-head-fg); font-size: 17px; flex: none; }
 
 /* фото, приклеенные скотчем */

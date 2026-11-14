@@ -61,15 +61,21 @@
 #ng-job .ng-job-scenes button.on { opacity: 1; background: var(--h-head-fg); color: var(--h-head-bg); }
 #ng-job .ng-job-scenes button:disabled { cursor: default; }
 #ng-job .ng-job-gm { display: flex; gap: 6px; }
+/* оформление — одна кнопка по кругу: Тушь → Смог → Кислота → Классика */
+#ng-job .ng-job-skin {
+  width: auto; height: 40px; padding: 0 12px; background: transparent; border: 1px solid currentColor; color: var(--h-head-fg);
+  font: 500 14px var(--h-font-head); letter-spacing: .08em; text-transform: uppercase; display: flex; align-items: center; gap: 8px; white-space: nowrap;
+}
 #ng-job .ng-job-gm button {
   width: auto; height: 40px; padding: 0 12px; background: transparent; border: 1px solid currentColor; color: var(--h-head-fg);
   font: 500 14px var(--h-font-head); letter-spacing: .08em; text-transform: uppercase; display: flex; align-items: center; gap: 8px; white-space: nowrap;
 }
 #ng-job .ng-job-gm button.ng-job-icon { width: 40px; padding: 0; justify-content: center; font-size: 17px; }
 
-/* нити и булавки */
+/* нити — от середины верхнего края фото, под скотчем */
 #ng-job .ng-job-thread { position: absolute; height: 2px; background: var(--h-high); transform-origin: 0 50%; box-shadow: 0 2px 4px rgba(0,0,0,.6); pointer-events: none; }
-#ng-job .ng-job-pin { position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: var(--h-high); box-shadow: 0 3px 5px rgba(0,0,0,.7); pointer-events: none; z-index: 2; }
+/* скотч — как у фото в холле */
+#ng-job .ng-job-tape { position: absolute; left: 50%; top: -11px; width: 80px; height: 22px; margin-left: -40px; background: var(--h-tape); pointer-events: none; z-index: 1; }
 
 /* фото-слоты: рамка как у фото холла */
 #ng-job .ng-job-photo {
@@ -115,36 +121,40 @@
 #ng-job .ng-job-panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 #ng-job .ng-job-panel-head h2 {
   margin: 0; border: 0; font: var(--h-h2-weight) 22px var(--h-h2-font); letter-spacing: .1em; text-transform: uppercase;
-  color: var(--h-h2-fg); background: var(--h-h2-bg); padding: var(--h-h2-pad); clip-path: var(--h-h2-clip);
+  color: var(--h-h2-fg); background: var(--h-h2-bg); padding: var(--h-h2-pad); clip-path: var(--h-h2-clip); white-space: nowrap;
 }
 #ng-job .ng-job-panel-head span { font-size: 12.5px; color: var(--h-muted); }
-#ng-job .ng-job-runner { display: flex; gap: 4px; }
+/* рискари в деле: портреты в три раза крупнее (автор, 2026-11-14) — по два в ряд */
+#ng-job .ng-job-runners { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+#ng-job .ng-job-runner { position: relative; min-width: 0; }
 #ng-job .ng-job-runner-card {
-  flex: 1; min-width: 0; height: auto; padding: 8px 10px; background: var(--h-card); border: 0; color: var(--h-fg);
-  display: flex; align-items: center; gap: 12px; text-align: left;
+  width: 100%; height: auto; padding: 0 0 10px; background: var(--h-card); border: 1px solid var(--h-por); color: var(--h-fg);
+  display: flex; flex-direction: column; align-items: stretch; gap: 6px; text-align: left;
 }
-#ng-job .ng-job-runner-card:hover { background: var(--h-hover); }
+#ng-job .ng-job-runner-card:hover { border-color: var(--h-acc); }
 #ng-job .ng-job-portrait {
-  width: 60px; height: 60px; flex: none; border-radius: 50%; overflow: hidden; background: var(--h-por); border: 2px solid var(--h-rank-fg);
-  display: flex; align-items: center; justify-content: center; font: 600 26px var(--h-font-head); color: var(--h-muted);
+  height: 180px; flex: none; overflow: hidden; background: var(--h-por);
+  display: flex; align-items: center; justify-content: center; font: 600 72px var(--h-font-head); color: var(--h-muted);
 }
 #ng-job .ng-job-portrait img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; display: block; }
-#ng-job .ng-job-portrait.small { width: 30px; height: 30px; border-width: 1px; font-size: 15px; }
-#ng-job .ng-job-runner-text { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0; }
-#ng-job .ng-job-runner-name { font: 600 18px var(--h-font-head); letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#ng-job .ng-job-portrait.small { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--h-rank-fg); font-size: 15px; }
+#ng-job .ng-job-runner-row { display: flex; align-items: baseline; gap: 6px; padding: 0 10px; min-width: 0; }
+#ng-job .ng-job-runner-name { flex: 1; min-width: 0; font: 600 18px var(--h-font-head); letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #ng-job.skin-classic .ng-job-runner-name { font-weight: 700; }
-#ng-job .ng-job-stress { display: flex; align-items: center; gap: 3px; }
+#ng-job .ng-job-stress { display: flex; align-items: center; gap: 3px; padding: 0 10px; flex-wrap: wrap; }
 #ng-job .ng-job-stress-label { font-size: 12px; color: var(--h-muted); margin-right: 6px; }
-#ng-job .ng-job-stress i { width: 12px; height: 12px; border: 1px solid var(--h-muted); flex: none; }
+#ng-job .ng-job-stress i { width: 13px; height: 13px; border: 1px solid var(--h-muted); flex: none; }
 #ng-job .ng-job-stress i.on { background: var(--h-acc); border-color: var(--h-acc); }
 #ng-job .ng-job-stress b { font: 600 14px var(--h-font-head); }
-#ng-job .ng-job-rank { flex: none; align-self: flex-start; font-size: 12px; color: var(--h-rank-fg); background: var(--h-rank-bg); padding: 0 4px; }
+#ng-job .ng-job-rank { flex: none; font-size: 12px; color: var(--h-rank-fg); background: var(--h-rank-bg); padding: 0 4px; white-space: nowrap; }
 #ng-job .ng-job-x {
   width: 44px; flex: none; padding: 0; background: var(--h-card); border: 0; color: var(--h-muted);
   display: flex; align-items: center; justify-content: center; font-size: 14px; height: auto;
 }
 #ng-job .ng-job-x:hover { color: var(--h-high); }
 #ng-job .ng-job-x.small { position: absolute; right: 0; top: 0; width: 28px; height: 28px; background: transparent; }
+#ng-job .ng-job-x.corner { position: absolute; right: 0; top: 0; width: 36px; height: 36px; background: rgba(16,12,10,.85); color: #D0D4C9; }
+#ng-job .ng-job-x.corner:hover { color: #E2402F; }
 #ng-job .ng-job-addrow {
   width: 100%; height: 44px; padding: 0; background: transparent; border: 1px dashed var(--h-acc); color: var(--h-acc);
   font: 500 15px var(--h-font-head); letter-spacing: .08em; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -180,3 +190,24 @@
 .ng-hall-win .ng-job-admin-backdrops img { width: 100%; height: 100%; object-fit: cover; display: block; border: 0; }
 .ng-hall-win .ng-job-admin-art { display: flex; align-items: center; gap: 12px; }
 .ng-hall-win .ng-job-admin-art img { width: 72px; height: 72px; object-fit: contain; background: #1E1D18; border: 1px solid var(--h-line); flex: none; }
+
+/* окно «Кадр задника» */
+.ng-hall-win .ng-job-bgcrop-view { position: relative; width: 960px; height: 540px; overflow: hidden; background: #14120F; cursor: grab; touch-action: none; user-select: none; border: 1px solid var(--h-line); }
+.ng-hall-win .ng-job-bgcrop-view.drag { cursor: grabbing; }
+.ng-hall-win .ng-job-bgcrop-view img { position: absolute; object-fit: cover; max-width: none; border: 0; pointer-events: none; }
+.ng-hall-win .ng-job-bgcrop-dim { position: absolute; inset: 0; background: rgba(12,10,8,.55); pointer-events: none; }
+.ng-hall-win .ng-job-bgcrop-ghost { position: absolute; border: 1px dashed rgba(236,233,224,.55); background: rgba(236,233,224,.06); pointer-events: none; }
+.ng-hall-win .ng-job-bgcrop-tools { align-items: center; margin-top: 10px; }
+.ng-hall-win .ng-job-bgcrop-tools label { display: flex; align-items: center; gap: 10px; flex: 1; }
+.ng-hall-win .ng-job-bgcrop-tools input[type=range] { flex: 1; }
+.ng-hall-win .ng-job-bgcrop .ng-job-gap { flex: 1; }
+
+/* крупный арт рискаря при наведении — как модули «картинка при наведении на токен» */
+#ng-job-hover {
+  position: fixed; z-index: 1000; pointer-events: none; padding: 6px; background: #100C0A; border: 2px solid #E0763A;
+  box-shadow: 0 24px 60px rgba(0,0,0,.75); opacity: 0; transition: opacity .12s ease-out; display: none;
+}
+#ng-job-hover.on { display: block; opacity: 1; }
+#ng-job-hover img { display: block; height: 100%; width: auto; max-width: 45vw; object-fit: contain; border: 0; }
+#ng-job-hover span { position: absolute; left: 6px; right: 6px; bottom: 6px; padding: 6px 10px; background: rgba(16,12,10,.85); color: #D0D4C9; font: 600 18px "Oswald", sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+@media (prefers-reduced-motion: reduce) { #ng-job-hover { transition: none; } }

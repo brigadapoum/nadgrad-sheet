@@ -20,6 +20,7 @@
 #ng-job .ng-job-bg { position: absolute; inset: 0; width: 1920px; height: 1080px; object-fit: cover; object-position: 50% 40%; display: block; }
 #ng-job .ng-job-dim { position: absolute; inset: 0; background: rgba(12,10,8,.55); }
 #ng-job .ng-job-side { position: absolute; left: 0; top: 0; width: 455px; height: 1080px; object-fit: cover; opacity: .5; mix-blend-mode: screen; pointer-events: none; display: block; }
+#ng-job .ng-job-corner { position: absolute; right: 0; bottom: 0; width: 480px; height: 584px; object-fit: contain; object-position: 100% 100%; opacity: .5; mix-blend-mode: screen; pointer-events: none; display: block; }
 
 /* шапка: фигура-лого не в левом верхнем углу — там меню Foundry (как у холла) */
 #ng-job .ng-job-head {

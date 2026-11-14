@@ -105,7 +105,7 @@ test("шаблон стола: кнопки мастера, игрок без к
   const tpl = C("job.hbs");
   const raw = { layout: "six", slots: [{ img: "a.webp", caption: "Серьга" }, { img: "b.webp" }] };
   const base = {
-    layout: { scale: 1, left: 0, top: 0 }, bg: "bg.webp", logo: "fig.webp", side: "side.webp",
+    layout: { scale: 1, left: 0, top: 0 }, bg: "bg.webp", logo: "fig.webp", side: "side.webp", corner: "corner.webp",
     job: { linked: true, name: "МОЙКА", meta: "Серьга · [место]", reward: "20 ч · 1 р", chips: [{ label: "0", tone: "low" }] },
     runners: { list: [{ id: "b", name: "Бланк", initial: "Б", rankText: "1", img: "blank.webp", stress: stressView(2, 9) }, { id: "n", name: "Никто", initial: "Н", rankText: "0", stress: stressView(1, 0) }], addable: [], open: false },
     clocks: { list: [{ id: "c", name: "Облава", src: "c.webp", value: 2, size: 6, canStep: true }], choices: [], open: false, show: true },
@@ -118,6 +118,7 @@ test("шаблон стола: кнопки мастера, игрок без к
   assert.ok(/data-job="bg"/.test(gm) && /data-job="bg-frame"/.test(gm) && /data-job="hall"/.test(gm) && /data-job="settings"/.test(gm));
   assert.equal((gm.match(/data-job="skin-next"/g) ?? []).length, 1, "оформление — одна кнопка");
   assert.match(gm, /data-job="hide"/, "мастер может скрыть стол");
+  assert.match(gm, /class="ng-job-corner" src="corner.webp"/, "арт справа внизу");
   assert.match(gm, /class="ng-job-clockbar"[\s\S]*Облава/, "часы — внизу по центру");
   assert.ok(gm.indexOf("ng-job-clockbar") > gm.indexOf("ng-job-side-col"), "часы не в правой колонке");
   assert.match(gm, /fa-palette"><\/i> Смог/);
@@ -193,10 +194,11 @@ test("окно кадра задника компилируется", () => {
   const adm = C("job-admin.hbs")({ layouts: [], backdrops: [], scenes: [] });
   assert.match(adm, /data-action="ngFrame"/);
   assert.match(adm, /data-action="ngHidden"/);
+  assert.match(adm, /data-key="corner"/);
 });
 
 test("арты стола на месте", () => {
-  for (const f of ["figure.webp", "side.webp", "backdrops/stilts.webp", "backdrops/round.webp", "backdrops/stairs.webp", "backdrops/floors.webp", "backdrops/arches.webp", "backdrops/tunnel.webp"]) {
+  for (const f of ["figure.webp", "side.webp", "corner.webp", "backdrops/stilts.webp", "backdrops/round.webp", "backdrops/stairs.webp", "backdrops/floors.webp", "backdrops/arches.webp", "backdrops/tunnel.webp"]) {
     assert.ok(existsSync(new URL(`../art/job/${f}`, import.meta.url)), f);
   }
 });

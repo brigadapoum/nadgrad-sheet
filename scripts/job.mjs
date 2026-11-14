@@ -17,7 +17,9 @@ import { stepClock, createClockDialog } from "./clock.mjs";
 const FLAG = "jobScene";
 const ART = `modules/${MODULE_ID}/art/job`;
 const TPL = `modules/${MODULE_ID}/templates`;
-const DEFAULTS = { bg: `${ART}/backdrops/stilts.webp`, logo: `${ART}/figure.webp`, side: `${ART}/side.webp` };
+const DEFAULTS = { bg: `${ART}/backdrops/stilts.webp`, logo: `${ART}/figure.webp`, side: `${ART}/side.webp`, corner: `${ART}/corner.webp` };
+/** Арт-подложка: «none» — убран мастером, пусто — арт модуля. */
+const artOf = (t, key) => (t[key] === "none" ? "" : (t[key] || DEFAULTS[key]));
 /** Задники из модуля — кадры автора (2026-11-14). */
 export const BACKDROPS = [
   { file: "stilts.webp", label: "Дома на сваях" },
@@ -235,7 +237,8 @@ async function render() {
     bgv: bgCss(t.bgView),
     skinLabel: skinLabel(skin),
     logo: t.logo || DEFAULTS.logo,
-    side: t.side === "none" ? "" : (t.side || DEFAULTS.side),
+    side: artOf(t, "side"),
+    corner: artOf(t, "corner"),
     job: headerContext(t),
     board: boardView(t, { isGM }),
     runners: runnersContext(t, isGM),
@@ -504,6 +507,7 @@ function adminClass() {
         },
         ngReset: function (event, target) { return set(this, { [target.dataset.key]: "" }); },
         ngNoSide: function () { return set(this, { side: "none" }); },
+        ngOff: function (event, target) { return set(this, { [target.dataset.key]: "none" }); },
         ngNewScene: async function () {
           const entry = game.journal.get(tableOf(scene()).job);
           if (!entry) return ui.notifications.warn("Сначала привяжи дело.");
@@ -544,6 +548,9 @@ function adminClass() {
         side: t.side === "none" ? "" : (t.side || DEFAULTS.side),
         sideCustom: !!t.side && t.side !== "none",
         sideOff: t.side === "none",
+        corner: artOf(t, "corner"),
+        cornerCustom: !!t.corner && t.corner !== "none",
+        cornerOff: t.corner === "none",
         hidden: t.hidden,
         scenes: jobScenes(sceneList(), t.job).map((x) => ({ ...x, current: x.id === s.id })),
       };

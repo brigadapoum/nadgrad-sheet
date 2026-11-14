@@ -76,6 +76,7 @@ export function readTable(raw = {}) {
     bg: str(r.bg).trim(),
     logo: str(r.logo).trim(),
     side: str(r.side).trim(),
+    corner: str(r.corner).trim(),
     slots,
     runners: ids(r.runners),
     clocks: ids(r.clocks),

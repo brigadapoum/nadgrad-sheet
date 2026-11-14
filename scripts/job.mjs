@@ -57,7 +57,8 @@ async function setSlot(scene, n, patch) {
 /** Новый задник: картинка во флаг и в фон сцены, кадр — по умолчанию. */
 function setBackdrop(scene, src) {
   if (!game.user.isGM || !scene) return;
-  return scene.update({ [`flags.${MODULE_ID}.${FLAG}.bg`]: src, [`flags.${MODULE_ID}.${FLAG}.bgView`]: { ...BG_DEFAULT }, "background.src": src });
+  // fit: cover — чтобы под скрытым столом задник не растягивался (если версия Foundry это поле знает)
+  return scene.update({ [`flags.${MODULE_ID}.${FLAG}.bg`]: src, [`flags.${MODULE_ID}.${FLAG}.bgView`]: { ...BG_DEFAULT }, "background.src": src, "background.fit": "cover" });
 }
 
 /** Выбор картинки встроенным файловым браузером Foundry: загруженное или загрузка с компьютера. */
@@ -118,7 +119,7 @@ export async function createJobScene(entry, layout) {
     folder: folder?.id ?? null,
     width: 1920, height: 1080, padding: 0,
     backgroundColor: "#14120F",
-    background: { src: DEFAULTS.bg },
+    background: { src: DEFAULTS.bg, fit: "cover" },
     grid: { type: CONST.GRID_TYPES.GRIDLESS },
     tokenVision: false,
     fog: { exploration: false },
@@ -208,7 +209,7 @@ function clocksContext(t, isGM) {
       .map((a) => { const c = normClock(a.system); return { id: a.id, name: a.name, value: c.value, size: c.size }; })
       .sort((a, b) => a.name.localeCompare(b.name, "ru"))
     : [];
-  return { list, choices, open: isGM && state.picker === "clocks" };
+  return { list, choices, open: isGM && state.picker === "clocks", show: isGM || list.length > 0 };
 }
 
 async function render() {
@@ -219,6 +220,13 @@ async function render() {
   for (const s of SKIN_IDS) el.classList.toggle(`skin-${s}`, s === skin);
   const t = tableOf(scene);
   const isGM = game.user.isGM;
+  // «Скрыть стол» (мастер): слоя нет — обычная сцена Foundry; у мастера сверху — «Показать стол»
+  if (t.hidden) {
+    hideArt();
+    if (!isGM) return unmount();
+    el.innerHTML = `<button type="button" class="ng-job-unhide" data-job="show" title="Вернуть стол дела у всех"><i class="fa-solid fa-eye"></i> Показать стол дела</button>`;
+    return;
+  }
   const scenes = jobScenes(sceneList(), t.job).map((s) => ({ ...s, current: s.id === scene.id }));
   const ctx = {
     layout: fitStage(freeArea(), STAGE),
@@ -237,6 +245,19 @@ async function render() {
   };
   hideArt();
   el.innerHTML = await tpl("job.hbs", ctx);
+  fitTitle(el);
+}
+
+/** Длинное название дела — шрифт меньше, пока не влезет целиком (до 22 px), а не обрезка. */
+function fitTitle(el) {
+  const t = el.querySelector(".ng-job-title");
+  if (!t) return;
+  let size = 40;
+  t.style.fontSize = `${size}px`;
+  while (t.scrollWidth > t.clientWidth + 1 && size > 22) {
+    size -= 2;
+    t.style.fontSize = `${size}px`;
+  }
 }
 
 export function refresh() {
@@ -294,6 +315,8 @@ async function onClick(event) {
       return;
     }
     case "bg-frame": return gm && new (frameClass())().render(true);
+    case "hide": state.picker = null; return gm && setTable(scene, { hidden: true });
+    case "show": return gm && setTable(scene, { hidden: false });
     case "skin-next": return game.settings.set(MODULE_ID, "theme", nextSkin(skinOf()));
     case "job": return game.journal.get(t.job)?.sheet.render(true);
     case "hall": {
@@ -492,6 +515,7 @@ function adminClass() {
         },
         ngGo: function (event, target) { return game.scenes.get(target.dataset.id)?.activate(); },
         ngFrame: function () { new (frameClass())().render(true); },
+        ngHidden: function () { return set(this, { hidden: !tableOf(scene()).hidden }); },
       },
     };
     static PARTS = { body: { template: `${TPL}/job-admin.hbs` } };
@@ -520,6 +544,7 @@ function adminClass() {
         side: t.side === "none" ? "" : (t.side || DEFAULTS.side),
         sideCustom: !!t.side && t.side !== "none",
         sideOff: t.side === "none",
+        hidden: t.hidden,
         scenes: jobScenes(sceneList(), t.job).map((x) => ({ ...x, current: x.id === s.id })),
       };
     }

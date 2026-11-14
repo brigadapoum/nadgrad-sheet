@@ -17,7 +17,7 @@ test("три раскладки: слоты внутри доски, левее 
   for (const l of LAYOUTS) {
     for (const s of l.slots) {
       assert.ok(s.x >= 72 && s.x + s.w + 16 <= RIGHT_COL, `${l.id}: слот по ширине`);
-      assert.ok(s.y >= 170 && s.y + s.h + 56 <= STAGE.h - 60, `${l.id}: слот по высоте (под шапкой, над хотбаром)`);
+      assert.ok(s.y >= 150 && s.y + s.h + 56 <= 860, `${l.id}: слот по высоте (под шапкой, над часами внизу)`);
     }
     for (const [a, b] of l.links) assert.ok(l.slots[a - 1] && l.slots[b - 1] && a !== b, `${l.id}: нить ${a}–${b}`);
   }
@@ -108,7 +108,7 @@ test("шаблон стола: кнопки мастера, игрок без к
     layout: { scale: 1, left: 0, top: 0 }, bg: "bg.webp", logo: "fig.webp", side: "side.webp",
     job: { linked: true, name: "МОЙКА", meta: "Серьга · [место]", reward: "20 ч · 1 р", chips: [{ label: "0", tone: "low" }] },
     runners: { list: [{ id: "b", name: "Бланк", initial: "Б", rankText: "1", img: "blank.webp", stress: stressView(2, 9) }, { id: "n", name: "Никто", initial: "Н", rankText: "0", stress: stressView(1, 0) }], addable: [], open: false },
-    clocks: { list: [{ id: "c", name: "Облава", src: "c.webp", value: 2, size: 6, canStep: true }], choices: [], open: false },
+    clocks: { list: [{ id: "c", name: "Облава", src: "c.webp", value: 2, size: 6, canStep: true }], choices: [], open: false, show: true },
     scenes: [], hasHall: true, skinLabel: "Смог", bgv: bgCss(BG_DEFAULT),
   };
   const gm = tpl({ ...base, isGM: true, board: boardView(raw, { isGM: true }) });
@@ -117,12 +117,15 @@ test("шаблон стола: кнопки мастера, игрок без к
   assert.equal((gm.match(/data-job="caption"/g) ?? []).length, 6);
   assert.ok(/data-job="bg"/.test(gm) && /data-job="bg-frame"/.test(gm) && /data-job="hall"/.test(gm) && /data-job="settings"/.test(gm));
   assert.equal((gm.match(/data-job="skin-next"/g) ?? []).length, 1, "оформление — одна кнопка");
+  assert.match(gm, /data-job="hide"/, "мастер может скрыть стол");
+  assert.match(gm, /class="ng-job-clockbar"[\s\S]*Облава/, "часы — внизу по центру");
+  assert.ok(gm.indexOf("ng-job-clockbar") > gm.indexOf("ng-job-side-col"), "часы не в правой колонке");
   assert.match(gm, /fa-palette"><\/i> Смог/);
   assert.match(gm, /class="ng-job-bg"[^>]*width: 100%; height: 100%; left: 0%; top: 0%; object-position: 50% 40%/);
   assert.ok(/data-job="runners-pick"/.test(gm) && /data-job="clocks-pick"/.test(gm) && /data-job="runner-remove"/.test(gm));
   assert.ok(/МОЙКА/.test(gm) && /20 ч · 1 р/.test(gm));
   const pl = tpl({ ...base, isGM: false, board: boardView(raw, { isGM: false }) });
-  assert.ok(!/photo-pick|photo-clear|data-job="bg"|bg-frame|data-job="settings"|runners-pick|clocks-pick|runner-remove|clock-remove|data-job="caption"/.test(pl), "у игрока нет кнопок мастера");
+  assert.ok(!/photo-pick|photo-clear|data-job="bg"|bg-frame|data-job="hide"|data-job="settings"|runners-pick|clocks-pick|runner-remove|clock-remove|data-job="caption"/.test(pl), "у игрока нет кнопок мастера");
   assert.match(pl, /data-job="skin-next"/, "оформление игрок меняет у себя");
   assert.equal((pl.match(/data-job="photo"/g) ?? []).length, 2);
   assert.ok(/<figcaption class="ng-job-caption">Серьга<\/figcaption>/.test(pl));
@@ -136,6 +139,8 @@ test("шаблон стола: кнопки мастера, игрок без к
   assert.ok(/data-job="runner-add" data-id="r"/.test(open));
   const none = tpl({ ...base, isGM: true, board: boardView(raw, { isGM: true }), runners: { list: [], addable: [], open: true } });
   assert.ok(/Все действующие уже в деле/.test(none) && /В деле пока никого/.test(none));
+  const noClocks = tpl({ ...base, isGM: false, board: boardView(raw), clocks: { list: [], choices: [], open: false, show: false } });
+  assert.ok(!/ng-job-clockbar/.test(noClocks), "у игрока без часов — полосы нет");
   const sc = tpl({ ...base, isGM: false, board: boardView(raw), scenes: [{ id: "1", n: 1, name: "a", current: true }, { id: "2", n: 2, name: "b" }] });
   assert.equal((sc.match(/data-job="scene"[^>]*disabled/g) ?? []).length, 2, "игрок видит номер сцены, но не переключает");
 });
@@ -185,7 +190,9 @@ test("окно кадра задника компилируется", () => {
   const html = C("job-frame.hbs")({ src: "bg.webp", css: bgCss(BG_DEFAULT), zoomPct: 100, zoomMin: 100, zoomMax: 400, ghosts: [{ x: 1, y: 2, w: 3, h: 4, rot: 5 }] });
   assert.match(html, /data-action="ngBgSave"/);
   assert.match(html, /class="ng-job-bgcrop-zoom" min="100" max="400"/);
-  assert.match(C("job-admin.hbs")({ layouts: [], backdrops: [], scenes: [] }), /data-action="ngFrame"/);
+  const adm = C("job-admin.hbs")({ layouts: [], backdrops: [], scenes: [] });
+  assert.match(adm, /data-action="ngFrame"/);
+  assert.match(adm, /data-action="ngHidden"/);
 });
 
 test("арты стола на месте", () => {

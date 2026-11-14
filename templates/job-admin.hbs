@@ -58,6 +58,12 @@
   </section>
 
   <section>
+    <h3>Слой стола</h3>
+    <p>{{#if hidden}}Стол <b>скрыт</b> — у всех обычная сцена Foundry.{{else}}Стол показан.{{/if}} Скрыть — если надо выложить токен, тайл, рисунок или что-то пошло не так: под столом обычная сцена, всё как всегда.</p>
+    <div class="ng-hall-admin-row"><button type="button" data-action="ngHidden">{{#if hidden}}<i class="fa-solid fa-eye"></i> Показать стол{{else}}<i class="fa-solid fa-eye-slash"></i> Скрыть стол{{/if}}</button></div>
+  </section>
+
+  <section>
     <h3>Сцены дела</h3>
     <div class="ng-hall-admin-row">
       {{#each scenes}}<button type="button" data-action="ngGo" data-id="{{id}}" class="{{#if current}}on{{/if}}" title="Сделать активной — перевести всех">{{n}} · {{name}}</button>{{/each}}

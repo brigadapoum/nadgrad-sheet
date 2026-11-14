@@ -24,9 +24,10 @@
 /* шапка: фигура-лого не в левом верхнем углу — там меню Foundry (как у холла) */
 #ng-job .ng-job-head {
   position: absolute; left: 72px; right: 72px; top: 16px; height: 88px; padding: 0 20px 0 400px;
-  display: flex; align-items: center; gap: 18px; background: var(--h-head-bg); color: var(--h-head-fg); border-bottom: var(--h-head-border);
+  display: flex; align-items: center; gap: 12px; background: var(--h-head-bg); color: var(--h-head-fg); border-bottom: var(--h-head-border);
 }
-#ng-job .ng-job-brand { position: relative; display: flex; align-items: center; gap: 14px; padding-left: 186px; min-width: 0; }
+#ng-job .ng-job-brand { position: relative; flex: 1 1 auto; display: flex; align-items: center; gap: 14px; padding-left: 186px; min-width: 0; }
+#ng-job .ng-job-name { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 #ng-job .ng-job-figure {
   position: absolute; left: 0; top: -12px; width: 176px; height: 160px; object-fit: contain; object-position: 50% 100%;
   filter: drop-shadow(8px 12px 10px rgba(0,0,0,.75)); pointer-events: none;
@@ -34,14 +35,17 @@
 #ng-job .ng-job-tag { flex: none; background: var(--h-acc); color: var(--h-ink); font: 600 15px var(--h-font-head); letter-spacing: .16em; padding: 3px 9px; text-transform: uppercase; }
 #ng-job.skin-acid .ng-job-tag { background: #1C1C1A; color: #FF551C; }
 #ng-job.skin-classic .ng-job-tag { background: #000; color: #FFE700; }
+/* название: кнопки Foundry центрируют содержимое — длинное название обрезалось с обеих сторон («СНА НАРОД…»); здесь — блок слева, с многоточием в конце */
 #ng-job .ng-job-title {
-  max-width: 560px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0; background: none; border: 0;
-  color: inherit; font: var(--h-title-weight) 40px/1.1 var(--h-title-font); letter-spacing: .08em; text-align: left; width: auto;
+  display: block; max-width: 100%; height: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  padding: 0; background: none; border: 0; justify-content: flex-start; text-align: left;
+  color: inherit; font: var(--h-title-weight) 40px/1.15 var(--h-title-font); letter-spacing: .06em; width: auto;
 }
 #ng-job button.ng-job-title:hover { color: var(--h-acc); }
 #ng-job.skin-acid button.ng-job-title:hover,
 #ng-job.skin-classic button.ng-job-title:hover { color: inherit; text-decoration: underline; }
-#ng-job .ng-job-meta { font-size: 14px; opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 300px; }
+#ng-job .ng-job-meta { display: block; font-size: 13px; opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#ng-job .ng-job-head > :not(.ng-job-brand) { flex-shrink: 0; }
 #ng-job .ng-job-reward { font: 600 20px var(--h-font-head); letter-spacing: .04em; color: var(--h-reward-fg); background: var(--h-reward-bg); padding: var(--h-reward-pad); white-space: nowrap; }
 #ng-job.skin-acid .ng-job-reward { color: #1C1C1A; }
 #ng-job .ng-job-chips { display: flex; gap: 4px; flex: none; }
@@ -111,7 +115,7 @@
 
 /* правая колонка: рискари в деле и часы */
 #ng-job .ng-job-side-col {
-  position: absolute; left: 1420px; top: 124px; width: 428px; max-height: 870px; overflow-y: auto; overflow-x: hidden;
+  position: absolute; left: 1420px; top: 124px; width: 428px; max-height: 936px; overflow-y: auto; overflow-x: hidden;
   display: flex; flex-direction: column; gap: 20px; scrollbar-width: thin;
 }
 #ng-job .ng-job-panel {
@@ -173,9 +177,24 @@
 #ng-job .ng-job-picker button:hover { background: var(--h-hover); }
 #ng-job .ng-job-picker-name { flex: 1; font: 600 16px var(--h-font-head); letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #ng-job .ng-job-picker-meta { font-size: 12px; color: var(--h-acc); }
-#ng-job .ng-job-clocks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-#ng-job .ng-job-clock { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-#ng-job .ng-job-clock-face { width: 104px; height: 104px; padding: 0; background: none; border: 0; }
+/* часы — внизу по центру, под фото (автор, 2026-11-14) */
+#ng-job .ng-job-clockbar {
+  position: absolute; left: 736px; bottom: 14px; transform: translateX(-50%); max-width: 1320px;
+  display: flex; align-items: center; gap: 16px; padding: 10px 16px;
+  background-color: var(--h-panel); background-image: var(--h-panel-img); background-size: 4px 4px; border: var(--h-panel-border);
+}
+#ng-job .ng-job-clockbar-head { display: flex; flex-direction: column; gap: 4px; flex: none; }
+#ng-job .ng-job-clockbar-head h2 {
+  margin: 0; border: 0; font: var(--h-h2-weight) 22px var(--h-h2-font); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--h-h2-fg); background: var(--h-h2-bg); padding: var(--h-h2-pad); clip-path: var(--h-h2-clip); white-space: nowrap;
+}
+#ng-job .ng-job-clockbar-head span { font-size: 12px; color: var(--h-muted); line-height: 1.3; }
+#ng-job .ng-job-clockbar .ng-job-empty { margin: 0; }
+#ng-job .ng-job-clock-add { position: relative; flex: none; }
+#ng-job .ng-job-addrow.tall { width: 96px; height: 96px; flex-direction: column; gap: 4px; }
+#ng-job .ng-job-picker.up { position: absolute; right: 0; bottom: calc(100% + 8px); width: 320px; max-height: 420px; overflow-y: auto; z-index: 3; box-shadow: 0 16px 32px rgba(0,0,0,.6); }
+#ng-job .ng-job-clock { position: relative; width: 112px; flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+#ng-job .ng-job-clock-face { width: 96px; height: 96px; padding: 0; background: none; border: 0; }
 #ng-job .ng-job-clock-face img { width: 100%; height: 100%; display: block; }
 #ng-job .ng-job-clock-face:disabled { cursor: default; }
 #ng-job .ng-job-clock-name { font: 500 15px var(--h-font-head); letter-spacing: .04em; text-align: center; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -211,3 +230,12 @@
 #ng-job-hover img { display: block; height: 100%; width: auto; max-width: 45vw; object-fit: contain; border: 0; }
 #ng-job-hover span { position: absolute; left: 6px; right: 6px; bottom: 6px; padding: 6px 10px; background: rgba(16,12,10,.85); color: #D0D4C9; font: 600 18px "Oswald", sans-serif; letter-spacing: .06em; text-transform: uppercase; }
 @media (prefers-reduced-motion: reduce) { #ng-job-hover { transition: none; } }
+
+/* стол скрыт (мастер, «на всякий случай»): сцена Foundry работает как обычно, сверху — кнопка вернуть */
+#ng-job .ng-job-unhide {
+  position: absolute; left: 50%; top: 12px; transform: translateX(-50%); pointer-events: auto;
+  height: 40px; padding: 0 16px; display: flex; align-items: center; gap: 8px;
+  background: #100C0A; color: #D0D4C9; border: 1px solid #E0763A; font: 500 14px "Oswald", sans-serif; letter-spacing: .08em; text-transform: uppercase;
+  box-shadow: 0 8px 20px rgba(0,0,0,.6);
+}
+#ng-job .ng-job-unhide:hover { background: #E0763A; color: #100C0A; }

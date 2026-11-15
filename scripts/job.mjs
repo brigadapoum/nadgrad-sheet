@@ -9,7 +9,7 @@ import { STAGE, fitStage, readJob, jobView } from "./hall-logic.mjs";
 import { freeArea, skinOf, hallScene, runnerRows, openActor } from "./hall.mjs";
 import {
   LAYOUTS, layoutOf, readTable, boardView, stressView, tableRunners, addableRunners, jobScenes, lastScene, sceneName,
-  JOB_SCENE_FOLDER, BG_DEFAULT, BG_ZOOM, readBgView, bgCss, bgPan, bgZoom, skinLabel, nextSkin,
+  JOB_SCENE_FOLDER, pinnedClocks, BG_DEFAULT, BG_ZOOM, readBgView, bgCss, bgPan, bgZoom, skinLabel, nextSkin,
 } from "./job-logic.mjs";
 import { CLOCK_TYPE, clockSrc, normClock } from "./clock-logic.mjs";
 import { stepClock, createClockDialog } from "./clock.mjs";
@@ -88,6 +88,26 @@ async function captionDialog(current) {
     window: { title: "Подпись к фото" },
     content: `<div class="form-group"><input type="text" name="ngCaption" maxlength="80" value="${esc(current)}" placeholder="кто или что это" autofocus></div><p class="hint">Пустая подпись — у игроков её не видно.</p>`,
     ok: { label: "Сохранить", callback: (event, button) => button.form.elements.ngCaption.value },
+    rejectClose: false,
+  });
+}
+
+/** Часы к фото (мастер): счётчики стола — сверху, остальные — ниже; «Новые часы…»; «без часов» — открепить. */
+async function photoClockDialog(t, current) {
+  const all = (game.actors?.contents ?? []).filter((a) => a.type === CLOCK_TYPE).sort((a, b) => a.name.localeCompare(b.name, "ru"));
+  const opt = (a) => { const c = normClock(a.system); return `<option value="${esc(a.id)}"${a.id === current ? " selected" : ""}>${esc(a.name)} — ${c.value}/${c.size}</option>`; };
+  const onTable = all.filter((a) => t.clocks.includes(a.id));
+  const rest = all.filter((a) => !t.clocks.includes(a.id));
+  const content = `<div class="form-group"><select name="ngClock" autofocus>
+    <option value="">— без часов —</option>
+    ${onTable.length ? `<optgroup label="На столе">${onTable.map(opt).join("")}</optgroup>` : ""}
+    ${rest.length ? `<optgroup label="Остальные счётчики">${rest.map(opt).join("")}</optgroup>` : ""}
+    <option value="__new">Новые часы…</option>
+  </select></div><p class="hint">Часы встанут в угол фото и уйдут с полосы внизу. Без часов — вернутся на полосу.</p>`;
+  return foundry.applications.api.DialogV2.prompt({
+    window: { title: "Часы к фото" },
+    content,
+    ok: { label: "Готово", callback: (event, button) => button.form.elements.ngClock.value },
     rejectClose: false,
   });
 }
@@ -198,14 +218,23 @@ function runnersContext(t, isGM) {
   return { list, addable, open: isGM && state.picker === "runners" };
 }
 
+function clockView(id) {
+  const a = id ? game.actors.get(id) : null;
+  if (!a || a.type !== CLOCK_TYPE) return null;
+  const c = normClock(a.system);
+  return { id: a.id, name: a.name, src: clockSrc(a.system), value: c.value, size: c.size, full: c.value >= c.size, canStep: a.isOwner };
+}
+
+/** Фото с приколотыми часами: часы — на фото (угол рамки), клик +1, правый −1. */
+function boardContext(t, isGM) {
+  const board = boardView(t, { isGM });
+  board.slots = board.slots.map((s) => ({ ...s, clockView: s.has ? clockView(s.clock) : null }));
+  return board;
+}
+
 function clocksContext(t, isGM) {
-  const list = t.clocks
-    .map((id) => game.actors.get(id))
-    .filter((a) => a && a.type === CLOCK_TYPE)
-    .map((a) => {
-      const c = normClock(a.system);
-      return { id: a.id, name: a.name, src: clockSrc(a.system), value: c.value, size: c.size, full: c.value >= c.size, canStep: a.isOwner };
-    });
+  const pinned = pinnedClocks(t);
+  const list = t.clocks.filter((id) => !pinned.has(id)).map(clockView).filter(Boolean);
   const choices = isGM && state.picker === "clocks"
     ? (game.actors?.contents ?? []).filter((a) => a.type === CLOCK_TYPE && !t.clocks.includes(a.id))
       .map((a) => { const c = normClock(a.system); return { id: a.id, name: a.name, value: c.value, size: c.size }; })
@@ -240,7 +269,7 @@ async function render() {
     side: artOf(t, "side"),
     corner: artOf(t, "corner"),
     job: headerContext(t),
-    board: boardView(t, { isGM }),
+    board: boardContext(t, isGM),
     runners: runnersContext(t, isGM),
     clocks: clocksContext(t, isGM),
     scenes: scenes.length > 1 ? scenes : [],
@@ -305,6 +334,19 @@ async function onClick(event) {
       return;
     }
     case "photo-clear": return gm && setSlot(scene, n, { img: "" });
+    case "photo-clock": {
+      if (!gm) return;
+      let pick = await photoClockDialog(t, t.slots[n - 1]?.clock ?? "");
+      if (pick == null) return;
+      if (pick === "__new") pick = (await createClockDialog())?.id ?? null;
+      if (pick == null) return;
+      const now = tableOf(scene);
+      const slots = now.slots.map((s, i) => (i === n - 1 ? { ...s, clock: pick } : s));
+      // приколотые часы — тоже «на столе»: открепишь — вернутся на полосу внизу
+      const clocks = pick && !now.clocks.includes(pick) ? [...now.clocks, pick] : now.clocks;
+      return setTable(scene, { slots, clocks });
+    }
+    case "photo-clock-clear": return gm && setSlot(scene, n, { clock: "" });
     case "caption": {
       if (!gm) return;
       const text = await captionDialog(t.slots[n - 1]?.caption ?? "");

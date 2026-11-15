@@ -45,7 +45,6 @@
 #ng-job button.ng-job-title:hover { color: var(--h-acc); }
 #ng-job.skin-acid button.ng-job-title:hover,
 #ng-job.skin-classic button.ng-job-title:hover { color: inherit; text-decoration: underline; }
-#ng-job .ng-job-meta { display: block; font-size: 13px; opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #ng-job .ng-job-head > :not(.ng-job-brand) { flex-shrink: 0; }
 #ng-job .ng-job-reward { font: 600 20px var(--h-font-head); letter-spacing: .04em; color: var(--h-reward-fg); background: var(--h-reward-bg); padding: var(--h-reward-pad); white-space: nowrap; }
 #ng-job.skin-acid .ng-job-reward { color: #1C1C1A; }
@@ -113,6 +112,19 @@
 #ng-job .ng-job-caption.blank { color: #8A8578; font-weight: 500; font-size: 15px; }
 #ng-job button.ng-job-caption:hover { color: #A64F2B; }
 #ng-job .ng-job-caption-gap { display: block; height: 22px; }
+/* часы, приколотые к фото (автор, 2026-11-15) — в правом верхнем углу рамки, как наклейка */
+#ng-job .ng-job-pin-clock { position: absolute; right: -24px; top: -24px; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+#ng-job .ng-job-pin-face { width: 100%; padding: 0; background: none; border: 0; border-radius: 50%; filter: drop-shadow(0 6px 10px rgba(0,0,0,.7)); }
+#ng-job .ng-job-pin-face img { width: 100%; height: 100%; display: block; }
+#ng-job .ng-job-pin-face:disabled { cursor: default; }
+#ng-job .ng-job-pin-name {
+  max-width: 160%; padding: 2px 8px; background: rgba(16,12,10,.9); color: #ECE9E0;
+  font: 500 15px/1.2 var(--h-font-head); letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#ng-job .ng-job-pin-clock.full .ng-job-pin-name { background: var(--h-high); color: #fff; }
+#ng-job .ng-job-pin-clock .ng-job-x.small { right: -6px; top: -6px; width: 28px; height: 28px; background: rgba(16,12,10,.88); color: #D0D4C9; opacity: 0; }
+#ng-job .ng-job-pin-clock:hover .ng-job-x.small,
+#ng-job .ng-job-pin-clock .ng-job-x.small:focus-visible { opacity: 1; }
 
 /* правая колонка: рискари в деле и часы */
 #ng-job .ng-job-side-col {
@@ -178,29 +190,31 @@
 #ng-job .ng-job-picker button:hover { background: var(--h-hover); }
 #ng-job .ng-job-picker-name { flex: 1; font: 600 16px var(--h-font-head); letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #ng-job .ng-job-picker-meta { font-size: 12px; color: var(--h-acc); }
-/* часы — внизу по центру, под фото (автор, 2026-11-14) */
+/* часы — внизу по центру, под фото (автор, 2026-11-14); полоса в полтора раза крупнее (автор, 2026-11-15) */
 #ng-job .ng-job-clockbar {
-  position: absolute; left: 736px; bottom: 14px; transform: translateX(-50%); max-width: 1320px;
-  display: flex; align-items: center; gap: 16px; padding: 10px 16px;
+  position: absolute; left: 736px; bottom: 12px; transform: translateX(-50%); max-width: 1320px;
+  display: flex; align-items: center; gap: 24px; padding: 12px 24px;
   background-color: var(--h-panel); background-image: var(--h-panel-img); background-size: 4px 4px; border: var(--h-panel-border);
 }
-#ng-job .ng-job-clockbar-head { display: flex; flex-direction: column; gap: 4px; flex: none; }
+#ng-job .ng-job-clockbar-head { display: flex; flex-direction: column; gap: 6px; flex: none; }
 #ng-job .ng-job-clockbar-head h2 {
-  margin: 0; border: 0; font: var(--h-h2-weight) 22px var(--h-h2-font); letter-spacing: .1em; text-transform: uppercase;
+  margin: 0; border: 0; font: var(--h-h2-weight) 32px var(--h-h2-font); letter-spacing: .1em; text-transform: uppercase;
   color: var(--h-h2-fg); background: var(--h-h2-bg); padding: var(--h-h2-pad); clip-path: var(--h-h2-clip); white-space: nowrap;
 }
-#ng-job .ng-job-clockbar-head span { font-size: 12px; color: var(--h-muted); line-height: 1.3; }
-#ng-job .ng-job-clockbar .ng-job-empty { margin: 0; }
+#ng-job .ng-job-clockbar-head span { font-size: 17px; color: var(--h-muted); line-height: 1.3; }
+#ng-job .ng-job-clockbar .ng-job-empty { margin: 0; padding: 14px; font-size: 19px; }
 #ng-job .ng-job-clock-add { position: relative; flex: none; }
-#ng-job .ng-job-addrow.tall { width: 96px; height: 96px; flex-direction: column; gap: 4px; }
+#ng-job .ng-job-addrow.tall { width: 144px; height: 144px; flex-direction: column; gap: 6px; font-size: 20px; }
+#ng-job .ng-job-addrow.tall i { font-size: 26px; }
 #ng-job .ng-job-picker.up { position: absolute; right: 0; bottom: calc(100% + 8px); width: 320px; max-height: 420px; overflow-y: auto; z-index: 3; box-shadow: 0 16px 32px rgba(0,0,0,.6); }
-#ng-job .ng-job-clock { position: relative; width: 112px; flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px; }
-#ng-job .ng-job-clock-face { width: 96px; height: 96px; padding: 0; background: none; border: 0; }
+#ng-job .ng-job-clock { position: relative; width: 168px; flex: none; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+#ng-job .ng-job-clock-face { width: 144px; height: 144px; padding: 0; background: none; border: 0; }
 #ng-job .ng-job-clock-face img { width: 100%; height: 100%; display: block; }
 #ng-job .ng-job-clock-face:disabled { cursor: default; }
-#ng-job .ng-job-clock-name { font: 500 15px var(--h-font-head); letter-spacing: .04em; text-align: center; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#ng-job .ng-job-clock-num { font-size: 12px; color: var(--h-muted); }
+#ng-job .ng-job-clock-name { font: 500 22px/1.15 var(--h-font-head); letter-spacing: .04em; text-align: center; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#ng-job .ng-job-clock-num { font-size: 17px; line-height: 1.2; color: var(--h-muted); }
 #ng-job .ng-job-clock.full .ng-job-clock-num { color: var(--h-high); }
+#ng-job .ng-job-clockbar .ng-job-x.small { width: 36px; height: 36px; font-size: 18px; }
 
 /* окно стола: миниатюры задников */
 .ng-hall-win .ng-job-admin-body select { width: 100%; background: #1E1D18; color: var(--h-fg); border: 1px solid var(--h-line); height: 32px; }

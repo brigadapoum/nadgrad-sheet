@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { readFileSync, existsSync } from "node:fs";
 import Handlebars from "handlebars";
 import {
-  LAYOUTS, MAX_SLOTS, layoutOf, readTable, pinOf, thread, boardView, stressView, tableRunners, addableRunners,
+  pinnedClocks, LAYOUTS, MAX_SLOTS, layoutOf, readTable, pinOf, thread, boardView, stressView, tableRunners, addableRunners,
   jobScenes, lastScene, sceneName, readBgView, bgCss, bgPan, bgZoom, coverSize, BG_DEFAULT, nextSkin, skinLabel,
 } from "../scripts/job-logic.mjs";
 
@@ -17,7 +17,7 @@ test("три раскладки: слоты внутри доски, левее 
   for (const l of LAYOUTS) {
     for (const s of l.slots) {
       assert.ok(s.x >= 72 && s.x + s.w + 16 <= RIGHT_COL, `${l.id}: слот по ширине`);
-      assert.ok(s.y >= 150 && s.y + s.h + 56 <= 860, `${l.id}: слот по высоте (под шапкой, над часами внизу)`);
+      assert.ok(s.y >= 150 && s.y + s.h + 56 <= 830, `${l.id}: слот по высоте (под шапкой, над часами внизу — полоса часов в полтора раза выше)`);
     }
     for (const [a, b] of l.links) assert.ok(l.slots[a - 1] && l.slots[b - 1] && a !== b, `${l.id}: нить ${a}–${b}`);
   }
@@ -28,13 +28,26 @@ test("данные стола: мусор → безопасные значен�
   const t = readTable({ layout: "four", slots: [{ img: " a.webp ", caption: "  Серьга   у байка " }, null, { img: 5 }], runners: ["x", "x", 3, "y"], clocks: "z", side: "none" });
   assert.equal(t.layout, "four");
   assert.equal(t.slots.length, MAX_SLOTS);
-  assert.deepEqual(t.slots[0], { img: "a.webp", caption: "Серьга у байка" });
-  assert.deepEqual(t.slots[2], { img: "", caption: "" });
+  assert.deepEqual(t.slots[0], { img: "a.webp", caption: "Серьга у байка", clock: "" });
+  assert.deepEqual(t.slots[2], { img: "", caption: "", clock: "" });
   assert.deepEqual(t.runners, ["x", "y"]);
   assert.deepEqual(t.clocks, []);
   assert.equal(t.side, "none");
   assert.equal(readTable(null).layout, "six");
   assert.equal(readTable({ slots: [{ caption: "x".repeat(200) }] }).slots[0].caption.length, 80);
+});
+
+test("часы на фото: только у слотов с фото в текущей раскладке; две горизонтальных в «Шести» — крупно", () => {
+  const raw = { layout: "four", clocks: ["c1"], slots: [{ img: "a.webp", clock: "c1" }, { clock: "c2" }, null, null, { img: "e.webp", clock: "c5" }] };
+  assert.deepEqual([...pinnedClocks(raw)], ["c1"], "без фото и вне раскладки — не на фото");
+  const b = boardView(raw, { isGM: true });
+  assert.equal(b.slots[0].clock, "c1");
+  assert.equal(b.slots[1].clock, "", "пустой слот — без часов");
+  assert.ok(b.slots.every((s) => s.badge >= 72 && s.badge <= 120));
+  const six = layoutOf("six").slots;
+  assert.ok(six[4].w >= 600 && six[4].h >= 280 && six[5].w >= 460 && six[5].h >= 280, "5 и 6 — вдвое крупнее");
+  assert.ok(six[4].x + six[4].w + 16 < six[5].x, "крупные не наезжают друг на друга");
+  for (const s of six.slice(0, 4)) assert.ok(s.y + s.h + 56 < six[4].y, "верхний ряд — над крупными");
 });
 
 test("нить: от булавки к булавке, длина и угол", () => {
@@ -118,6 +131,13 @@ test("шаблон стола: кнопки мастера, игрок без к
   assert.ok(/data-job="bg"/.test(gm) && /data-job="bg-frame"/.test(gm) && /data-job="hall"/.test(gm) && /data-job="settings"/.test(gm));
   assert.equal((gm.match(/data-job="skin-next"/g) ?? []).length, 1, "оформление — одна кнопка");
   assert.match(gm, /data-job="hide"/, "мастер может скрыть стол");
+  assert.ok(!/Серьга · \[место\]|ng-job-meta/.test(gm), "в шапке нет заказчика и места из записи дела (автор, 2026-11-15)");
+  assert.ok(!/наведи — арт/.test(gm), "у блока рискарей нет подсказки");
+  assert.equal((gm.match(/data-job="photo-clock"/g) ?? []).length, 2, "кнопка «Часы к фото» на каждом фото");
+  const pinned = boardView(raw, { isGM: true });
+  pinned.slots[0].clockView = { id: "c", name: "Облава", src: "c.webp", value: 2, size: 6, canStep: true };
+  const withPin = tpl({ ...base, isGM: true, board: pinned });
+  assert.match(withPin, /ng-job-pin-clock[\s\S]*data-job="clock" data-id="c"[\s\S]*photo-clock-clear/, "часы на фото: клик +1, у мастера — открепить");
   assert.match(gm, /class="ng-job-corner" src="corner.webp"/, "арт справа внизу");
   assert.match(gm, /class="ng-job-clockbar"[\s\S]*Облава/, "часы — внизу по центру");
   assert.ok(gm.indexOf("ng-job-clockbar") > gm.indexOf("ng-job-side-col"), "часы не в правой колонке");

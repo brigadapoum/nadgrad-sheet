@@ -10,7 +10,6 @@
       <span class="ng-job-tag">Дело</span>
       <span class="ng-job-name">
         {{#if job.linked}}<button type="button" class="ng-job-title" data-job="job" title="{{job.name}} — запись дела в журнале">{{job.name}}</button>{{else}}<span class="ng-job-title">{{job.name}}</span>{{/if}}
-        {{#if job.meta}}<span class="ng-job-meta" title="{{job.meta}}">{{job.meta}}</span>{{/if}}
       </span>
     </span>
     {{#if job.reward}}<span class="ng-job-reward">{{job.reward}}</span>{{/if}}
@@ -42,6 +41,7 @@
       {{#if ../isGM}}
       <span class="ng-job-tools">
         <button type="button" data-job="photo-pick" data-n="{{n}}">Заменить</button>
+        <button type="button" data-job="photo-clock" data-n="{{n}}" title="Часы к фото{{#if clockView}}: {{clockView.name}}{{/if}}" aria-label="Часы к фото"><i class="fa-solid fa-clock"></i></button>
         <button type="button" data-job="photo-clear" data-n="{{n}}" aria-label="Убрать фото"><i class="fa-solid fa-xmark"></i></button>
       </span>
       {{/if}}
@@ -56,13 +56,20 @@
     {{else}}
     {{#if caption}}<figcaption class="ng-job-caption">{{caption}}</figcaption>{{else}}<span class="ng-job-caption-gap"></span>{{/if}}
     {{/if}}
+    {{#if clockView}}
+    <span class="ng-job-pin-clock{{#if clockView.full}} full{{/if}}" style="width: {{badge}}px">
+      <button type="button" data-job="clock" data-id="{{clockView.id}}" class="ng-job-pin-face" style="height: {{badge}}px" {{#unless clockView.canStep}}disabled{{/unless}} title="{{clockView.name}}: {{clockView.value}} из {{clockView.size}}{{#if clockView.canStep}} — клик +1, правый −1{{/if}}" aria-label="{{clockView.name}}: {{clockView.value}} из {{clockView.size}}"><img src="{{clockView.src}}" alt=""></button>
+      <span class="ng-job-pin-name">{{clockView.name}}</span>
+      {{#if ../isGM}}<button type="button" class="ng-job-x small" data-job="photo-clock-clear" data-n="{{n}}" aria-label="Открепить часы от фото"><i class="fa-solid fa-xmark"></i></button>{{/if}}
+    </span>
+    {{/if}}
     <span class="ng-job-tape" style="transform: rotate({{tape}}deg)" aria-hidden="true"></span>
   </figure>
   {{/each}}
 
   <div class="ng-job-side-col">
     <section class="ng-job-panel" aria-label="Рискари в деле">
-      <div class="ng-job-panel-head"><h2>Рискари в деле</h2><span>наведи — арт</span></div>
+      <div class="ng-job-panel-head"><h2>Рискари в деле</h2></div>
       {{#if runners.list.length}}
       <div class="ng-job-runners">
         {{#each runners.list}}

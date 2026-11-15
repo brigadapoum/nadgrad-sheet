@@ -12,14 +12,15 @@ export const LAYOUTS = [
   {
     id: "six",
     label: "Шесть фото",
-    hint: "Как на макете: шесть разных фото, пять нитей.",
+    hint: "Четыре фото сверху, два горизонтальных крупно снизу; пять нитей.",
+    // автор, 2026-11-15: «пару фоток в два раза больше, которые горизонтальные» — 5 и 6 вдвое крупнее, 4 — наверх
     slots: [
-      { x: 110, y: 180, w: 220, h: 230, rot: -3 },
-      { x: 450, y: 290, w: 260, h: 208, rot: 2 },
-      { x: 860, y: 180, w: 230, h: 240, rot: -2 },
-      { x: 1010, y: 540, w: 300, h: 200, rot: 3 },
-      { x: 330, y: 640, w: 320, h: 150, rot: -2 },
-      { x: 760, y: 600, w: 240, h: 150, rot: 1.5 },
+      { x: 90, y: 165, w: 220, h: 230, rot: -3 },
+      { x: 400, y: 180, w: 260, h: 208, rot: 2 },
+      { x: 750, y: 160, w: 230, h: 240, rot: -2 },
+      { x: 1060, y: 190, w: 300, h: 200, rot: 3 },
+      { x: 110, y: 484, w: 640, h: 290, rot: -1.5 },
+      { x: 820, y: 484, w: 480, h: 290, rot: 1.5 },
     ],
     links: [[1, 2], [2, 3], [3, 4], [2, 5], [5, 6]],
   },
@@ -31,7 +32,7 @@ export const LAYOUTS = [
       { x: 120, y: 200, w: 360, h: 260, rot: -2 },
       { x: 620, y: 180, w: 340, h: 300, rot: 2 },
       { x: 1040, y: 230, w: 300, h: 250, rot: -3 },
-      { x: 520, y: 580, w: 420, h: 220, rot: 1.5 },
+      { x: 520, y: 560, w: 420, h: 210, rot: 1.5 },
     ],
     links: [[1, 2], [2, 3], [2, 4], [1, 4]],
   },
@@ -40,15 +41,15 @@ export const LAYOUTS = [
     label: "Девять мелких",
     hint: "Девять небольших фото сеткой вразброс — для дела с кучей участников.",
     slots: [
-      { x: 110, y: 170, w: 230, h: 140, rot: -3 },
-      { x: 500, y: 160, w: 240, h: 140, rot: 2 },
-      { x: 930, y: 175, w: 230, h: 140, rot: -2 },
-      { x: 150, y: 400, w: 230, h: 140, rot: 2 },
-      { x: 540, y: 415, w: 250, h: 145, rot: -1.5 },
-      { x: 960, y: 400, w: 240, h: 140, rot: 3 },
-      { x: 110, y: 630, w: 240, h: 140, rot: -2 },
-      { x: 520, y: 645, w: 230, h: 140, rot: 2.5 },
-      { x: 940, y: 630, w: 250, h: 140, rot: -1 },
+      { x: 110, y: 155, w: 230, h: 140, rot: -3 },
+      { x: 500, y: 150, w: 240, h: 140, rot: 2 },
+      { x: 930, y: 160, w: 230, h: 140, rot: -2 },
+      { x: 150, y: 385, w: 230, h: 140, rot: 2 },
+      { x: 540, y: 400, w: 250, h: 145, rot: -1.5 },
+      { x: 960, y: 385, w: 240, h: 140, rot: 3 },
+      { x: 110, y: 615, w: 240, h: 140, rot: -2 },
+      { x: 520, y: 630, w: 230, h: 140, rot: 2.5 },
+      { x: 940, y: 615, w: 250, h: 140, rot: -1 },
     ],
     links: [[1, 2], [2, 3], [2, 5], [4, 5], [5, 6], [5, 8], [7, 8], [3, 6], [6, 9]],
   },
@@ -62,13 +63,13 @@ const ids = (v) => (Array.isArray(v) ? [...new Set(v.filter((x) => typeof x === 
 /**
  * Данные стола из флага сцены nadgrad.jobScene.
  * job — id записи журнала с делом; bg / logo / side — картинки (пусто — арт модуля по умолчанию);
- * slots — [{ img, caption }] по номерам (лишние при смене раскладки не теряются); runners, clocks — id актёров.
+ * slots — [{ img, caption, clock }] по номерам (clock — id счётчика, приколотого к фото) (лишние при смене раскладки не теряются); runners, clocks — id актёров.
  */
 export function readTable(raw = {}) {
   const r = raw && typeof raw === "object" ? raw : {};
   const slots = Array.from({ length: MAX_SLOTS }, (_, i) => {
     const s = Array.isArray(r.slots) ? r.slots[i] : null;
-    return { img: str(s?.img).trim(), caption: str(s?.caption).replace(/\s+/g, " ").trim().slice(0, 80) };
+    return { img: str(s?.img).trim(), caption: str(s?.caption).replace(/\s+/g, " ").trim().slice(0, 80), clock: str(s?.clock).trim() };
   });
   return {
     job: str(r.job),
@@ -169,6 +170,8 @@ export function boardView(table, { isGM = false } = {}) {
       frame: pos.w + 16,
       img: data.img,
       caption: data.caption,
+      clock: has ? data.clock : "",
+      badge: Math.min(120, Math.max(72, Math.round(pos.h * 0.45))),
       has,
       visible: has || isGM,
       showCaption: !!data.caption || isGM,
@@ -180,6 +183,16 @@ export function boardView(table, { isGM = false } = {}) {
     .filter(([a, b]) => slots[a - 1]?.visible && slots[b - 1]?.visible)
     .map(([a, b]) => ({ a, b, ...thread(lay.slots[a - 1], lay.slots[b - 1]) }));
   return { layout: lay.id, slots: slots.filter((s) => s.visible), threads, pins: slots.filter((s) => s.visible).map((s) => s.pin) };
+}
+
+/**
+ * Часы, приколотые к фото (автор, 2026-11-15: «кнопки привязки к фоткам часов»):
+ * id счётчиков у слотов текущей раскладки, где есть фото. Такие часы — на фото, не в полосе внизу.
+ */
+export function pinnedClocks(table) {
+  const t = readTable(table);
+  const n = layoutOf(t.layout).slots.length;
+  return new Set(t.slots.slice(0, n).filter((s) => s.img && s.clock).map((s) => s.clock));
 }
 
 /** Шкала стресса: клетки, если максимум разумный, иначе — число. */

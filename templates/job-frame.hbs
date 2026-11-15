@@ -1,20 +1,26 @@
 <div class="ng-hall-admin-body ng-job-bgcrop">
   {{#if none}}
-  <p>Это окно — для сцены дела.</p>
+  <p>{{none}}</p>
   {{else}}
-  <div class="ng-job-bgcrop-view" aria-label="Кадр задника: тяни мышкой, колесо — ближе или дальше">
+  <div class="ng-job-bgcrop-view{{#if photo}} photo{{/if}}"{{#if photo}} style="width: {{photo.w}}px; height: {{photo.h}}px"{{/if}} aria-label="{{#if photo}}Кадр фото{{else}}Кадр задника{{/if}}: тяни мышкой, колесо — ближе или дальше">
     <img src="{{src}}" alt="" draggable="false" style="width: {{css.w}}%; height: {{css.h}}%; left: {{css.left}}%; top: {{css.top}}%; object-position: {{css.pos}}">
+    {{#unless photo}}
     <div class="ng-job-bgcrop-dim"></div>
     <span class="ng-job-bgcrop-ghost" style="left: 36px; top: 8px; width: 888px; height: 44px"></span>
     <span class="ng-job-bgcrop-ghost" style="left: 710px; top: 62px; width: 214px; height: 420px"></span>
     {{#each ghosts}}<span class="ng-job-bgcrop-ghost" style="left: {{x}}px; top: {{y}}px; width: {{w}}px; height: {{h}}px; transform: rotate({{rot}}deg)"></span>{{/each}}
+    {{/unless}}
   </div>
   <div class="ng-hall-admin-row ng-job-bgcrop-tools">
     <label>Приближение <input type="range" class="ng-job-bgcrop-zoom" min="{{zoomMin}}" max="{{zoomMax}}" step="1" value="{{zoomPct}}"></label>
     <button type="button" data-action="ngBgCenter">По центру</button>
     <button type="button" data-action="ngBgReset">Как по умолчанию</button>
   </div>
+  {{#if photo}}
+  <p class="hint">Тяни картинку мышкой, колесо — ближе / дальше. Окно — ровно рамка фото на доске. Крупно по клику игрок видит картинку целиком.</p>
+  {{else}}
   <p class="hint">Тяни картинку мышкой, колесо — ближе / дальше. Пунктир — где лежат шапка, фото и панели стола. Видно всем, у кого открыт стол.</p>
+  {{/if}}
   <div class="ng-hall-admin-row">
     <span class="ng-job-gap"></span>
     <button type="button" data-action="ngBgCancel">Отмена</button>

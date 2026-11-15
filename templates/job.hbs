@@ -37,10 +37,11 @@
   <figure class="ng-job-photo{{#unless has}} empty{{/unless}}" style="left: {{x}}px; top: {{y}}px; width: {{frame}}px; transform: rotate({{rot}}deg)">
     {{#if has}}
     <span class="ng-job-shot-box" style="height: {{h}}px">
-      <button type="button" class="ng-job-shot" data-job="photo" data-n="{{n}}" aria-label="Открыть фото{{#if caption}}: {{caption}}{{/if}}"><img src="{{img}}" alt="{{caption}}"></button>
+      <button type="button" class="ng-job-shot" data-job="photo" data-n="{{n}}" aria-label="Открыть фото{{#if caption}}: {{caption}}{{/if}}"><img src="{{img}}" alt="{{caption}}" style="width: {{css.w}}%; height: {{css.h}}%; left: {{css.left}}%; top: {{css.top}}%; object-position: {{css.pos}}"></button>
       {{#if ../isGM}}
       <span class="ng-job-tools">
         <button type="button" data-job="photo-pick" data-n="{{n}}">Заменить</button>
+        <button type="button" data-job="photo-frame" data-n="{{n}}" title="Кадр: сдвинуть и приблизить картинку в фото" aria-label="Кадр фото"><i class="fa-solid fa-crop-simple"></i></button>
         <button type="button" data-job="photo-clock" data-n="{{n}}" title="Часы к фото{{#if clockView}}: {{clockView.name}}{{/if}}" aria-label="Часы к фото"><i class="fa-solid fa-clock"></i></button>
         <button type="button" data-job="photo-clear" data-n="{{n}}" aria-label="Убрать фото"><i class="fa-solid fa-xmark"></i></button>
       </span>

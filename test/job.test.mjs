@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { readFileSync, existsSync } from "node:fs";
 import Handlebars from "handlebars";
 import {
-  pinnedClocks, LAYOUTS, MAX_SLOTS, layoutOf, readTable, pinOf, thread, boardView, stressView, tableRunners, addableRunners,
+  PHOTO_DEFAULT, readPhotoView, photoPreview, pinnedClocks, LAYOUTS, MAX_SLOTS, layoutOf, readTable, pinOf, thread, boardView, stressView, tableRunners, addableRunners,
   jobScenes, lastScene, sceneName, readBgView, bgCss, bgPan, bgZoom, coverSize, BG_DEFAULT, nextSkin, skinLabel,
 } from "../scripts/job-logic.mjs";
 
@@ -28,8 +28,8 @@ test("данные стола: мусор → безопасные значен�
   const t = readTable({ layout: "four", slots: [{ img: " a.webp ", caption: "  Серьга   у байка " }, null, { img: 5 }], runners: ["x", "x", 3, "y"], clocks: "z", side: "none" });
   assert.equal(t.layout, "four");
   assert.equal(t.slots.length, MAX_SLOTS);
-  assert.deepEqual(t.slots[0], { img: "a.webp", caption: "Серьга у байка", clock: "" });
-  assert.deepEqual(t.slots[2], { img: "", caption: "", clock: "" });
+  assert.deepEqual(t.slots[0], { img: "a.webp", caption: "Серьга у байка", clock: "", view: PHOTO_DEFAULT });
+  assert.deepEqual(t.slots[2], { img: "", caption: "", clock: "", view: PHOTO_DEFAULT });
   assert.deepEqual(t.runners, ["x", "y"]);
   assert.deepEqual(t.clocks, []);
   assert.equal(t.side, "none");
@@ -48,6 +48,18 @@ test("часы на фото: только у слотов с фото в тек
   assert.ok(six[4].w >= 600 && six[4].h >= 280 && six[5].w >= 460 && six[5].h >= 280, "5 и 6 — вдвое крупнее");
   assert.ok(six[4].x + six[4].w + 16 < six[5].x, "крупные не наезжают друг на друга");
   for (const s of six.slice(0, 4)) assert.ok(s.y + s.h + 56 < six[4].y, "верхний ряд — над крупными");
+});
+
+test("кадр фото: как у задника, по умолчанию — 50% 25%; окно — по рамке слота", () => {
+  assert.deepEqual(readPhotoView(null), PHOTO_DEFAULT);
+  assert.deepEqual(readPhotoView({ x: 2, y: -1, z: 9 }), { x: 1, y: 0, z: 4 });
+  const b = boardView({ slots: [{ img: "a.webp", view: { x: 0.2, y: 0.7, z: 2 } }, { img: "b.webp" }] }, { isGM: false });
+  assert.deepEqual(b.slots[0].css, { w: 200, h: 200, left: -20, top: -70, pos: "20% 70%" });
+  assert.equal(b.slots[1].css.pos, "50% 25%", "без кадра — как раньше");
+  assert.deepEqual(photoPreview(640, 290), { w: 720, h: 326 });
+  assert.deepEqual(photoPreview(220, 230), { w: 459, h: 480 });
+  const v = bgPan(PHOTO_DEFAULT, 0, -100, 1000, 1000, 640, 290, PHOTO_DEFAULT);
+  assert.ok(v.y > PHOTO_DEFAULT.y && v.x === 0.5, "тянем вверх — кадр ниже по картинке");
 });
 
 test("нить: от булавки к булавке, длина и угол", () => {
@@ -134,6 +146,7 @@ test("шаблон стола: кнопки мастера, игрок без к
   assert.ok(!/Серьга · \[место\]|ng-job-meta/.test(gm), "в шапке нет заказчика и места из записи дела (автор, 2026-11-15)");
   assert.ok(!/наведи — арт/.test(gm), "у блока рискарей нет подсказки");
   assert.equal((gm.match(/data-job="photo-clock"/g) ?? []).length, 2, "кнопка «Часы к фото» на каждом фото");
+  assert.equal((gm.match(/data-job="photo-frame"/g) ?? []).length, 2, "кнопка «Кадр» на каждом фото");
   const pinned = boardView(raw, { isGM: true });
   pinned.slots[0].clockView = { id: "c", name: "Облава", src: "c.webp", value: 2, size: 6, canStep: true };
   const withPin = tpl({ ...base, isGM: true, board: pinned });
@@ -146,7 +159,7 @@ test("шаблон стола: кнопки мастера, игрок без к
   assert.ok(/data-job="runners-pick"/.test(gm) && /data-job="clocks-pick"/.test(gm) && /data-job="runner-remove"/.test(gm));
   assert.ok(/МОЙКА/.test(gm) && /20 ч · 1 р/.test(gm));
   const pl = tpl({ ...base, isGM: false, board: boardView(raw, { isGM: false }) });
-  assert.ok(!/photo-pick|photo-clear|data-job="bg"|bg-frame|data-job="hide"|data-job="settings"|runners-pick|clocks-pick|runner-remove|clock-remove|data-job="caption"/.test(pl), "у игрока нет кнопок мастера");
+  assert.ok(!/photo-pick|photo-clear|photo-frame|photo-clock|data-job="bg"|bg-frame|data-job="hide"|data-job="settings"|runners-pick|clocks-pick|runner-remove|clock-remove|data-job="caption"/.test(pl), "у игрока нет кнопок мастера");
   assert.match(pl, /data-job="skin-next"/, "оформление игрок меняет у себя");
   assert.equal((pl.match(/data-job="photo"/g) ?? []).length, 2);
   assert.ok(/<figcaption class="ng-job-caption">Серьга<\/figcaption>/.test(pl));

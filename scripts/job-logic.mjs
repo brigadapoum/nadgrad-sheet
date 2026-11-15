@@ -63,13 +63,13 @@ const ids = (v) => (Array.isArray(v) ? [...new Set(v.filter((x) => typeof x === 
 /**
  * Данные стола из флага сцены nadgrad.jobScene.
  * job — id записи журнала с делом; bg / logo / side — картинки (пусто — арт модуля по умолчанию);
- * slots — [{ img, caption, clock }] по номерам (clock — id счётчика, приколотого к фото) (лишние при смене раскладки не теряются); runners, clocks — id актёров.
+ * slots — [{ img, caption, clock, view }] по номерам (clock — id счётчика, приколотого к фото; view — кадр картинки в фото) (лишние при смене раскладки не теряются); runners, clocks — id актёров.
  */
 export function readTable(raw = {}) {
   const r = raw && typeof raw === "object" ? raw : {};
   const slots = Array.from({ length: MAX_SLOTS }, (_, i) => {
     const s = Array.isArray(r.slots) ? r.slots[i] : null;
-    return { img: str(s?.img).trim(), caption: str(s?.caption).replace(/\s+/g, " ").trim().slice(0, 80), clock: str(s?.clock).trim() };
+    return { img: str(s?.img).trim(), caption: str(s?.caption).replace(/\s+/g, " ").trim().slice(0, 80), clock: str(s?.clock).trim(), view: readPhotoView(s?.view) };
   });
   return {
     job: str(r.job),
@@ -92,20 +92,29 @@ export function readTable(raw = {}) {
 export const BG_ZOOM = { min: 1, max: 4 };
 export const BG_DEFAULT = { x: 0.5, y: 0.4, z: 1 };
 const clamp = (v, lo, hi, fb) => (Number.isFinite(Number(v)) ? Math.min(hi, Math.max(lo, Number(v))) : fb);
-export function readBgView(v = {}) {
+/** Кадр картинки внутри фото на доске (автор, 2026-11-15: «двигать, примерно как задник»); по умолчанию — как раньше, 50% 25%. */
+export const PHOTO_DEFAULT = { x: 0.5, y: 0.25, z: 1 };
+export function readBgView(v = {}, def = BG_DEFAULT) {
   const o = v && typeof v === "object" ? v : {};
   return {
-    x: clamp(o.x, 0, 1, BG_DEFAULT.x),
-    y: clamp(o.y, 0, 1, BG_DEFAULT.y),
-    z: clamp(o.z, BG_ZOOM.min, BG_ZOOM.max, BG_DEFAULT.z),
+    x: clamp(o.x, 0, 1, def.x),
+    y: clamp(o.y, 0, 1, def.y),
+    z: clamp(o.z, BG_ZOOM.min, BG_ZOOM.max, def.z),
   };
 }
+export const readPhotoView = (v) => readBgView(v, PHOTO_DEFAULT);
+/** Окно фото — ровно по рамке слота, вписанной в 720×480. */
+export function photoPreview(w, h, max = { w: 720, h: 480 }) {
+  const k = Math.min(max.w / w, max.h / h);
+  return { w: Math.round(w * k), h: Math.round(h * k) };
+}
+
 /**
  * CSS картинки задника в рамке любого размера: коробка z×100% сдвинута на (1−z)·x, внутри — cover с object-position x y.
  * Итог — картинка «заполнить» × z, левый край = (W − ширина)·x. Натуральный размер картинки не нужен.
  */
-export function bgCss(view) {
-  const v = readBgView(view);
+export function bgCss(view, def = BG_DEFAULT) {
+  const v = readBgView(view, def);
   const r = (n) => Math.round(n * 1000) / 1000;
   return { w: r(v.z * 100), h: r(v.z * 100), left: r((1 - v.z) * v.x * 100), top: r((1 - v.z) * v.y * 100), pos: `${r(v.x * 100)}% ${r(v.y * 100)}%` };
 }
@@ -115,13 +124,13 @@ export function coverSize(nw, nh, W, H, z = 1) {
   return { w: (nw || 1) * s, h: (nh || 1) * s };
 }
 /** Тянем мышкой на dx, dy пикселей рамки W×H: картинка едет за мышкой; по оси без запаса — стоит. */
-export function bgPan(view, dx, dy, nw, nh, W, H) {
-  const v = readBgView(view);
+export function bgPan(view, dx, dy, nw, nh, W, H, def = BG_DEFAULT) {
+  const v = readBgView(view, def);
   const c = coverSize(nw, nh, W, H, v.z);
   const ox = c.w - W, oy = c.h - H;
-  return readBgView({ ...v, x: ox > 0.5 ? v.x - dx / ox : v.x, y: oy > 0.5 ? v.y - dy / oy : v.y });
+  return readBgView({ ...v, x: ox > 0.5 ? v.x - dx / ox : v.x, y: oy > 0.5 ? v.y - dy / oy : v.y }, def);
 }
-export const bgZoom = (view, z) => readBgView({ ...readBgView(view), z });
+export const bgZoom = (view, z, def = BG_DEFAULT) => readBgView({ ...readBgView(view, def), z }, def);
 
 // ---------- оформление: одна кнопка по кругу (автор, 2026-11-14) ----------
 export const SKIN_CYCLE = [
@@ -171,6 +180,7 @@ export function boardView(table, { isGM = false } = {}) {
       img: data.img,
       caption: data.caption,
       clock: has ? data.clock : "",
+      css: bgCss(data.view, PHOTO_DEFAULT),
       badge: Math.min(120, Math.max(72, Math.round(pos.h * 0.45))),
       has,
       visible: has || isGM,

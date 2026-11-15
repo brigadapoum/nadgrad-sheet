@@ -9,7 +9,7 @@ import { STAGE, fitStage, readJob, jobView } from "./hall-logic.mjs";
 import { freeArea, skinOf, hallScene, runnerRows, openActor } from "./hall.mjs";
 import {
   LAYOUTS, layoutOf, readTable, boardView, stressView, tableRunners, addableRunners, jobScenes, lastScene, sceneName,
-  JOB_SCENE_FOLDER, pinnedClocks, BG_DEFAULT, BG_ZOOM, readBgView, bgCss, bgPan, bgZoom, skinLabel, nextSkin,
+  JOB_SCENE_FOLDER, pinnedClocks, BG_DEFAULT, PHOTO_DEFAULT, BG_ZOOM, readBgView, readPhotoView, photoPreview, bgCss, bgPan, bgZoom, skinLabel, nextSkin,
 } from "./job-logic.mjs";
 import { CLOCK_TYPE, clockSrc, normClock } from "./clock-logic.mjs";
 import { stepClock, createClockDialog } from "./clock.mjs";
@@ -330,10 +330,10 @@ async function onClick(event) {
     case "photo-pick": {
       if (!gm) return;
       const path = await pickImage(t.slots[n - 1]?.img);
-      if (path) await setSlot(scene, n, { img: path });
+      if (path) await setSlot(scene, n, { img: path, view: { ...PHOTO_DEFAULT } });
       return;
     }
-    case "photo-clear": return gm && setSlot(scene, n, { img: "" });
+    case "photo-clear": return gm && setSlot(scene, n, { img: "", view: { ...PHOTO_DEFAULT } });
     case "photo-clock": {
       if (!gm) return;
       let pick = await photoClockDialog(t, t.slots[n - 1]?.clock ?? "");
@@ -359,7 +359,8 @@ async function onClick(event) {
       if (path) await setBackdrop(scene, path);
       return;
     }
-    case "bg-frame": return gm && new (frameClass())().render(true);
+    case "bg-frame": return gm && openFrame(0);
+    case "photo-frame": return gm && openFrame(n);
     case "hide": state.picker = null; return gm && setTable(scene, { hidden: true });
     case "show": return gm && setTable(scene, { hidden: false });
     case "skin-next": return game.settings.set(MODULE_ID, "theme", nextSkin(skinOf()));
@@ -430,54 +431,88 @@ function onArtOut(event) {
   if (event.target.closest?.("[data-art]") === hoverFor) hideArt();
 }
 
-// ---------- окно «Кадр задника» (мастер) — как вырез аватарки под кольцо: тянуть мышкой, колесо — ближе ----------
+// ---------- окно «Кадр» (мастер) — задник или картинка в фото: тянуть мышкой, колесо — ближе ----------
+// Задник — как вырез аватарки под кольцо (2026-11-14); фото — так же (автор, 2026-11-15: «картинку внутри фото двигать, как задник»).
 
 let Frame = null;
+const frames = new Map();
+/** slot 0 — задник сцены, 1…9 — фото на доске. Окно на каждый кадр своё; повторный клик — поднять открытое. */
+function openFrame(slot = 0) {
+  const open = frames.get(slot);
+  if (open?.rendered) return open.bringToFront?.();
+  const app = new (frameClass())({ id: `ng-job-frame-${slot || "bg"}`, ngSlot: slot });
+  frames.set(slot, app);
+  return app.render(true);
+}
 function frameClass() {
   if (Frame) return Frame;
   const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api;
-  const PREVIEW = { w: 960, h: 540 };
   Frame = class NadgradJobFrame extends HandlebarsApplicationMixin(ApplicationV2) {
     static DEFAULT_OPTIONS = {
-      id: "ng-job-frame",
       classes: ["ng-hall-win"],
       window: { title: "Кадр задника", icon: "fa-solid fa-crop-simple" },
       position: { width: 1000, height: "auto" },
       actions: {
-        ngBgCenter: function () { this.view = { ...BG_DEFAULT, y: 0.5 }; this.paint(); },
-        ngBgReset: function () { this.view = { ...BG_DEFAULT }; this.paint(); },
+        ngBgCenter: function () { this.view = { ...this.def, y: 0.5 }; this.paint(); },
+        ngBgReset: function () { this.view = { ...this.def }; this.paint(); },
         ngBgCancel: function () { this.close(); },
         ngBgSave: async function () {
           const s = canvas?.scene;
-          if (isJobScene(s)) await setTable(s, { bgView: readBgView(this.view) });
+          if (isJobScene(s)) {
+            const v = readBgView(this.view, this.def);
+            await (this.slot ? setSlot(s, this.slot, { view: v }) : setTable(s, { bgView: v }));
+          }
           this.close();
         },
       },
     };
     static PARTS = { body: { template: `${TPL}/job-frame.hbs` } };
     view = null;
+    get slot() { return Number(this.options.ngSlot) || 0; }
+    get def() { return this.slot ? PHOTO_DEFAULT : BG_DEFAULT; }
+    get title() {
+      if (!this.slot) return "Кадр задника";
+      const c = isJobScene(canvas?.scene) ? tableOf(canvas.scene).slots[this.slot - 1]?.caption : "";
+      return `Кадр фото ${this.slot}${c ? ` — ${c}` : ""}`;
+    }
+    _initializeApplicationOptions(options) {
+      const o = super._initializeApplicationOptions(options);
+      if (Number(options.ngSlot)) o.position = { ...o.position, width: 760 };
+      return o;
+    }
     async _prepareContext() {
       const s = canvas?.scene;
-      if (!isJobScene(s)) return { none: true };
+      if (!isJobScene(s)) return { none: "Это окно — для сцены дела." };
       const t = tableOf(s);
+      const base = { zoomMin: BG_ZOOM.min * 100, zoomMax: BG_ZOOM.max * 100 };
+      if (this.slot) {
+        const data = t.slots[this.slot - 1];
+        const pos = layoutOf(t.layout).slots[this.slot - 1];
+        if (!data?.img || !pos) return { none: "В этом слоте нет фото — сначала добавь картинку." };
+        this.view ??= readPhotoView(data.view);
+        return { ...base, src: data.img, photo: photoPreview(pos.w, pos.h), css: bgCss(this.view, PHOTO_DEFAULT), zoomPct: Math.round(this.view.z * 100) };
+      }
       this.view ??= readBgView(t.bgView);
       const half = (n) => Math.round(n / 2);
       return {
+        ...base,
         src: t.bg || DEFAULTS.bg,
         css: bgCss(this.view),
         zoomPct: Math.round(this.view.z * 100),
-        zoomMin: BG_ZOOM.min * 100,
-        zoomMax: BG_ZOOM.max * 100,
         ghosts: boardView(t, { isGM: true }).slots.map((x) => ({ x: half(x.x), y: half(x.y), w: half(x.frame), h: half(x.h + 56), rot: x.rot })),
       };
     }
     paint() {
       const img = this.element?.querySelector(".ng-job-bgcrop-view img");
       if (!img) return;
-      const c = bgCss(this.view);
+      const c = bgCss(this.view, this.def);
       Object.assign(img.style, { width: `${c.w}%`, height: `${c.h}%`, left: `${c.left}%`, top: `${c.top}%`, objectPosition: c.pos });
       const z = this.element.querySelector(".ng-job-bgcrop-zoom");
       if (z) z.value = String(Math.round(this.view.z * 100));
+    }
+    _onClose(options) {
+      if (frames.get(this.slot) === this) frames.delete(this.slot);
+      return super._onClose?.(options);
     }
     _onRender() {
       const box = this.element.querySelector(".ng-job-bgcrop-view");
@@ -486,7 +521,7 @@ function frameClass() {
       let start = null;
       const size = () => {
         const r = box.getBoundingClientRect();
-        return { W: r.width || PREVIEW.w, H: r.height || PREVIEW.h };
+        return { W: r.width || box.offsetWidth || 1, H: r.height || box.offsetHeight || 1 };
       };
       box.addEventListener("pointerdown", (e) => {
         if (e.button !== 0) return;
@@ -497,7 +532,7 @@ function frameClass() {
       box.addEventListener("pointermove", (e) => {
         if (!start || !img.naturalWidth) return;
         const { W, H } = size();
-        this.view = bgPan(start.view, e.clientX - start.x, e.clientY - start.y, img.naturalWidth, img.naturalHeight, W, H);
+        this.view = bgPan(start.view, e.clientX - start.x, e.clientY - start.y, img.naturalWidth, img.naturalHeight, W, H, this.def);
         this.paint();
       });
       const end = () => { start = null; box.classList.remove("drag"); };
@@ -505,11 +540,11 @@ function frameClass() {
       box.addEventListener("pointercancel", end);
       box.addEventListener("wheel", (e) => {
         e.preventDefault();
-        this.view = bgZoom(this.view, this.view.z * (e.deltaY < 0 ? 1.1 : 1 / 1.1));
+        this.view = bgZoom(this.view, this.view.z * (e.deltaY < 0 ? 1.1 : 1 / 1.1), this.def);
         this.paint();
       }, { passive: false });
       this.element.querySelector(".ng-job-bgcrop-zoom")?.addEventListener("input", (e) => {
-        this.view = bgZoom(this.view, Number(e.target.value) / 100);
+        this.view = bgZoom(this.view, Number(e.target.value) / 100, this.def);
         this.paint();
       });
     }
@@ -560,7 +595,7 @@ function adminClass() {
           this.render();
         },
         ngGo: function (event, target) { return game.scenes.get(target.dataset.id)?.activate(); },
-        ngFrame: function () { new (frameClass())().render(true); },
+        ngFrame: function () { openFrame(0); },
         ngHidden: function () { return set(this, { hidden: !tableOf(scene()).hidden }); },
       },
     };
